@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import DeepQNet
 
+
 sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
