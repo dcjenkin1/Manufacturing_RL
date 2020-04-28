@@ -4,6 +4,7 @@ from collections import namedtuple, Counter
 from itertools import count, filterfalse
 import random
 import math
+import json
 
 ####################################################
 ########## CREATING THE WAFER CLASS  ###############
@@ -67,6 +68,8 @@ class Machine(object):
         proc_t = sim_inst.get_proc_time(wafer.HT, wafer.seq, wafer.number_wafers)
 
         done_in = proc_t
+
+        sim_inst.ht_seq_wait[(wafer.HT, wafer.seq)].append(sim_inst.env.now-wafer.queue_start_time)
         while done_in:
             try:
                 if self.break_mean is not None:
@@ -88,6 +91,7 @@ class Machine(object):
                 if wafer.seq < (len(sim_inst.recipes[wafer.HT])):
                     # add the part to the corresponding queue for the next operation in the sequence
                     sim_inst.queue_lists[sim_inst.recipes[wafer.HT][wafer.seq][0]].append(wafer)
+                    wafer.queue_start_time = sim_inst.env.now
                     sim_inst.n_HT_seq[wafer.HT][wafer.seq] += 1
                 else:
                     # # add the part to the list of completed parts
@@ -153,7 +157,8 @@ class Machine(object):
 ####################################################
 class FactorySim(object):
     #Initialize simpy environment and set the amount of time the simulation will run for
-    def __init__(self, sim_time, m_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean=None, repair_mean=None):
+    def __init__(self, sim_time, m_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, path_to_wait_times=None, break_mean=None,
+                 repair_mean=None):
         self.break_mean = break_mean
         self.repair_mean = repair_mean
         self.order_completed = False
@@ -171,6 +176,14 @@ class FactorySim(object):
         self.t_between_completions = []
         self.cumulative_reward = 0
         self.cumulative_reward_list = []
+
+        if path_to_wait_times is not None:
+            with open(path_to_wait_times, 'r') as fp:
+                self.wait_times = json.load(fp)
+        else:
+            self.wait_times = None
+
+        # print(self.wait_times)
 
 
 
@@ -253,9 +266,12 @@ class FactorySim(object):
         n_steps = len(steps)
 
         rem_shop_t = 0
-
-        for i in range(seq, n_steps):
-            rem_shop_t = rem_shop_t + self.get_proc_time(ht, i, num_waf)
+        if self.wait_times is not None:
+            for i in range(seq, n_steps):
+                rem_shop_t = rem_shop_t + self.get_proc_time(ht, i, num_waf) + self.wait_times[str((ht, seq))]
+        else:
+            for i in range(seq, n_steps):
+                rem_shop_t = rem_shop_t + self.get_proc_time(ht, i, num_waf)
 
         # assert(rem_shop_t>0)
         return rem_shop_t
