@@ -7,6 +7,7 @@ import math
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
+import json
 
 sim_time = 5e5
 WEEK = 24*7
@@ -15,6 +16,9 @@ num_seq_steps = 20
 
 recipes = pd.read_csv('~/Documents/workspace/WDsim/recipes.csv')
 machines = pd.read_csv('~/Documents/workspace/WDsim/machines.csv')
+
+# with open('ht_seq_mean_w3.json', 'r') as fp:
+#     ht_seq_mean_w_l = json.load(fp)
 # print(len(machines))
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
@@ -94,7 +98,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:15000}
+    d = {ht:16000}
     lead_dict.update(d)
 
     w = {ht:1}
@@ -169,8 +173,9 @@ def choose_action(sim):
         return waf_to_choose
 
 
+wt = 'ht_seq_mean_w0.json'
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, wt)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -224,6 +229,12 @@ print(my_sim.lateness)
 
 print(my_sim.complete_wafer_dict)
 
+# ht_seq_mean_w = dict()
+# for tup, time_values in my_sim.ht_seq_wait.items():
+#     ht_seq_mean_w[tup] = np.mean(time_values)
+
+# with open('ht_seq_mean_wn.json', 'w') as fp:
+#     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
 
 
 print(np.mean(my_sim.lateness[-1000:]))
