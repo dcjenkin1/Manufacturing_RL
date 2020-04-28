@@ -137,7 +137,7 @@ def get_state(sim):
 
 
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean, repair_mean)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean=break_mean, repair_mean=repair_mean)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
