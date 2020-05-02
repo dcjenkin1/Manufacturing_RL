@@ -40,6 +40,7 @@ class Machine(object):
 
         self.process = None
         self.repair_mean = repair_mean
+        self.total_operational_time = 0
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
@@ -139,6 +140,7 @@ class Machine(object):
 
         # Parts completed by this machine
         self.parts_made += 1
+        self.total_operational_time += proc_t
 
     def get_allowed_actions(self, sim_inst):
         #find all (HT, seq) tuples with non zero queues at the station of this machine
@@ -184,9 +186,6 @@ class FactorySim(object):
             self.wait_times = None
 
         # print(self.wait_times)
-
-
-
 
         # Number of future weeks we want to look into for calculating due dates
         self.FUTURE_WEEKS = math.ceil((max(lead_dict.values()) + sim_time) / (7*24*60) + 1)
