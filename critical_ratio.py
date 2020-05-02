@@ -88,7 +88,7 @@ break_mean = 1e5
 
 repair_mean = 20
 
-n_part_mix = 30
+n_part_mix = 120
 
 # average lead time for each head type
 head_types = recipes.keys()
@@ -173,9 +173,10 @@ def choose_action(sim):
         return waf_to_choose
 
 
-wt = 'ht_seq_mean_w0.json'
+# wt = 'ht_seq_mean_w0.json'
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, wt)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix,
+                             break_mean=break_mean, repair_mean=repair_mean)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -236,6 +237,13 @@ print(my_sim.complete_wafer_dict)
 # with open('ht_seq_mean_wn.json', 'w') as fp:
 #     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
 
+# Total wafers produced
+operational_times = [mach.total_operational_time for mach in my_sim.machines_list]
+mach_util = [op_time/sim_time for op_time in operational_times]
+print(operational_times)
+print(np.mean(mach_util))
+
+print("Total wafers produced:", len(my_sim.cycle_time))
 
 print(np.mean(my_sim.lateness[-1000:]))
 
