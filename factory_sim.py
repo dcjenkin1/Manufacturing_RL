@@ -92,7 +92,9 @@ class Machine(object):
                 if wafer.seq < (len(sim_inst.recipes[wafer.HT])):
                     # add the part to the corresponding queue for the next operation in the sequence
                     sim_inst.queue_lists[sim_inst.recipes[wafer.HT][wafer.seq][0]].append(wafer)
+                    # ts = sim_inst.recipes[wafer.HT][wafer.seq][0]
                     wafer.queue_start_time = sim_inst.env.now
+                    sim_inst.arrival_times[sim_inst.recipes[wafer.HT][wafer.seq][0]].append(sim_inst.env.now)
                     sim_inst.n_HT_seq[wafer.HT][wafer.seq] += 1
                 else:
                     # # add the part to the list of completed parts
@@ -193,13 +195,15 @@ class FactorySim(object):
         # Initialize an index that will be used to name each wafer box
         self.wafer_index = 0
 
-        # Dictionary where the key is the name of the machine and the value is [station, proc_t]
+        # Dictionary where the key is the name of the machine and the value is the station
         self.machine_dict = m_dict
 
         self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean) for mach in self.machine_dict.items()]
 
         # create a list of all the station names
         self.stations = list(set(list(self.machine_dict.values())))
+
+        self.arrival_times = {station: [] for station in self.stations}
 
         # sim_inst.recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
         self.recipes = recipes
