@@ -88,7 +88,7 @@ break_mean = 1e5
 
 repair_mean = 20
 
-n_part_mix = 120
+n_part_mix = 30
 
 # average lead time for each head type
 head_types = recipes.keys()
@@ -238,16 +238,39 @@ print(my_sim.complete_wafer_dict)
 #     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
 
 # Total wafers produced
-operational_times = [mach.total_operational_time for mach in my_sim.machines_list]
-mach_util = [op_time/sim_time for op_time in operational_times]
-print(operational_times)
-print(np.mean(mach_util))
-
 print("Total wafers produced:", len(my_sim.cycle_time))
+
+# utilization
+operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
+mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
+mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
+             for station in my_sim.stations}
+# stdev_util = {station: np.std(mach_util)
+
+inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
+                                                    my_sim.arrival_times[station][1:])] for station in my_sim.stations}
+mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+
+print(operational_times)
+print(mean_util)
+# print(stdev_util)
+print(inter_arrival_times)
+print(mean_inter)
+print(std_inter)
+print(coeff_var)
 
 print(np.mean(my_sim.lateness[-1000:]))
 
-# Plot the time taken to complete each wafer
+cols = [mean_util, mean_inter, std_inter, coeff_var]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival'])
+df = df.transpose()
+df.to_csv('util_inter_arr.csv')
+# print(df)
+
+# # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness)
 plt.xlabel("Wafers")
 plt.ylabel("Lateness")
