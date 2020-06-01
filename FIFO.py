@@ -8,10 +8,10 @@ import math
 import matplotlib.pyplot as plt
 from itertools import chain
 
-sim_time = 1e5
+sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 500
+# num_seq_steps = 500
 
 recipes = pd.read_csv('~/Documents/workspace/WDsim/recipes.csv')
 machines = pd.read_csv('~/Documents/workspace/WDsim/machines.csv')
@@ -55,8 +55,8 @@ for ht in list(recipes.HT.unique()):
         recipe_dict.update(d)
 
 # take only the first num_seq_steps sequence steps for each recipe to reduce the complexity of the simulation.
-for ht, step in recipe_dict.items():
-    recipe_dict[ht] = step[0:num_seq_steps]
+# for ht, step in recipe_dict.items():
+#     recipe_dict[ht] = step[0:num_seq_steps]
 
 # remove machines which aren't used in the first num_seq_steps for each recipe
 used_stations = []
@@ -221,16 +221,77 @@ while my_sim.env.now<sim_time:
 # print(i)
 #Wafers of each head type
 print("### Wafers of each head type ###")
-print(my_sim.complete_wafer_dict)
 
 print(my_sim.lateness)
 
-print(np.mean(my_sim.lateness[-1000:]))
+print(my_sim.complete_wafer_dict)
+
+# ht_seq_mean_w = dict()
+# for tup, time_values in my_sim.ht_seq_wait.items():
+#     ht_seq_mean_w[tup] = np.mean(time_values)
+
+# with open('ht_seq_mean_wn.json', 'w') as fp:
+#     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
 
 # Total wafers produced
 print("Total wafers produced:", len(my_sim.cycle_time))
 
-# Plot the time taken to complete each wafer
+# utilization
+operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
+mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
+mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
+             for station in my_sim.stations}
+mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+
+mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+                                         mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+                           station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
+# stdev_util = {station: np.std(mach_util)
+
+inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
+                                                    my_sim.arrival_times[station][1:])] for station in my_sim.stations}
+mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
+                        my_sim.stations}
+
+print('operational times')
+print(operational_times)
+print('mean util')
+print(mean_util)
+# print(stdev_util)
+print('interarrival times')
+print(inter_arrival_times)
+print('mean interarrival')
+print(mean_inter)
+print('std inter')
+print(std_inter)
+print('coeff var')
+print(coeff_var)
+print('mean station takt times')
+print(mean_station_takt_times)
+
+print(np.mean(my_sim.lateness[-1000:]))
+
+cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
+df = df.transpose()
+df.to_csv('util_inter_arr.csv')
+# print(df)
+
+# # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness)
 plt.xlabel("Wafers")
 plt.ylabel("Lateness")
