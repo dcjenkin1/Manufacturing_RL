@@ -1,7 +1,7 @@
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
-import math 
+import math
 # import matplotlib
 # import random
 # matplotlib.use('TkAgg')
@@ -12,7 +12,7 @@ import json
 sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+# num_seq_steps = 200
 
 recipes = pd.read_csv('~/Documents/workspace/WDsim/recipes.csv')
 machines = pd.read_csv('~/Documents/workspace/WDsim/machines.csv')
@@ -29,7 +29,7 @@ for index, row in machines.iterrows():
     d = {row[0]:row[1]}
     machine_d.update(d)
 
-# Modifying the above list to match the stations from the two datasets 
+# Modifying the above list to match the stations from the two datasets
 a = machines.TOOLSET.unique()
 b = recipes.TOOLSET.unique()
 common_stations = (set(a) & set(b))
@@ -40,7 +40,7 @@ modified_machine_dict = {k:v for k,v in machine_d.items() if v in ls}
 
 # Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
-    if row[2] not in ls:
+    if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
         recipes.drop(index, inplace=True)
 
 recipes = recipes.dropna()
@@ -60,8 +60,8 @@ for ht in list(recipes.HT.unique()):
         recipe_dict.update(d)
 
 # take only the first num_seq_steps sequence steps for each recipe to reduce the complexity of the simulation.
-for ht, step in recipe_dict.items():
-    recipe_dict[ht] = step[0:num_seq_steps]
+# for ht, step in recipe_dict.items():
+#     recipe_dict[ht] = step[0:num_seq_steps]
 
 # remove machines which aren't used in the first num_seq_steps for each recipe
 used_stations = []
@@ -190,7 +190,6 @@ action_size = len(action_space)
 
 while my_sim.env.now < sim_time:
     wafer = choose_action(my_sim)
-
     my_sim.run_action(mach, wafer)
     print('Step Reward:'+ str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
@@ -245,6 +244,21 @@ operational_times = {mach: mach.total_operational_time for mach in my_sim.machin
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
+mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+
+mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+                                         mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+                           station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
 # stdev_util = {station: np.std(mach_util)
 
 inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
@@ -252,20 +266,30 @@ inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_
 mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
+                        my_sim.stations}
 
+print('operational times')
 print(operational_times)
+print('mean util')
 print(mean_util)
 # print(stdev_util)
+print('interarrival times')
 print(inter_arrival_times)
+print('mean interarrival')
 print(mean_inter)
+print('std inter')
 print(std_inter)
+print('coeff var')
 print(coeff_var)
+print('mean station takt times')
+print(mean_station_takt_times)
 
 print(np.mean(my_sim.lateness[-1000:]))
 
-cols = [mean_util, mean_inter, std_inter, coeff_var]
+cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival'])
+                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
 df.to_csv('util_inter_arr.csv')
 # print(df)
@@ -276,4 +300,3 @@ plt.xlabel("Wafers")
 plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
 plt.show()
-
