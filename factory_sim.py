@@ -41,6 +41,7 @@ class Machine(object):
         self.process = None
         self.repair_mean = repair_mean
         self.total_operational_time = 0
+        self.takt_times = []
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
@@ -69,6 +70,8 @@ class Machine(object):
         proc_t = sim_inst.get_proc_time(wafer.HT, wafer.seq, wafer.number_wafers)
 
         done_in = proc_t
+
+        start_time = sim_inst.env.now
 
         sim_inst.ht_seq_wait[(wafer.HT, wafer.seq)].append(sim_inst.env.now-wafer.queue_start_time)
         while done_in:
@@ -113,7 +116,7 @@ class Machine(object):
                     # Subtract wafer,number_wafers wafers from the corresponding list element 
                     sim_inst.due_wafers[wafer.HT][week_index] -= wafer.number_wafers
 
-                    if all((sum(sim_inst.due_wafers[ht])<=(sim_inst.n_part_mix-1)*sim_inst.part_mix[ht]*
+                    if all((sum(sim_inst.due_wafers[ht]) <= (sim_inst.n_part_mix-1)*sim_inst.part_mix[ht]*
                             sim_inst.num_wafers) for ht in sim_inst.recipes.keys()):
                         sim_inst.order_completed = True
                         sim_inst.t_between_completions.append(sim_inst.env.now-sim_inst.order_complete_time)
@@ -143,6 +146,7 @@ class Machine(object):
         # Parts completed by this machine
         self.parts_made += 1
         self.total_operational_time += proc_t
+        self.takt_times.append(sim_inst.env.now - start_time)
 
     def get_allowed_actions(self, sim_inst):
         #find all (HT, seq) tuples with non zero queues at the station of this machine
@@ -317,8 +321,6 @@ class FactorySim(object):
         # Set the machine to be unavailable to process parts because it is now busy
         assert machine.available
         machine.available = False
-        # Find the wafer that has that HT and seq
-        # wafer_choice = next(wafer for wafer in self.queue_lists[machine.station] if wafer.HT == ht and wafer.seq == seq)
         # set the wafer being processed on this machine to wafer_choice
         machine.wafer_being_proc = wafer_choice
         # Remove the part from it's queue
@@ -330,7 +332,17 @@ class FactorySim(object):
         for machine in self.machines_list:
             if machine.available:
                 allowed_actions = machine.get_allowed_actions(self)
-                if len(allowed_actions) > 0:
+                if len(allowed_actions) == 1:
+                    wafer_choice = self.queue_lists[machine.station][0]
+                    machine.available = False
+                    # set the wafer being processed on this machine to wafer_choice
+                    machine.wafer_being_proc = wafer_choice
+                    # Remove the part from it's queue
+                    self.queue_lists[machine.station].remove(wafer_choice)
+                    self.n_HT_seq[wafer_choice.HT][wafer_choice.seq] -= 1
+                    # Begin processing the part on the machine
+                    machine.process = self.env.process(machine.part_process(wafer_choice, self))
+                elif len(allowed_actions) > 1:
                     self.next_machine = machine
                     self.allowed_actions = allowed_actions
                     self.cumulative_reward += self.step_reward
@@ -349,7 +361,17 @@ class FactorySim(object):
             for machine in self.machines_list:
                 if machine.available:
                     allowed_actions = machine.get_allowed_actions(self)
-                    if len(allowed_actions) > 0:
+                    if len(allowed_actions) == 1:
+                        wafer_choice = self.queue_lists[machine.station][0]
+                        machine.available = False
+                        # set the wafer being processed on this machine to wafer_choice
+                        machine.wafer_being_proc = wafer_choice
+                        # Remove the part from it's queue
+                        self.queue_lists[machine.station].remove(wafer_choice)
+                        self.n_HT_seq[wafer_choice.HT][wafer_choice.seq] -= 1
+                        # Begin processing the part on the machine
+                        machine.process = self.env.process(machine.part_process(wafer_choice, self))
+                    elif len(allowed_actions) > 1:
                         self.next_machine = machine
                         self.allowed_actions = allowed_actions
                         self.cumulative_reward += self.step_reward
