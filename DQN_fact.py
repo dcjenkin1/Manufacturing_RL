@@ -183,7 +183,7 @@ while my_sim.env.now < sim_time:
     if my_sim.order_completed:
         # After each wafer completed, train the policy network 
         dqn_agent.replay()
-        order_count+= 1
+        order_count += 1
         if order_count >= 1:
             # After every 20 processes update the target network and reset the order count
             dqn_agent.train_target()
@@ -208,20 +208,73 @@ print(my_sim.complete_wafer_dict)
 # Total wafers produced
 print("Total wafers produced:", len(my_sim.cycle_time))
 
+# utilization
+operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
+mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
+mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
+             for station in my_sim.stations}
+mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+
+mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+                                         mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+                           station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
+# stdev_util = {station: np.std(mach_util)
+
+inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
+                                                    my_sim.arrival_times[station][1:])] for station in my_sim.stations}
+mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
+                        my_sim.stations}
+
+print('operational times')
+print(operational_times)
+print('mean util')
+print(mean_util)
+# print(stdev_util)
+print('interarrival times')
+print(inter_arrival_times)
+print('mean interarrival')
+print(mean_inter)
+print('std inter')
+print(std_inter)
+print('coeff var')
+print(coeff_var)
+print('mean station takt times')
+print(mean_station_takt_times)
+
 print(np.mean(my_sim.lateness[-1000:]))
+
+cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
+df = df.transpose()
+df.to_csv('util_inter_arr_dqn.csv')
+# print(df)
+
+# # Plot the time taken to complete each wafer
+plt.plot(my_sim.lateness)
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.show()
 
 # Plot the time taken to complete each wafer
 plt.plot(my_sim.cumulative_reward_list)
 plt.xlabel("step")
 plt.ylabel("Cumulative Reward")
 plt.title("The sum of all rewards up until each time step")
-plt.show()
-
-# Plot the time taken to complete each wafer
-plt.plot(my_sim.lateness)
-plt.xlabel("Wafers")
-plt.ylabel("lateness")
-plt.title("The amount of time each wafer was late")
 plt.show()
 
 
