@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import json
 
-sim_time = 5e5
+sim_time = 1e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
@@ -192,7 +192,7 @@ while my_sim.env.now < sim_time:
     wafer = choose_action(my_sim)
 
     my_sim.run_action(mach, wafer)
-    print('Step Reward:'+ str(my_sim.step_reward))
+    # print('Step Reward:'+ str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     # next_state = get_state(my_sim)
@@ -253,14 +253,14 @@ mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts i
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
 
-print(operational_times)
-print(mean_util)
-# print(stdev_util)
-print(inter_arrival_times)
-print(mean_inter)
-print(std_inter)
-print(coeff_var)
-
+# print(operational_times)
+# print(mean_util)
+# # print(stdev_util)
+# print(inter_arrival_times)
+# print(mean_inter)
+# print(std_inter)
+# print(coeff_var)
+#
 print(np.mean(my_sim.lateness[-1000:]))
 
 cols = [mean_util, mean_inter, std_inter, coeff_var]
