@@ -14,8 +14,8 @@ WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('~/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('~/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('/persistvol/recipes.csv')
+machines = pd.read_csv('/persistvol/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -152,7 +152,7 @@ action_size = len(action_space)
 state_size = len(state)
 
 # Creating the DQN agent
-dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.9999)
+dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999)
 
 order_count = 0
 
@@ -276,12 +276,4 @@ plt.xlabel("step")
 plt.ylabel("Cumulative Reward")
 plt.title("The sum of all rewards up until each time step")
 plt.show()
-
-
-
-
-
-
-
-
 
