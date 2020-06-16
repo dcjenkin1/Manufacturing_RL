@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import json
 
-sim_time = 1e5
+sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
