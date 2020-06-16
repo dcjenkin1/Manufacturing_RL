@@ -209,6 +209,8 @@ class FactorySim(object):
 
         self.arrival_times = {station: [] for station in self.stations}
 
+        self.station_machines = {station: [machine for machine in self.machines_list if machine.station == station] for station in self.stations}
+        # ts = self.station_machines
         # sim_inst.recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
         self.recipes = recipes
 
@@ -297,22 +299,26 @@ class FactorySim(object):
                 self.due_wafers[ht][week_number] += self.num_wafers
                 self.wafer_index += 1
 
-        for machine in self.machines_list:
-            if machine.available:
-                allowed_actions = machine.get_allowed_actions(self)
-                if len(allowed_actions) > 0:
-                    self.next_machine = machine
-                    self.allowed_actions = allowed_actions
-                    return
+        for station in self.stations:
+            if len(self.queue_lists[station])>0:
+                for machine in self.station_machines[station]:
+                    if machine.available:
+                        allowed_actions = machine.get_allowed_actions(self)
+                        if len(allowed_actions) > 0:
+                            self.next_machine = machine
+                            self.allowed_actions = allowed_actions
+                            return
         while True:
             self.env.step()
-            for machine in self.machines_list:
-                if machine.available:
-                    allowed_actions = machine.get_allowed_actions(self)
-                    if len(allowed_actions) > 0:
-                        self.next_machine = machine
-                        self.allowed_actions = allowed_actions
-                        return
+            for station in self.stations:
+                if len(self.queue_lists[station]) > 0:
+                    for machine in self.station_machines[station]:
+                        if machine.available:
+                            allowed_actions = machine.get_allowed_actions(self)
+                            if len(allowed_actions) > 0:
+                                self.next_machine = machine
+                                self.allowed_actions = allowed_actions
+                                return
 
 
     def run_action(self, machine, wafer_choice):
@@ -331,15 +337,17 @@ class FactorySim(object):
         # Begin processing the part on the machine
         machine.process = self.env.process(machine.part_process(wafer_choice, self))
 
-        for machine in self.machines_list:
-            if machine.available:
-                allowed_actions = machine.get_allowed_actions(self)
-                if len(allowed_actions) > 0:
-                    self.next_machine = machine
-                    self.allowed_actions = allowed_actions
-                    self.cumulative_reward += self.step_reward
-                    self.cumulative_reward_list.append(self.cumulative_reward)
-                    return
+        for station in self.stations:
+            if len(self.queue_lists[station]) > 0:
+                for machine in self.station_machines[station]:
+                    if machine.available:
+                        allowed_actions = machine.get_allowed_actions(self)
+                        if len(allowed_actions) > 0:
+                            self.next_machine = machine
+                            self.allowed_actions = allowed_actions
+                            self.cumulative_reward += self.step_reward
+                            self.cumulative_reward_list.append(self.cumulative_reward)
+                            return
         while True:
             before_time = self.env.now
             self.env.step()
@@ -350,15 +358,17 @@ class FactorySim(object):
                 buffer_list.append(sum(value[:current_week]))
                 self.step_reward -= time_change*sum(buffer_list)
 
-            for machine in self.machines_list:
-                if machine.available:
-                    allowed_actions = machine.get_allowed_actions(self)
-                    if len(allowed_actions) > 0:
-                        self.next_machine = machine
-                        self.allowed_actions = allowed_actions
-                        self.cumulative_reward += self.step_reward
-                        self.cumulative_reward_list.append(self.cumulative_reward)
-                        return
+            for station in self.stations:
+                if len(self.queue_lists[station]) > 0:
+                    for machine in self.station_machines[station]:
+                        if machine.available:
+                            allowed_actions = machine.get_allowed_actions(self)
+                            if len(allowed_actions) > 0:
+                                self.next_machine = machine
+                                self.allowed_actions = allowed_actions
+                                self.cumulative_reward += self.step_reward
+                                self.cumulative_reward_list.append(self.cumulative_reward)
+                                return
 
 
 
