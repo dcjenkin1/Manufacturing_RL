@@ -201,7 +201,7 @@ while my_sim.env.now < sim_time:
 
     # print(f"state dimension: {len(state)}")
     # print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
     mach, allowed_actions = next_mach, next_allowed_actions
     # print("State:", state)
