@@ -14,8 +14,8 @@ WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 # num_seq_steps = 200
 
-recipes = pd.read_csv('~/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('~/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('/persistvol/recipes.csv')
+machines = pd.read_csv('/persistvol/machines.csv')
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)

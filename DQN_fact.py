@@ -12,10 +12,10 @@ import DeepQNet
 sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+# num_seq_steps = 20
 
-recipes = pd.read_csv('~/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('~/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('/persistvol/recipes.csv')
+machines = pd.read_csv('/persistvol/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -34,9 +34,9 @@ ls = list(common_stations)
 # This dictionary has the correct set of stations
 modified_machine_dict = {k: v for k, v in machine_d.items() if v in ls}
 
-# Removing unncommon rows from recipes 
+# Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
-    if row[2] not in ls:
+    if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
         recipes.drop(index, inplace=True)
 
 recipes = recipes.dropna()
@@ -55,9 +55,9 @@ for ht in list(recipes.HT.unique()):
         d = {ht:ls}
         recipe_dict.update(d)
 
-# take only the first num_seq_steps sequence steps for each recipe to reduce the complexity of the simulation.
-for ht, step in recipe_dict.items():
-    recipe_dict[ht] = step[0:num_seq_steps]
+# # take only the first num_seq_steps sequence steps for each recipe to reduce the complexity of the simulation.
+# for ht, step in recipe_dict.items():
+#     recipe_dict[ht] = step[0:num_seq_steps]
 
 # remove machines which aren't used in the first num_seq_steps for each recipe
 used_stations = []
