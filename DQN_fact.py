@@ -112,7 +112,7 @@ def get_state(sim):
     state_rep = sum([sim.n_HT_seq[HT] for HT in sim.recipes.keys()], [])
 
     # assert state_rep == state_rep2
-    print(len(state_rep))
+    # print(len(state_rep))
     # b is a one-hot encoded list indicating which machine the next action will correspond to
     b = np.zeros(len(sim.machines_list))
     b[sim.machines_list.index(sim.next_machine)] = 1
@@ -132,7 +132,7 @@ def get_state(sim):
 
     c = sum(rolling_window, [])
     state_rep.extend(c) # Appending the rolling window to state space
-    print(len(state_rep))
+    # print(len(state_rep))
     return state_rep
 
 
@@ -175,7 +175,7 @@ while my_sim.env.now < sim_time:
     print("action space dimension:", action_size)
     # record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-    print("State:", state)
+    # print("State:", state)
 
     # Save the example for later training
     dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
@@ -238,21 +238,21 @@ coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for stati
 machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
                         my_sim.stations}
 
-print('operational times')
-print(operational_times)
-print('mean util')
-print(mean_util)
-# print(stdev_util)
-print('interarrival times')
-print(inter_arrival_times)
-print('mean interarrival')
-print(mean_inter)
-print('std inter')
-print(std_inter)
-print('coeff var')
-print(coeff_var)
-print('mean station takt times')
-print(mean_station_takt_times)
+# print('operational times')
+# print(operational_times)
+# print('mean util')
+# print(mean_util)
+# # print(stdev_util)
+# print('interarrival times')
+# print(inter_arrival_times)
+# print('mean interarrival')
+# print(mean_inter)
+# print('std inter')
+# print(std_inter)
+# print('coeff var')
+# print(coeff_var)
+# print('mean station takt times')
+# print(mean_station_takt_times)
 
 print(np.mean(my_sim.lateness[-1000:]))
 
