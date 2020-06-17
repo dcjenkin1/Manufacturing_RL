@@ -41,6 +41,7 @@ class Machine(object):
         self.process = None
         self.repair_mean = repair_mean
         self.total_operational_time = 0
+        self.takt_times = []
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
@@ -69,6 +70,8 @@ class Machine(object):
         proc_t = sim_inst.get_proc_time(wafer.HT, wafer.seq, wafer.number_wafers)
 
         done_in = proc_t
+
+        start_time = sim_inst.env.now
 
         sim_inst.ht_seq_wait[(wafer.HT, wafer.seq)].append(sim_inst.env.now-wafer.queue_start_time)
         while done_in:
@@ -110,10 +113,10 @@ class Machine(object):
                     # due.
                     week_index = next((i for i, x in enumerate(sim_inst.due_wafers[wafer.HT]) if x), None)
 
-                    # Subtract wafer,number_wafers wafers from the corresponding list element 
+                    # Subtract wafer,number_wafers wafers from the corresponding list element
                     sim_inst.due_wafers[wafer.HT][week_index] -= wafer.number_wafers
 
-                    if all((sum(sim_inst.due_wafers[ht])<=(sim_inst.n_part_mix-1)*sim_inst.part_mix[ht]*
+                    if all((sum(sim_inst.due_wafers[ht]) <= (sim_inst.n_part_mix-1)*sim_inst.part_mix[ht]*
                             sim_inst.num_wafers) for ht in sim_inst.recipes.keys()):
                         sim_inst.order_completed = True
                         sim_inst.t_between_completions.append(sim_inst.env.now-sim_inst.order_complete_time)
@@ -143,6 +146,7 @@ class Machine(object):
         # Parts completed by this machine
         self.parts_made += 1
         self.total_operational_time += proc_t
+        self.takt_times.append(sim_inst.env.now - start_time)
 
     def get_allowed_actions(self, sim_inst):
         #find all (HT, seq) tuples with non zero queues at the station of this machine
@@ -203,11 +207,10 @@ class FactorySim(object):
         # create a list of all the station names
         self.stations = list(set(list(self.machine_dict.values())))
 
-        self.station_machines = {station: [machine for machine in self.machines_list if machine.station == station] for
-                                 station in self.stations}
-
         self.arrival_times = {station: [] for station in self.stations}
 
+        self.station_machines = {station: [machine for machine in self.machines_list if machine.station == station] for station in self.stations}
+        # ts = self.station_machines
         # sim_inst.recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
         self.recipes = recipes
 
@@ -366,7 +369,6 @@ class FactorySim(object):
                                 self.cumulative_reward += self.step_reward
                                 self.cumulative_reward_list.append(self.cumulative_reward)
                                 return
-
 
 
 
