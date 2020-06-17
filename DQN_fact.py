@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import DeepQNet
 
-sim_time = 5e5
+sim_time = 5e3
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 # num_seq_steps = 20
@@ -260,7 +260,7 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, ma
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv('util_inter_arr_dqn.csv')
+df.to_csv('/persistvol/util_inter_arr_dqn.csv')
 # print(df)
 
 # # Plot the time taken to complete each wafer
