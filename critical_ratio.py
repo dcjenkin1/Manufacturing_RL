@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import json
 
-sim_time = 5e5
+sim_time = 1e6
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 # num_seq_steps = 200
@@ -88,7 +88,7 @@ break_mean = 1e5
 
 repair_mean = 20
 
-n_part_mix = 30
+n_part_mix = 60
 
 # average lead time for each head type
 head_types = recipes.keys()
@@ -98,7 +98,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:16000}
+    d = {ht:108000}
     lead_dict.update(d)
 
     w = {ht:1}
@@ -191,7 +191,7 @@ action_size = len(action_space)
 while my_sim.env.now < sim_time:
     wafer = choose_action(my_sim)
     my_sim.run_action(mach, wafer)
-    print('Step Reward:'+ str(my_sim.step_reward))
+    # print('Step Reward:'+ str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     # next_state = get_state(my_sim)
@@ -200,7 +200,7 @@ while my_sim.env.now < sim_time:
 
     # print(f"state dimension: {len(state)}")
     # print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
     mach, allowed_actions = next_mach, next_allowed_actions
     # print("State:", state)
@@ -225,9 +225,9 @@ while my_sim.env.now < sim_time:
 #Wafers of each head type
 print("### Wafers of each head type ###")
 
-print(my_sim.lateness)
+# print(my_sim.lateness)
 
-print(my_sim.complete_wafer_dict)
+# print(my_sim.complete_wafer_dict)
 
 # ht_seq_mean_w = dict()
 # for tup, time_values in my_sim.ht_seq_wait.items():

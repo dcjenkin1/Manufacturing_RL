@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import DeepQNet
 
-sim_time = 5e5
+sim_time = 1e6
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 # num_seq_steps = 20
@@ -84,7 +84,7 @@ break_mean = 1e5
 
 repair_mean = 120
 
-n_part_mix = 30
+n_part_mix = 60
 
 # average lead time for each head type
 head_types = recipes.keys()
@@ -94,7 +94,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:16000}
+    d = {ht:108000}
     lead_dict.update(d)
 
     w = {ht:1}
@@ -163,16 +163,16 @@ while my_sim.env.now < sim_time:
                         action[1])
 
     my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:' + str(my_sim.step_reward))
+    # print('Step Reward:' + str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
@@ -201,9 +201,9 @@ dqn_agent.save_model("DQN_model_60rm.h5")
 print("### Wafers of each head type ###")
 print("### Wafers of each head type ###")
 
-print(my_sim.lateness)
+# print(my_sim.lateness)
 
-print(my_sim.complete_wafer_dict)
+# print(my_sim.complete_wafer_dict)
 
 # Total wafers produced
 print("Total wafers produced:", len(my_sim.cycle_time))
