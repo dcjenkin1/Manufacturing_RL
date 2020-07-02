@@ -8,6 +8,14 @@ import math
 import matplotlib.pyplot as plt
 from itertools import chain
 import DeepQNet
+import argparse
+
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+parser.add_argument("--s", default='/persistvol/util_inter_arr_dqn.csv', help="path to save results")
+
+args = parser.parse_args()
+s = args.s
+print(s)
 
 sim_time = 1e6
 WEEK = 24*7
@@ -260,7 +268,7 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, ma
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv('/persistvol/util_inter_arr_dqn.csv')
+df.to_csv(s)
 # print(df)
 
 # # Plot the time taken to complete each wafer
