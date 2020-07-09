@@ -199,8 +199,7 @@ step_counter = 0
 class Config():
     def __init__(self):
         self.train_dir = './ckpts/predictron_train'
-        self.max_steps =  10
-        self.num_gpus = 1
+        # self.num_gpus = 1
         
         # adam optimizer:
         self.learning_rate = 1e-3
@@ -210,14 +209,11 @@ class Config():
         
         self.epochs = 5000
         self.batch_size = 128
-        self.episode_length = 20
-        self.replay_memory_size = 10000
+        self.episode_length = 500
+        self.gamma = 0.99
+        self.replay_memory_size = 100000
         self.predictron_update_steps = 50
-        self.state_size = 1000
         self.max_depth = 16
-        self.max_grad_norm = 10.
-        self.log_device_placement = False
-        self.num_threads = 10
 
 config = Config()
 config.state_size = len(state)
@@ -247,7 +243,7 @@ while my_sim.env.now < sim_time:
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    reward_queue = [x + reward for x in reward_queue]
+    reward_queue = [config.gamma*x + reward for x in reward_queue]
     reward_episode = reward_queue.pop(0)
     reward_queue.append(0.)
     
