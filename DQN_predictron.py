@@ -231,9 +231,9 @@ while my_sim.env.now < sim_time:
     reward_episode = reward_queue.pop(0)
     reward_queue.append(0.)
     
-    if (step_counter > max(config.burnin, config.episode_length)):
+    if step_counter > config.burnin+2*config.episode_length:
         replay_buffer.put((state_episode, reward_episode))
-        if (step_counter > max(config.batch_size, 2*config.episode_length)) and (step_counter % config.predictron_update_steps) == 0:
+        if step_counter > config.batch_size and (step_counter % config.predictron_update_steps) == 0:
             
             data = np.array(replay_buffer.get(config.batch_size))
             states = np.array([np.array(x) for x in data[:,0]])
@@ -247,16 +247,18 @@ while my_sim.env.now < sim_time:
             preturn_loss_arr.append(preturn_loss)
             lambda_preturn_loss_arr.append(lambda_preturn_loss)
             
-    if step_counter % 10 == 0 and step_counter > max(config.burnin, 2*config.episode_length):
+    if step_counter % 1000 == 0:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
-        print("% of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
-        print("% of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
-        predictron_result = model.predict([state])
-        DQN_arr.append(dqn_agent.calculate_value_of_action(state, allowed_actions))
-        predictron_lambda_arr.append(predictron_result[1])
-        reward_episode_arr.append(reward_episode)
         
-        print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
+        if step_counter > config.burnin+2*config.episode_length:
+            print("% of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
+            print("% of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
+            predictron_result = model.predict([state])
+            DQN_arr.append(dqn_agent.calculate_value_of_action(state, allowed_actions))
+            predictron_lambda_arr.append(predictron_result[1])
+            reward_episode_arr.append(reward_episode)
+            
+            print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
         
     # print(f"state dimension: {len(state)}")
     # print(f"next state dimension: {len(next_state)}")
