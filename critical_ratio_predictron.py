@@ -12,7 +12,26 @@ import queue
 
 from predictron import Predictron, Replay_buffer
 
-sim_time = 5e7
+class Config_predictron():
+    def __init__(self):
+        self.train_dir = './ckpts/predictron_train'
+        # self.num_gpus = 1
+        
+        # adam optimizer:
+        self.learning_rate = 1e-3
+        self.beta_1 = 0.9
+        self.beta_2 = 0.999
+        self.epsilon = 1e-8
+        
+        self.epochs = 5000
+        self.batch_size = 128
+        self.episode_length = 500
+        self.gamma = 0.99
+        self.replay_memory_size = 100000
+        self.predictron_update_steps = 50
+        self.max_depth = 16
+
+sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
@@ -196,26 +215,7 @@ action_size = len(action_space)
 step_counter = 0
 
 # setup of predictron
-class Config():
-    def __init__(self):
-        self.train_dir = './ckpts/predictron_train'
-        # self.num_gpus = 1
-        
-        # adam optimizer:
-        self.learning_rate = 1e-3
-        self.beta_1 = 0.9
-        self.beta_2 = 0.999
-        self.epsilon = 1e-8
-        
-        self.epochs = 5000
-        self.batch_size = 128
-        self.episode_length = 500
-        self.gamma = 0.99
-        self.replay_memory_size = 100000
-        self.predictron_update_steps = 50
-        self.max_depth = 16
-
-config = Config()
+config = Config_predictron()
 config.state_size = len(state)
 state_queue = list([])
 for i in range(config.episode_length):
@@ -260,6 +260,7 @@ while my_sim.env.now < sim_time:
     if (step_counter > config.episode_length):
         replay_buffer.put((state_episode, reward_episode))
         if (step_counter > max(config.batch_size, 2*config.episode_length)) and (step_counter % config.predictron_update_steps) == 0:
+            
             data = np.array(replay_buffer.get(config.batch_size))
             states = np.array([np.array(x) for x in data[:,0]])
             states = np.expand_dims(states,-1)
@@ -268,6 +269,9 @@ while my_sim.env.now < sim_time:
             _, preturn_loss, lambda_preturn_loss = model.train_on_batch(states, rewards)
             preturn_loss_arr.append(preturn_loss)
             lambda_preturn_loss_arr.append(lambda_preturn_loss)
+
+    if step_counter % 10000 == 0:
+        print(("%.2f" % 100*my_sim.env.now/sim_time)+"% done")
     
 for b in range(config.batch_size):
     test_data = np.array([states[b]])
