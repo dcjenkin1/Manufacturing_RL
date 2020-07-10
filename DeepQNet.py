@@ -52,6 +52,17 @@ class DQN:
             temp.append(pred[self.action_space.index(item)])
         # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
         return allowed_actions[np.argmax(temp)]
+    
+    # Action function to choose the best action given the q-function if not exploring based on epsilon
+    def calculate_value_of_action(self, state, allowed_actions):
+        state = np.array(state).reshape(1, self.state_space_dim)
+        pred = self.model.predict(state)
+        pred = sum(pred.tolist(), [])
+        temp = []
+        for item in allowed_actions:
+            temp.append(pred[self.action_space.index(item)])
+        # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
+        return np.max(temp)
 
     # Create replay buffer memory to sample randomly
     def remember(self, state, action, reward, next_state, next_allowed_actions):
