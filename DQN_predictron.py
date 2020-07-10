@@ -13,6 +13,11 @@ import DeepQNet
 
 from predictron import Predictron, Replay_buffer
 
+sim_time = 5e5
+WEEK = 24*7
+NO_OF_WEEKS = math.ceil(sim_time/WEEK)
+num_seq_steps = 20
+
 class Config_predictron():
     def __init__(self):
         self.train_dir = './ckpts/predictron_train'
@@ -27,15 +32,13 @@ class Config_predictron():
         self.epochs = 5000
         self.batch_size = 128
         self.episode_length = 500
+        self.burnin = sim_time/20
         self.gamma = 0.99
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
         self.max_depth = 16
 
-sim_time = 5e5
-WEEK = 24*7
-NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+
 
 recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
 machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
@@ -197,6 +200,10 @@ max_preturn_loss = 0
 lambda_preturn_loss_arr = []
 max_lambda_preturn_loss = 0
 
+DQN_arr =  []
+predictron_lambda_arr = []
+reward_episode_arr = []
+
 # Creating the DQN agent
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_max=0., gamma=0.99)
 dqn_agent.load_model(model_dir)
@@ -219,21 +226,12 @@ while my_sim.env.now < sim_time:
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
-
+    
     reward_queue = [config.gamma*x + reward for x in reward_queue]
     reward_episode = reward_queue.pop(0)
     reward_queue.append(0.)
     
-    
-
-    # print(f"state dimension: {len(state)}")
-    # print(f"next state dimension: {len(next_state)}")
-    # print("action space dimension:", action_size)
-    # record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-    # print("State:", state)
-    
-    if (step_counter > config.episode_length):
+    if (step_counter > max(config.burnin, config.episode_length)):
         replay_buffer.put((state_episode, reward_episode))
         if (step_counter > max(config.batch_size, 2*config.episode_length)) and (step_counter % config.predictron_update_steps) == 0:
             
@@ -249,27 +247,39 @@ while my_sim.env.now < sim_time:
             preturn_loss_arr.append(preturn_loss)
             lambda_preturn_loss_arr.append(lambda_preturn_loss)
             
-    if step_counter % 1000 == 0 and step_counter > 2*config.episode_length:
+    if step_counter % 10 == 0 and step_counter > max(config.burnin, 2*config.episode_length):
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         print("% of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
         print("% of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
-        # plt.figure(0)
-        # plt.clf()
-        # plt.plot(preturn_loss_arr)
-        # plt.show()
-        # plt.figure(1)
-        # plt.clf()
-        # plt.plot(lambda_preturn_loss_arr)
-        # plt.show()
-    
-for b in range(config.batch_size):
-    test_data = np.array([states[b]])
-    print(model.predict(test_data)[0],model.predict(test_data)[1], rewards[b])
+        predictron_result = model.predict([state])
+        DQN_arr.append(dqn_agent.calculate_value_of_action(state, allowed_actions))
+        predictron_lambda_arr.append(predictron_result[1])
+        reward_episode_arr.append(reward_episode)
+        
+        print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
+        
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
+    # record the information for use again in the next training example
+    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    # print("State:", state)
 
 plt.figure()
 plt.plot(preturn_loss_arr)
 plt.figure()
 plt.plot(lambda_preturn_loss_arr)
+plt.figure()
+plt.plot(predictron_lambda_arr, label='Predictron')
+plt.plot(DQN_arr, label='DQN')
+plt.plot(reward_episode_arr, label='GT')
+plt.title("Value estimate")
+
+plt.figure()
+plt.plot(np.abs(predictron_lambda_arr-reward_episode_arr), label='Predictron')
+plt.plot(np.abs(DQN_arr-reward_episode_arr), label='DQN')
+plt.title("Value estimate error")
+
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
 # # # i = 0
