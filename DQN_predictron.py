@@ -210,7 +210,6 @@ dqn_agent.load_model(model_dir)
 
 
 while my_sim.env.now < sim_time:
-    step_counter += 1
     action = dqn_agent.choose_action(state, allowed_actions)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
@@ -231,9 +230,12 @@ while my_sim.env.now < sim_time:
     reward_episode = reward_queue.pop(0)
     reward_queue.append(0.)
     
-    if step_counter > config.burnin+config.episode_length:
+    if my_sim.env.now > config.burnin:
+        step_counter += 1
+        
+    if step_counter > config.episode_length:
         replay_buffer.put((state_episode, reward_episode))
-        if step_counter > config.burnin+config.episode_length+config.batch_size and (step_counter % config.predictron_update_steps) == 0:
+        if step_counter > config.episode_length+config.batch_size and (step_counter % config.predictron_update_steps) == 0:
             
             data = np.array(replay_buffer.get(config.batch_size))
             states = np.array([np.array(x) for x in data[:,0]])
@@ -250,7 +252,7 @@ while my_sim.env.now < sim_time:
     if step_counter % 1000 == 0:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         
-        if step_counter > config.burnin+config.episode_length+config.batch_size:
+        if step_counter > config.episode_length+config.batch_size:
             print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
             print("running mean % of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
             predictron_result = model.predict([state])
