@@ -11,7 +11,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-
+# tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 
 class Predictron:
     def __init__(self, config):
