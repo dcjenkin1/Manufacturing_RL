@@ -79,15 +79,15 @@ class Machine(object):
                 if self.break_mean is not None:
                     break_process = self.env.process(self.break_machine())
                 start = self.env.now
-                print("started processing wafer %s on machine %s at %s"%(wafer.name, self.name, start))
+                # print("started processing wafer %s on machine %s at %s"%(wafer.name, self.name, start))
                 # wait until the process is done
                 yield sim_inst.env.timeout(done_in)
                 # set the wafer being processed to None
                 self.wafer_being_proc = None
                 # set machine to be available to process part
                 self.available = True
-                print("Completed the process step of wafer %s on machine %s at %s and sent to "
-                      "next machine."%(wafer.name, self.name, self.env.now))
+                # print("Completed the process step of wafer %s on machine %s at %s and sent to "
+                      # "next machine."%(wafer.name, self.name, self.env.now))
                 # set the wafer to be at the next step in the sequence
                 wafer.seq += 1
                 # if seq is not the last sequence step then find the next station and choose actions for each of the
@@ -103,7 +103,7 @@ class Machine(object):
                     # # add the part to the list of completed parts
                     # sim_inst.queue_lists['complete'].append(wafer)
                     sim_inst.cycle_time.append(self.env.now - wafer.start_time)
-                    print("Finished processing wafer %s at %s"%(wafer.name, self.env.now))
+                    # print("Finished processing wafer %s at %s"%(wafer.name, self.env.now))
                     sim_inst.complete_wafer_dict[wafer.HT] += 1
 
                     sim_inst.lateness.append(max([0, (sim_inst.env.now-wafer.due_time)]))
