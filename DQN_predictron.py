@@ -249,7 +249,7 @@ while my_sim.env.now < sim_time:
             preturn_loss_arr.append(preturn_loss)
             lambda_preturn_loss_arr.append(lambda_preturn_loss)
             
-    if step_counter % 1000 == 0:
+    if step_counter % 1000 == 0 and step_counter > 1:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         
         if step_counter > config.episode_length+config.batch_size:
