@@ -152,7 +152,7 @@ action_size = len(action_space)
 state_size = len(state)
 
 # Creating the DQN agent
-dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999)
+dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
 
 order_count = 0
 
@@ -173,8 +173,6 @@ while my_sim.env.now < sim_time:
     print(f"state dimension: {len(state)}")
     print(f"next state dimension: {len(next_state)}")
     print("action space dimension:", action_size)
-    # record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     print("State:", state)
 
     # Save the example for later training
