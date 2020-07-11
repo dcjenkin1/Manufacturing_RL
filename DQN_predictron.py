@@ -13,7 +13,7 @@ import DeepQNet
 
 from predictron import Predictron, Replay_buffer
 
-sim_time = 5e5
+sim_time = 5e6
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
@@ -32,7 +32,7 @@ class Config_predictron():
         self.epochs = 5000
         self.batch_size = 128
         self.episode_length = 500
-        self.burnin = sim_time/20
+        self.burnin = 3e4
         self.gamma = 0.99
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
@@ -278,11 +278,24 @@ plt.plot(predictron_lambda_arr, label='Predictron')
 plt.plot(DQN_arr, label='DQN')
 plt.plot(reward_episode_arr, label='GT')
 plt.title("Value estimate")
+plt.legend()
+
+predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
+predictron_error_avg = [predictron_error[0]]
+alpha = 0.05
+for i in range(len(predictron_error)-1):
+    predictron_error_avg.append(predictron_error_avg[i]*(1-alpha) + predictron_error[i+1]*alpha)
+DQN_error = np.abs(np.array(DQN_arr)-np.array(reward_episode_arr))
+plt.figure()
+plt.plot(predictron_error, label='Predictron')
+plt.plot(predictron_error_avg, label='Running average')
+# plt.plot(DQN_error, label='DQN')
+plt.title("Absolute value estimate error")
+plt.legend()
 
 plt.figure()
-plt.plot(np.abs(predictron_lambda_arr-reward_episode_arr), label='Predictron')
-plt.plot(np.abs(DQN_arr-reward_episode_arr), label='DQN')
-plt.title("Value estimate error")
+plt.plot(DQN_error - predictron_error)
+plt.title("DQN_error - predictron_error")
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
