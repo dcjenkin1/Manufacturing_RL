@@ -11,7 +11,7 @@ import DeepQNet
 import argparse
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--s", default='/persistvol/util_inter_arr_dqn.csv', help="path to save results")
+parser.add_argument("--s", default='/mypath/util_inter_arr_dqn.csv', help="path to save results")
 
 args = parser.parse_args()
 s = args.s
@@ -22,8 +22,8 @@ WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 # num_seq_steps = 20
 
-recipes = pd.read_csv('/persistvol/recipes.csv')
-machines = pd.read_csv('/persistvol/machines.csv')
+recipes = pd.read_csv('/mypath/recipes.csv')
+machines = pd.read_csv('/mypath/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
