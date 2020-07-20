@@ -11,13 +11,15 @@ import DeepQNet
 import argparse
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--s", default='/mypath/util_inter_arr_dqn.csv', help="path to save results")
+parser.add_argument("--s", default='/mypath/', help="path to save results")
+
+
 
 args = parser.parse_args()
 s = args.s
 print(s)
 
-sim_time = 1e6
+sim_time = 15e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 # num_seq_steps = 20
@@ -182,7 +184,6 @@ while my_sim.env.now < sim_time:
     # print(f"next state dimension: {len(next_state)}")
     # print("action space dimension:", action_size)
     # record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
 
     # Save the example for later training
@@ -268,22 +269,24 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, ma
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(s)
+df.to_csv(s+'util.csv')
 # print(df)
+with open(s+'lateness.txt','w') as f:
+  f.write('\n'.join(my_sim.lateness))
 
+# # # Plot the time taken to complete each wafer
+# plt.plot(my_sim.lateness)
+# plt.xlabel("Wafers")
+# plt.ylabel("Lateness")
+# plt.title("The amount of time each wafer was late")
+# plt.show()
+#
 # # Plot the time taken to complete each wafer
-plt.plot(my_sim.lateness)
-plt.xlabel("Wafers")
-plt.ylabel("Lateness")
-plt.title("The amount of time each wafer was late")
-plt.show()
-
-# Plot the time taken to complete each wafer
-plt.plot(my_sim.cumulative_reward_list)
-plt.xlabel("step")
-plt.ylabel("Cumulative Reward")
-plt.title("The sum of all rewards up until each time step")
-plt.show()
+# plt.plot(my_sim.cumulative_reward_list)
+# plt.xlabel("step")
+# plt.ylabel("Cumulative Reward")
+# plt.title("The sum of all rewards up until each time step")
+# plt.show()
 
 
 
