@@ -81,6 +81,7 @@ class DQN:
                 t.append(next_pred[self.action_space.index(it)])
             Q_future = max(t)
             target[0][action_id] = reward + self.gamma * Q_future
+            a = target
             self.model.fit(state, target, epochs=1, verbose=1)
 
 
