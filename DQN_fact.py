@@ -94,7 +94,7 @@ break_mean = 1e5
 
 repair_mean = 120
 
-n_part_mix = 60
+n_part_mix = 30
 
 # average lead time for each head type
 head_types = recipes.keys()
