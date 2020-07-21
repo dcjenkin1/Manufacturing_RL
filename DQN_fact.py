@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import math 
 # import matplotlib
-# import random
+import random
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
