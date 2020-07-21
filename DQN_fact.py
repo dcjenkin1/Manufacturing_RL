@@ -12,7 +12,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--s", default='/mypath/', help="path to save results")
-
+id = str(int(np.ceil(random.random()*10000)))
 
 
 args = parser.parse_args()
@@ -269,9 +269,9 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, ma
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(s+'util.csv')
+df.to_csv(s+'util'+id+'.csv')
 # print(df)
-with open(s+'lateness.txt','w') as f:
+with open(s+'lateness'+id+'.txt','w') as f:
   f.write('\n'.join(my_sim.lateness))
 
 # # # Plot the time taken to complete each wafer
