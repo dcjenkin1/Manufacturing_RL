@@ -40,7 +40,7 @@ class DQN:
         self.epsilon = max(self.epsilon_min, self.epsilon)
         r = np.random.random()
         if r < self.epsilon:
-            print("******* CHOOSING A RANDOM ACTION *******")
+            # print("******* CHOOSING A RANDOM ACTION *******")
             return random.choice(allowed_actions)
         # print(state)
         # print(len(state))
@@ -50,7 +50,7 @@ class DQN:
         temp = []
         for item in allowed_actions:
             temp.append(pred[self.action_space.index(item)])
-        print(" ********************* CHOOSING A PREDICTED ACTION **********************")
+        # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
         return allowed_actions[np.argmax(temp)]
 
     # Create replay buffer memory to sample randomly
