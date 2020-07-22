@@ -3,19 +3,29 @@ import numpy as np
 import pandas as pd
 import math 
 # import matplotlib
-# import random
+import random
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
 import DeepQNet
+import argparse
+
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+parser.add_argument("--s", default='/mypath/', help="path to save results")
+id = str(int(np.ceil(random.random()*10000)))
+
+
+args = parser.parse_args()
+s = args.s
+print(s)
 
 sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('/persistvol/recipes.csv')
-machines = pd.read_csv('/persistvol/machines.csv')
+recipes = pd.read_csv('/mypath/recipes.csv')
+machines = pd.read_csv('/mypath/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -36,7 +46,7 @@ modified_machine_dict = {k: v for k, v in machine_d.items() if v in ls}
 
 # Removing unncommon rows from recipes 
 for index, row in recipes.iterrows():
-    if row[2] not in ls:
+    if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
         recipes.drop(index, inplace=True)
 
 recipes = recipes.dropna()
@@ -112,7 +122,7 @@ def get_state(sim):
     state_rep = sum([sim.n_HT_seq[HT] for HT in sim.recipes.keys()], [])
 
     # assert state_rep == state_rep2
-    print(len(state_rep))
+    # print(len(state_rep))
     # b is a one-hot encoded list indicating which machine the next action will correspond to
     b = np.zeros(len(sim.machines_list))
     b[sim.machines_list.index(sim.next_machine)] = 1
@@ -132,7 +142,7 @@ def get_state(sim):
 
     c = sum(rolling_window, [])
     state_rep.extend(c) # Appending the rolling window to state space
-    print(len(state_rep))
+    # print(len(state_rep))
     return state_rep
 
 
@@ -170,12 +180,11 @@ while my_sim.env.now < sim_time:
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-    print("State:", state)
+    # print("State:", state)
 
     # Save the example for later training
     dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
@@ -201,9 +210,9 @@ dqn_agent.save_model("DQN_model_60rm.h5")
 print("### Wafers of each head type ###")
 print("### Wafers of each head type ###")
 
-print(my_sim.lateness)
+# print(my_sim.lateness)
 
-print(my_sim.complete_wafer_dict)
+# print(my_sim.complete_wafer_dict)
 
 # Total wafers produced
 print("Total wafers produced:", len(my_sim.cycle_time))
@@ -238,21 +247,21 @@ coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for stati
 machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
                         my_sim.stations}
 
-print('operational times')
-print(operational_times)
-print('mean util')
-print(mean_util)
-# print(stdev_util)
-print('interarrival times')
-print(inter_arrival_times)
-print('mean interarrival')
-print(mean_inter)
-print('std inter')
-print(std_inter)
-print('coeff var')
-print(coeff_var)
-print('mean station takt times')
-print(mean_station_takt_times)
+# print('operational times')
+# print(operational_times)
+# print('mean util')
+# print(mean_util)
+# # print(stdev_util)
+# print('interarrival times')
+# print(inter_arrival_times)
+# print('mean interarrival')
+# print(mean_inter)
+# print('std inter')
+# print(std_inter)
+# print('coeff var')
+# print(coeff_var)
+# print('mean station takt times')
+# print(mean_station_takt_times)
 
 print(np.mean(my_sim.lateness[-1000:]))
 
@@ -260,20 +269,30 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, ma
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv('util_inter_arr_dqn.csv')
+df.to_csv(s+'util'+id+'.csv')
 # print(df)
+with open(s+'lateness'+id+'.txt','w') as f:
+  f.write('\n'.join(my_sim.lateness))
 
+# # # Plot the time taken to complete each wafer
+# plt.plot(my_sim.lateness)
+# plt.xlabel("Wafers")
+# plt.ylabel("Lateness")
+# plt.title("The amount of time each wafer was late")
+# plt.show()
+#
 # # Plot the time taken to complete each wafer
-plt.plot(my_sim.lateness)
-plt.xlabel("Wafers")
-plt.ylabel("Lateness")
-plt.title("The amount of time each wafer was late")
-plt.show()
+# plt.plot(my_sim.cumulative_reward_list)
+# plt.xlabel("step")
+# plt.ylabel("Cumulative Reward")
+# plt.title("The sum of all rewards up until each time step")
+# plt.show()
 
-# Plot the time taken to complete each wafer
-plt.plot(my_sim.cumulative_reward_list)
-plt.xlabel("step")
-plt.ylabel("Cumulative Reward")
-plt.title("The sum of all rewards up until each time step")
-plt.show()
+
+
+
+
+
+
+
 
