@@ -44,7 +44,7 @@ ls = list(common_stations)
 # This dictionary has the correct set of stations
 modified_machine_dict = {k: v for k, v in machine_d.items() if v in ls}
 
-# Removing unncommon rows from recipes 
+# Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
     if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
         recipes.drop(index, inplace=True)
