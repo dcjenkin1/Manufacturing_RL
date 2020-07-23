@@ -3,29 +3,45 @@ import numpy as np
 import pandas as pd
 import math 
 # import matplotlib
-import random
+# import random
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
-import DeepQNet
-import argparse
+import json
+import queue
 
-parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--s", default='/mypath/', help="path to save results")
-id = str(int(np.ceil(random.random()*10000)))
+from predictron import Predictron, Replay_buffer
 
-
-args = parser.parse_args()
-s = args.s
-print(s)
+class Config_predictron():
+    def __init__(self):
+        self.train_dir = './ckpts/predictron_train'
+        # self.num_gpus = 1
+        
+        # adam optimizer:
+        self.learning_rate = 1e-3
+        self.beta_1 = 0.9
+        self.beta_2 = 0.999
+        self.epsilon = 1e-8
+        
+        self.epochs = 5000
+        self.batch_size = 128
+        self.episode_length = 500
+        self.gamma = 0.99
+        self.replay_memory_size = 100000
+        self.predictron_update_steps = 50
+        self.max_depth = 16
 
 sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('/mypath/recipes.csv')
-machines = pd.read_csv('/mypath/machines.csv')
+recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
+machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+
+# with open('ht_seq_mean_w3.json', 'r') as fp:
+#     ht_seq_mean_w_l = json.load(fp)
+# print(len(machines))
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -35,18 +51,18 @@ for index, row in machines.iterrows():
     d = {row[0]:row[1]}
     machine_d.update(d)
 
-# Modifying the above list to match the stations from the two datasets
+# Modifying the above list to match the stations from the two datasets 
 a = machines.TOOLSET.unique()
 b = recipes.TOOLSET.unique()
 common_stations = (set(a) & set(b))
 ls = list(common_stations)
 
 # This dictionary has the correct set of stations
-modified_machine_dict = {k: v for k, v in machine_d.items() if v in ls}
+modified_machine_dict = {k:v for k,v in machine_d.items() if v in ls}
 
 # Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
-    if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
+    if row[2] not in ls:
         recipes.drop(index, inplace=True)
 
 recipes = recipes.dropna()
@@ -77,13 +93,13 @@ for ht in recipe_dict.keys():
 
 used_stations = set(used_stations)
 
-
 modified_machine_dict = {k:v for k,v in modified_machine_dict.items() if v in list(used_stations)}
 
 # Dictionary where the key is the name of the machine and the value is [station, proc_t]
 # machine_dict = {'m0': 's1', 'm2': 's2', 'm1': 's1', 'm3': 's2'}
 machine_dict = modified_machine_dict
-print(len(machine_dict))
+
+
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
 recipes = recipe_dict
@@ -92,7 +108,7 @@ wafers_per_box = 4
 
 break_mean = 1e5
 
-repair_mean = 120
+repair_mean = 20
 
 n_part_mix = 30
 
@@ -146,74 +162,155 @@ def get_state(sim):
     return state_rep
 
 
+
+####################################################
+########## CHOOSING AN ACTION HERE  ################
+####################################################
+
+'''
+Critical Ratio. The critical ratio (CR) is calculated by dividing the time remaining until
+a job’s due date by the total shop time remaining for the job, which is defined as the
+setup, processing, move, and expected waiting times of all remaining operations,
+including the operation being scheduled. 
+
+CR = (Due date - Today’s date) / (Total shop time remaining)
+
+The difference between the due date and today’s date must be in the same time units as
+the total shop time remaining. A ratio less than 1.0 implies that the job is behind schedule, 
+and a ratio greater than 1.0 implies that the job is ahead of schedule. The job with
+the lowest CR is scheduled next.
+
+'''
+
+def choose_action(sim):
+    wafer_list = sim.queue_lists[sim.next_machine.station]
+
+    if len(wafer_list) == 1:
+        waf_ = wafer_list[0]
+        return waf_
+
+    else:
+        cr_ratio = {}
+        for waf in wafer_list:
+            cr_ = (waf.due_time - sim.env.now) / (sim.get_rem_shop_time(waf.HT, waf.seq, waf.number_wafers))
+            cr_ratio[waf] = cr_
+        waf_to_choose = min(cr_ratio, key=cr_ratio.get)
+        # best_action = (waf_to_choose.HT, waf_to_choose.seq)
+        return waf_to_choose
+
+# wt = 'ht_seq_mean_w0.json'
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean=break_mean, repair_mean=repair_mean)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix,
+                             break_mean=break_mean, repair_mean=repair_mean)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
 mach = my_sim.next_machine
 # Save the state and allowed actions at the start for later use in training examples
 state = get_state(my_sim)
-allowed_actions = my_sim.allowed_actions
 # The action space is a list of tuples of the form [('ht1',0), ('ht1',1), ..., ('ht2', 0), ...] indicating the head
 # types and sequence steps for all allowed actions.
 action_space = list(chain.from_iterable(my_sim.station_HT_seq.values()))
 action_size = len(action_space)
-state_size = len(state)
+step_counter = 0
 
-# Creating the DQN agent
-dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
+# setup of predictron
+config = Config_predictron()
+config.state_size = len(state)
+state_queue = list([])
+for i in range(config.episode_length):
+    state_queue.append(np.zeros(config.state_size))
+reward_queue = list(np.zeros(config.episode_length))
+replay_buffer = Replay_buffer(memory_size = config.replay_memory_size)
 
-order_count = 0
+predictron = Predictron(config)
+model = predictron.model
+preturn_loss_arr = []
+lambda_preturn_loss_arr = []
 
 while my_sim.env.now < sim_time:
-    action = dqn_agent.choose_action(state, allowed_actions)
-
-    wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
-                        action[1])
-
-    my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:' + str(my_sim.step_reward))
+    step_counter += 1
+    wafer = choose_action(my_sim)
+    
+    state_episode = state_queue.pop(0)
+    state_queue.append(state)
+    
+    my_sim.run_action(mach, wafer)
+    # print('Step Reward:'+ str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    reward_queue = [config.gamma*x + reward for x in reward_queue]
+    reward_episode = reward_queue.pop(0)
+    reward_queue.append(0.)
+    
+    
+
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-    print("State:", state)
+    mach, allowed_actions = next_mach, next_allowed_actions
+    # print("State:", state)
+    state = next_state
+    
+    if (step_counter > config.episode_length):
+        replay_buffer.put((state_episode, reward_episode))
+        if (step_counter > max(config.batch_size, 2*config.episode_length)) and (step_counter % config.predictron_update_steps) == 0:
+            
+            data = np.array(replay_buffer.get(config.batch_size))
+            states = np.array([np.array(x) for x in data[:,0]])
+            states = np.expand_dims(states,-1)
+            rewards = np.array([np.array(x) for x in data[:,1]])
+            rewards = np.expand_dims(rewards,-1)
+            _, preturn_loss, lambda_preturn_loss = model.train_on_batch(states, rewards)
+            preturn_loss_arr.append(preturn_loss)
+            lambda_preturn_loss_arr.append(lambda_preturn_loss)
 
-    # Save the example for later training
-    dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
-
-    if my_sim.order_completed:
-        # After each wafer completed, train the policy network 
-        dqn_agent.replay()
-        order_count += 1
-        if order_count >= 1:
-            # After every 20 processes update the target network and reset the order count
-            dqn_agent.train_target()
-            order_count = 0
-
-    # Record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    if step_counter % 10000 == 0:
+        print(("%.2f" % 100*my_sim.env.now/sim_time)+"% done")
+    
+for b in range(config.batch_size):
+    test_data = np.array([states[b]])
+    print(model.predict(test_data)[0],model.predict(test_data)[1], rewards[b])
+plt.figure()
+plt.plot(preturn_loss_arr)
+plt.figure()
+plt.plot(lambda_preturn_loss_arr)
 
 
-# Save the trained DQN policy network
-dqn_agent.save_model("DQN_model_60rm.h5")
+# Total wafers produced
+# print("Total wafers produced:", len(my_sim.cycle_time))
+# # # i = 0
+# for ht in my_sim.recipes.keys():
+#     # for sequ in range(len(my_sim.recipes[ht])-1):
+#     # i += 1
+#     # print(len(my_sim.recipes[ht]))
+#     # waf = fact_sim.wafer_box(my_sim, 4, ht, my_sim.wafer_index, lead_dict, sequ)
+#     # my_sim.wafer_index += 1
+#     sequ = len(my_sim.recipes[ht])-1
+#     print(ht)
+#     print(sequ)
+#     print(my_sim.get_rem_shop_time(ht, sequ, 4))
 
-
+# print(my_sim.get_proc_time('ASGA', 99, 4))
+# print(i)
 #Wafers of each head type
 print("### Wafers of each head type ###")
-print("### Wafers of each head type ###")
 
-# print(my_sim.lateness)
+print(my_sim.lateness)
 
-# print(my_sim.complete_wafer_dict)
+print(my_sim.complete_wafer_dict)
+
+# ht_seq_mean_w = dict()
+# for tup, time_values in my_sim.ht_seq_wait.items():
+#     ht_seq_mean_w[tup] = np.mean(time_values)
+
+# with open('ht_seq_mean_wn.json', 'w') as fp:
+#     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
 
 # Total wafers produced
 print("Total wafers produced:", len(my_sim.cycle_time))
@@ -223,21 +320,6 @@ operational_times = {mach: mach.total_operational_time for mach in my_sim.machin
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
-mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
-std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
-
-mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
-                                         mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
-                           station in my_sim.stations}
-# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
-#                                          mach.station == station]), 3) for station in my_sim.stations}
-
-parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
-                     station in my_sim.stations}
-
-station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
-                      station in my_sim.stations}
-
 # stdev_util = {station: np.std(mach_util)
 
 inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
@@ -245,55 +327,29 @@ inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_
 mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
-machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
-                        my_sim.stations}
 
-# print('operational times')
 # print(operational_times)
-# print('mean util')
 # print(mean_util)
 # # print(stdev_util)
-# print('interarrival times')
 # print(inter_arrival_times)
-# print('mean interarrival')
 # print(mean_inter)
-# print('std inter')
 # print(std_inter)
-# print('coeff var')
 # print(coeff_var)
-# print('mean station takt times')
-# print(mean_station_takt_times)
-
+#
 print(np.mean(my_sim.lateness[-1000:]))
 
-cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
+cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
+                  'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv(s+'util'+id+'.csv')
+df.to_csv('util_inter_arr.csv')
 # print(df)
-with open(s+'lateness'+id+'.txt','w') as f:
-  f.write('\n'.join(my_sim.lateness))
 
-# # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.lateness)
-# plt.xlabel("Wafers")
-# plt.ylabel("Lateness")
-# plt.title("The amount of time each wafer was late")
-# plt.show()
-#
 # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.cumulative_reward_list)
-# plt.xlabel("step")
-# plt.ylabel("Cumulative Reward")
-# plt.title("The sum of all rewards up until each time step")
-# plt.show()
-
-
-
-
-
-
-
-
+plt.figure()
+plt.plot(my_sim.lateness)
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.show()
 

@@ -11,11 +11,11 @@ import random
 ########################################################################################################################################
 
 class DQN:
-    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005):
+    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max = 1):
         self.state_space_dim = state_space_dim
         self.action_space = action_space
         self.gamma = gamma
-        self.epsilon = 1.0
+        self.epsilon = epsilon_max
         self.epsilon_min = 0.0
         self.epsilon_decay = epsilon_decay
         self.tau = tau
@@ -40,7 +40,7 @@ class DQN:
         self.epsilon = max(self.epsilon_min, self.epsilon)
         r = np.random.random()
         if r < self.epsilon:
-            print("******* CHOOSING A RANDOM ACTION *******")
+            # print("******* CHOOSING A RANDOM ACTION *******")
             return random.choice(allowed_actions)
         # print(state)
         # print(len(state))
@@ -50,8 +50,19 @@ class DQN:
         temp = []
         for item in allowed_actions:
             temp.append(pred[self.action_space.index(item)])
-        print(" ********************* CHOOSING A PREDICTED ACTION **********************")
+        # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
         return allowed_actions[np.argmax(temp)]
+    
+    # Action function to choose the best action given the q-function if not exploring based on epsilon
+    def calculate_value_of_action(self, state, allowed_actions):
+        state = np.array(state).reshape(1, self.state_space_dim)
+        pred = self.model.predict(state)
+        pred = sum(pred.tolist(), [])
+        temp = []
+        for item in allowed_actions:
+            temp.append(pred[self.action_space.index(item)])
+        # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
+        return np.max(temp)
 
     # Create replay buffer memory to sample randomly
     def remember(self, state, action, reward, next_state, next_allowed_actions):
@@ -95,3 +106,7 @@ class DQN:
     # Save our model
     def save_model(self, fn):
         self.model.save(fn)
+        
+    # Load model
+    def load_model(self, model_dir):
+        self.model.load_weights(model_dir)
