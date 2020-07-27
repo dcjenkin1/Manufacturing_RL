@@ -87,7 +87,7 @@ class Machine(object):
                 # set machine to be available to process part
                 self.available = True
                 # print("Completed the process step of wafer %s on machine %s at %s and sent to "
-                      # "next machine."%(wafer.name, self.name, self.env.now))
+                #       "next machine."%(wafer.name, self.name, self.env.now))
                 # set the wafer to be at the next step in the sequence
                 wafer.seq += 1
                 # if seq is not the last sequence step then find the next station and choose actions for each of the

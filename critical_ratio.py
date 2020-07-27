@@ -3,23 +3,29 @@ import numpy as np
 import pandas as pd
 import math 
 # import matplotlib
-# import random
+import random
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
-import json
+import DeepQNet
+import argparse
+
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+parser.add_argument("--s", default='./', help="path to save results")
+id = str(int(np.ceil(random.random()*10000)))
+
+
+args = parser.parse_args()
+s = args.s
+print(s)
 
 sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('/persistvol/recipes.csv')
-machines = pd.read_csv('/persistvol/machines.csv')
-
-# with open('ht_seq_mean_w3.json', 'r') as fp:
-#     ht_seq_mean_w_l = json.load(fp)
-# print(len(machines))
+recipes = pd.read_csv('./ncloud/recipes.csv')
+machines = pd.read_csv('./ncloud/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -40,7 +46,7 @@ modified_machine_dict = {k:v for k,v in machine_d.items() if v in ls}
 
 # Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
-    if row[2] not in ls:
+    if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
         recipes.drop(index, inplace=True)
 
 recipes = recipes.dropna()
@@ -77,6 +83,18 @@ modified_machine_dict = {k:v for k,v in modified_machine_dict.items() if v in li
 # machine_dict = {'m0': 's1', 'm2': 's2', 'm1': 's1', 'm3': 's2'}
 machine_dict = modified_machine_dict
 
+machine_dict.update({'MV3PM3': '602B'})
+machine_dict.update({'MV3PM4': '602B'})
+machine_dict.update({'MV3PM5': '602B'})
+machine_dict.update({'MV3PM6': '602B'})
+machine_dict.update({'MV3PM7': '602B'})
+machine_dict.update({'MV3PM8': '602B'})
+machine_dict.update({'MV3PM9': '602B'})
+machine_dict.update({'MV3PM10': '602B'})
+machine_dict.update({'MV3PM11': '602B'})
+machine_dict.update({'DNS-42': 'SCRUBBER'})
+machine_dict.update({'DNS-43': 'SCRUBBER'})
+machine_dict.update({'DNS-44': 'SCRUBBER'})
 
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
@@ -245,6 +263,21 @@ operational_times = {mach: mach.total_operational_time for mach in my_sim.machin
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
+mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+
+mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+                                         mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+                           station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
 # stdev_util = {station: np.std(mach_util)
 
 inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
@@ -252,28 +285,55 @@ inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_
 mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
+                        my_sim.stations}
 
+# print('operational times')
 # print(operational_times)
+# print('mean util')
 # print(mean_util)
 # # print(stdev_util)
+# print('interarrival times')
 # print(inter_arrival_times)
+# print('mean interarrival')
 # print(mean_inter)
+# print('std inter')
 # print(std_inter)
+# print('coeff var')
 # print(coeff_var)
-#
+# print('mean station takt times')
+# print(mean_station_takt_times)
+
 print(np.mean(my_sim.lateness[-1000:]))
 
-cols = [mean_util, mean_inter, std_inter, coeff_var]
+cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival'])
+                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv('util_inter_arr.csv')
+df.to_csv(s+'util'+id+'.csv')
 # print(df)
+# with open(s+'lateness'+id+'.txt','w') as f:
+#   f.write('\n'.join(my_sim.lateness))
 
+# # # Plot the time taken to complete each wafer
+# plt.plot(my_sim.lateness)
+# plt.xlabel("Wafers")
+# plt.ylabel("Lateness")
+# plt.title("The amount of time each wafer was late")
+# plt.show()
+#
 # # Plot the time taken to complete each wafer
-plt.plot(my_sim.lateness)
-plt.xlabel("Wafers")
-plt.ylabel("Lateness")
-plt.title("The amount of time each wafer was late")
-plt.show()
+# plt.plot(my_sim.cumulative_reward_list)
+# plt.xlabel("step")
+# plt.ylabel("Cumulative Reward")
+# plt.title("The sum of all rewards up until each time step")
+# plt.show()
+
+
+
+
+
+
+
+
 

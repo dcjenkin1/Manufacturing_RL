@@ -24,8 +24,8 @@ WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('/mypath/recipes.csv')
-machines = pd.read_csv('/mypath/machines.csv')
+recipes = pd.read_csv('./ncloud/recipes.csv')
+machines = pd.read_csv('./ncloud/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
