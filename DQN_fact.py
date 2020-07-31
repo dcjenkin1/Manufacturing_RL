@@ -11,7 +11,7 @@ import DeepQNet
 import argparse
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--s", default='/mypath/', help="path to save results")
+parser.add_argument("--s", default='./', help="path to save results")
 id = str(int(np.ceil(random.random()*10000)))
 
 
@@ -19,7 +19,7 @@ args = parser.parse_args()
 s = args.s
 print(s)
 
-sim_time = 5e5
+sim_time = 3e4
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
@@ -83,6 +83,44 @@ modified_machine_dict = {k:v for k,v in modified_machine_dict.items() if v in li
 # Dictionary where the key is the name of the machine and the value is [station, proc_t]
 # machine_dict = {'m0': 's1', 'm2': 's2', 'm1': 's1', 'm3': 's2'}
 machine_dict = modified_machine_dict
+
+machine_dict.update({'MV3PM3': '602B'})
+machine_dict.update({'MV3PM4': '602B'})
+machine_dict.update({'MV3PM5': '602B'})
+machine_dict.update({'MV3PM6': '602B'})
+machine_dict.update({'MV3PM7': '602B'})
+machine_dict.update({'MV3PM8': '602B'})
+machine_dict.update({'MV3PM9': '602B'})
+machine_dict.update({'MV3PM10': '602B'})
+machine_dict.update({'MV3PM11': '602B'})
+machine_dict.update({'MV3PM12': '602B'})
+machine_dict.update({'MV3PM13': '602B'})
+machine_dict.update({'MV3PM14': '602B'})
+machine_dict.update({'MV3PM15': '602B'})
+machine_dict.update({'MV3PM16': '602B'})
+machine_dict.update({'MV3PM17': '602B'})
+machine_dict.update({'MV3PM18': '602B'})
+machine_dict.update({'MV3PM19': '602B'})
+machine_dict.update({'MV3PM20': '602B'})
+machine_dict.update({'MV3PM21': '602B'})
+machine_dict.update({'MV3PM22': '602B'})
+machine_dict.update({'DNS-42': 'SCRUBBER'})
+machine_dict.update({'DNS-43': 'SCRUBBER'})
+machine_dict.update({'DNS-44': 'SCRUBBER'})
+machine_dict.update({'DNS-45': 'SCRUBBER'})
+machine_dict.update({'DNS-46': 'SCRUBBER'})
+machine_dict.update({'FSI015': 'FSI DEV'})
+machine_dict.update({'FSI016': 'FSI DEV'})
+machine_dict.update({'FSI017': 'FSI DEV'})
+machine_dict.update({'FSI018': 'FSI DEV'})
+machine_dict.update({'DUV005': 'DUV 193'})
+machine_dict.update({'DUV006': 'DUV 193'})
+machine_dict.update({'DUV007': 'DUV 193'})
+machine_dict.update({'DUV008': 'DUV 193'})
+machine_dict.update({'ASHER009': 'ASH IM'})
+machine_dict.update({'ASHER0010': 'ASH IM'})
+machine_dict.update({'ASHER0011': 'ASH IM'})
+
 print(len(machine_dict))
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
@@ -104,7 +142,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:16000}
+    d = {ht:1500}
     lead_dict.update(d)
 
     w = {ht:1}
@@ -171,21 +209,21 @@ while my_sim.env.now < sim_time:
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
                         action[1])
-
+    print(my_sim.env.now)
     my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:' + str(my_sim.step_reward))
+    # print('Step Reward:' + str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-    print("State:", state)
+    # mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    # print("State:", state)
 
     # Save the example for later training
     dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
@@ -218,17 +256,18 @@ print("### Wafers of each head type ###")
 # Total wafers produced
 print("Total wafers produced:", len(my_sim.cycle_time))
 
+
 # utilization
 operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
-mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
-std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
-
-mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
-                                         mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
-                           station in my_sim.stations}
+# mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+# std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+#
+# mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+#                            station in my_sim.stations}
 # mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
 #                                          mach.station == station]), 3) for station in my_sim.stations}
 
@@ -266,21 +305,21 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 
 print(np.mean(my_sim.lateness[-1000:]))
 
-cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
+cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
+                  'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
 df.to_csv(s+'util'+id+'.csv')
 # print(df)
-with open(s+'lateness'+id+'.txt','w') as f:
-  f.write('\n'.join(my_sim.lateness))
+# with open(s+'lateness'+id+'.txt','w') as f:
+#   f.write('\n'.join(my_sim.lateness))
 
-# # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.lateness)
-# plt.xlabel("Wafers")
-# plt.ylabel("Lateness")
-# plt.title("The amount of time each wafer was late")
-# plt.show()
+# # Plot the time taken to complete each wafer
+plt.plot(my_sim.lateness)
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.show()
 #
 # # Plot the time taken to complete each wafer
 # plt.plot(my_sim.cumulative_reward_list)
