@@ -26,6 +26,7 @@ class Config_predictron():
         self.epochs = 5000
         self.batch_size = 128
         self.episode_length = 500
+        self.burnin = 3e4
         self.gamma = 0.99
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
@@ -229,7 +230,6 @@ preturn_loss_arr = []
 lambda_preturn_loss_arr = []
 
 while my_sim.env.now < sim_time:
-    step_counter += 1
     wafer = choose_action(my_sim)
     
     state_episode = state_queue.pop(0)
@@ -257,6 +257,9 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     state = next_state
     
+    if my_sim.env.now > config.burnin:
+        step_counter += 1
+    
     if (step_counter > config.episode_length):
         replay_buffer.put((state_episode, reward_episode))
         if (step_counter > max(config.batch_size, 2*config.episode_length)) and (step_counter % config.predictron_update_steps) == 0:
@@ -270,8 +273,8 @@ while my_sim.env.now < sim_time:
             preturn_loss_arr.append(preturn_loss)
             lambda_preturn_loss_arr.append(lambda_preturn_loss)
 
-    if step_counter % 10000 == 0:
-        print(("%.2f" % 100*my_sim.env.now/sim_time)+"% done")
+        if step_counter % 10000 == 0 and step_counter > 1:
+            print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
     
 for b in range(config.batch_size):
     test_data = np.array([states[b]])
@@ -281,6 +284,9 @@ plt.plot(preturn_loss_arr)
 plt.figure()
 plt.plot(lambda_preturn_loss_arr)
 
+# Save the trained Predictron network
+
+model.save("Predictron_CR.h5")
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))

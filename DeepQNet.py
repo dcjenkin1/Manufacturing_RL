@@ -87,12 +87,12 @@ class DQN:
             next_pred = self.target_model.predict(new_state)[0]
             next_pred = next_pred.tolist()
             t = []
-            print("new_allowed_actions:", new_allowed_actions)
+            # print("new_allowed_actions:", new_allowed_actions)
             for it in new_allowed_actions:
                 t.append(next_pred[self.action_space.index(it)])
             Q_future = max(t)
             target[0][action_id] = reward + self.gamma * Q_future
-            self.model.fit(state, target, epochs=1, verbose=1)
+            self.model.train_on_batch(state, target)
 
 
     # Update our target network

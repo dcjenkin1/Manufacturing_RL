@@ -13,7 +13,7 @@ import DeepQNet
 
 from predictron import Predictron, Replay_buffer
 
-sim_time = 5e6
+sim_time = 1e6
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
@@ -42,7 +42,7 @@ class Config_predictron():
 
 recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
 machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
-model_dir = "DQN_model_60rm.h5"
+model_dir = "DQN_model_5e6.h5"
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -195,6 +195,7 @@ replay_buffer = Replay_buffer(memory_size = config.replay_memory_size)
 
 predictron = Predictron(config)
 model = predictron.model
+model.load_weights("Predictron_CR.h5")
 preturn_loss_arr = []
 max_preturn_loss = 0
 lambda_preturn_loss_arr = []
@@ -269,16 +270,7 @@ while my_sim.env.now < sim_time:
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
 
-plt.figure()
-plt.plot(preturn_loss_arr)
-plt.figure()
-plt.plot(lambda_preturn_loss_arr)
-plt.figure()
-plt.plot(predictron_lambda_arr, label='Predictron')
-plt.plot(DQN_arr, label='DQN')
-plt.plot(reward_episode_arr, label='GT')
-plt.title("Value estimate")
-plt.legend()
+
 
 predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
@@ -286,16 +278,71 @@ alpha = 0.05
 for i in range(len(predictron_error)-1):
     predictron_error_avg.append(predictron_error_avg[i]*(1-alpha) + predictron_error[i+1]*alpha)
 DQN_error = np.abs(np.array(DQN_arr)-np.array(reward_episode_arr))
+
+
+predictron_dqn_error_avg=[DQN_error[0] - predictron_error[0]]
+for i in range(len(predictron_error)-1):
+    predictron_dqn_error_avg.append(predictron_dqn_error_avg[i]*(1-alpha) + (DQN_error[i+1]-predictron_error[i+1])*alpha)
+
+predictron_ratio_error = np.asarray(predictron_lambda_arr)[:,0] / (np.asarray(reward_episode_arr)+1e-18)
+predictron_ratio_error_avg = [predictron_ratio_error[0]]
+for i in range(len(predictron_error)-1):
+    predictron_ratio_error_avg.append(predictron_ratio_error_avg[i]*(1-alpha) + predictron_ratio_error[i+1]*alpha)
+
+
 plt.figure()
-plt.plot(predictron_error, label='Predictron')
+plt.plot(preturn_loss_arr)
+
+plt.figure()
+plt.plot(lambda_preturn_loss_arr)
+
+plt.figure()
+plt.plot(reward_episode_arr, '.', label='Target')
+# plt.plot(predictron_lambda_arr, '.', label='Predictron')
+# plt.plot(DQN_arr, '.', label='DQN')
+plt.title("Value estimate")
+plt.xlabel("Thousands of steps")
+plt.legend(loc='lower center')
+
+plt.figure()
+plt.plot(predictron_error, '.', label='Predictron')
 plt.plot(predictron_error_avg, label='Running average')
 # plt.plot(DQN_error, label='DQN')
 plt.title("Absolute value estimate error")
 plt.legend()
 
 plt.figure()
-plt.plot(DQN_error - predictron_error)
+plt.plot(DQN_error[0:100] - predictron_error[0:100], '.', label='DQN - Predictron')
+plt.plot(predictron_dqn_error_avg[0:100], label='Running average')
+plt.title("DQN_error - predictron_error (first 100.000 steps)")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+
+plt.figure()
+plt.plot(DQN_error - predictron_error, '.', label='DQN - Predictron')
+plt.plot(predictron_dqn_error_avg, label='Running average')
 plt.title("DQN_error - predictron_error")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+
+plt.figure()
+plt.plot(predictron_error, label='Predictron')
+plt.plot(predictron_error_avg, label='Running average')
+plt.title("Predictron_error")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+
+plt.figure()
+plt.plot(predictron_ratio_error, '.', label='Predictron')
+# plt.plot(predictron_ratio_error_avg, label='Running average')
+plt.title("Predictron error ratio")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+plt.ylim((-1,2.5))
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
