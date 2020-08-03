@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import DeepQNet
 
-sim_time = 5e5
+sim_time = 5e6
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('/persistvol/recipes.csv')
-machines = pd.read_csv('/persistvol/machines.csv')
+recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
+machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -73,7 +73,7 @@ modified_machine_dict = {k:v for k,v in modified_machine_dict.items() if v in li
 # Dictionary where the key is the name of the machine and the value is [station, proc_t]
 # machine_dict = {'m0': 's1', 'm2': 's2', 'm1': 's1', 'm3': 's2'}
 machine_dict = modified_machine_dict
-print(len(machine_dict))
+# print(len(machine_dict))
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
 recipes = recipe_dict
@@ -112,7 +112,7 @@ def get_state(sim):
     state_rep = sum([sim.n_HT_seq[HT] for HT in sim.recipes.keys()], [])
 
     # assert state_rep == state_rep2
-    print(len(state_rep))
+    # print(len(state_rep))
     # b is a one-hot encoded list indicating which machine the next action will correspond to
     b = np.zeros(len(sim.machines_list))
     b[sim.machines_list.index(sim.next_machine)] = 1
@@ -132,7 +132,7 @@ def get_state(sim):
 
     c = sum(rolling_window, [])
     state_rep.extend(c) # Appending the rolling window to state space
-    print(len(state_rep))
+    # print(len(state_rep))
     return state_rep
 
 
@@ -155,25 +155,26 @@ state_size = len(state)
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
 
 order_count = 0
-
+step_counter = 0
 while my_sim.env.now < sim_time:
+    step_counter += 1
     action = dqn_agent.choose_action(state, allowed_actions)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
                         action[1])
 
     my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:' + str(my_sim.step_reward))
+    # print('Step Reward:' + str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
-    print("State:", state)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
+    # print("State:", state)
 
     # Save the example for later training
     dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
@@ -189,6 +190,9 @@ while my_sim.env.now < sim_time:
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    
+    if step_counter % 1000 == 0:
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 
 # Save the trained DQN policy network
