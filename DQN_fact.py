@@ -24,8 +24,10 @@ WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('/mypath/recipes.csv')
-machines = pd.read_csv('/mypath/machines.csv')
+# recipes = pd.read_csv('/mypath/recipes.csv')
+# machines = pd.read_csv('/mypath/machines.csv')
+recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
+machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -165,7 +167,8 @@ state_size = len(state)
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
 
 order_count = 0
-
+step_counter = 0
+avg_reward = []
 while my_sim.env.now < sim_time:
     action = dqn_agent.choose_action(state, allowed_actions)
 
@@ -173,19 +176,20 @@ while my_sim.env.now < sim_time:
                         action[1])
 
     my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:' + str(my_sim.step_reward))
+    # print('Step Reward:' + str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
+    avg_reward.append(reward)
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
     # mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-    print("State:", state)
+    # print("State:", state)
 
     # Save the example for later training
     dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
@@ -201,7 +205,12 @@ while my_sim.env.now < sim_time:
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-
+    
+    if step_counter % 1000 == 0 and step_counter > 1:
+        print("Average reward: ", np.mean(avg_reward))
+        avg_reward = []
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done\n")
+    step_counter += 1
 
 # Save the trained DQN policy network
 dqn_agent.save_model("DQN_model_60rm.h5")
@@ -276,18 +285,18 @@ with open(s+'lateness'+id+'.txt','w') as f:
   f.write('\n'.join(my_sim.lateness))
 
 # # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.lateness)
-# plt.xlabel("Wafers")
-# plt.ylabel("Lateness")
-# plt.title("The amount of time each wafer was late")
-# plt.show()
+plt.plot(my_sim.lateness)
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.show()
 #
 # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.cumulative_reward_list)
-# plt.xlabel("step")
-# plt.ylabel("Cumulative Reward")
-# plt.title("The sum of all rewards up until each time step")
-# plt.show()
+plt.plot(my_sim.cumulative_reward_list)
+plt.xlabel("step")
+plt.ylabel("Cumulative Reward")
+plt.title("The sum of all rewards up until each time step")
+plt.show()
 
 
 
