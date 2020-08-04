@@ -209,7 +209,7 @@ while my_sim.env.now < sim_time:
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
                         action[1])
-    print(my_sim.env.now)
+
     my_sim.run_action(mach, wafer_choice)
     # print('Step Reward:' + str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
