@@ -298,7 +298,7 @@ plt.plot(lambda_preturn_loss_arr)
 
 plt.figure()
 plt.plot(reward_episode_arr, '.', label='Target')
-# plt.plot(predictron_lambda_arr, '.', label='Predictron')
+plt.plot(predictron_lambda_arr, '.', label='Predictron')
 # plt.plot(DQN_arr, '.', label='DQN')
 plt.title("Value estimate")
 plt.xlabel("Thousands of steps")
