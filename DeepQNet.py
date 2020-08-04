@@ -89,11 +89,13 @@ class DQN:
         # else:
             # take max only from next_allowed_actions
         new_states = np.array(new_states).reshape(self.batch_size, self.state_space_dim)
-        next_preds = target_model.predict(new_states)
-        next_preds = next_preds.tolist()
+        if extern_target_model:
+            _, next_preds = target_model.predict(new_states) #using lambda predictions
+        else:
+            next_preds = target_model.predict(new_states)
+        # next_preds = next_preds.tolist()
         t = []
         # print("new_allowed_actions:", new_allowed_actions)
-        
         for b in range(self.batch_size):
             if extern_target_model:
                 next_target = next_preds[b]
@@ -101,7 +103,7 @@ class DQN:
                 for it in new_allowed_actions[b]:
                     t.append(next_preds[b][self.action_space.index(it)])
                 next_target = max(t)
-                
+            
             preds[b][action_ids[b]] = rewards[b] + self.gamma * next_target
             
         self.model.train_on_batch(states, preds)

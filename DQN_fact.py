@@ -273,17 +273,6 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 # print('mean station takt times')
 # print(mean_station_takt_times)
 
-print(np.mean(my_sim.lateness[-1000:]))
-
-cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
-df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
-df = df.transpose()
-df.to_csv(s+'util'+id+'.csv')
-# print(df)
-with open(s+'lateness'+id+'.txt','w') as f:
-  f.write('\n'.join(my_sim.lateness))
-
 # # # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness)
 plt.xlabel("Wafers")
@@ -297,6 +286,18 @@ plt.xlabel("step")
 plt.ylabel("Cumulative Reward")
 plt.title("The sum of all rewards up until each time step")
 plt.show()
+
+
+print(np.mean(my_sim.lateness[-1000:]))
+
+cols = [mean_util, mean_inter, std_inter, coeff_var, mean_station_takt_times, machines_per_station, station_wait_times]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival', 'mean_station_service_times', 'machines_per_station', 'mean_wait_time'])
+df = df.transpose()
+df.to_csv(s+'util'+id+'.csv')
+# print(df)
+with open(s+'lateness'+id+'.txt','w') as f:
+  f.write('\n'.join(my_sim.lateness))
 
 
 

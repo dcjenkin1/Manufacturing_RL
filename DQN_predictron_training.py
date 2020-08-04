@@ -1,3 +1,5 @@
+import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -12,6 +14,7 @@ import queue
 import DeepQNet
 
 from predictron import Predictron, Replay_buffer
+
 
 sim_time = 1e6
 WEEK = 24*7
@@ -236,11 +239,11 @@ while my_sim.env.now < sim_time:
             print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         if my_sim.order_completed:
             # After each wafer completed, train the policy network 
-            dqn_agent.replay()
+            dqn_agent.replay(extern_target_model = predictron.model)
             order_count += 1
             if order_count >= 1:
                 # After every 20 processes update the target network and reset the order count
-                dqn_agent.train_target(extern_target_model = predictron.model)
+                dqn_agent.train_target()
                 order_count = 0
                 # Record the information for use again in the next training example
                 
