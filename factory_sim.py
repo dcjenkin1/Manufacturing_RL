@@ -79,7 +79,7 @@ class Machine(object):
                 if self.break_mean is not None:
                     break_process = self.env.process(self.break_machine())
                 start = self.env.now
-                # print("started processing wafer %s on machine %s at %s"%(wafer.name, self.name, start))
+                print("started processing wafer %s on machine %s at %s"%(wafer.name, self.name, start))
                 # wait until the process is done
                 yield sim_inst.env.timeout(done_in)
                 # set the wafer being processed to None
