@@ -182,7 +182,7 @@ class FactorySim(object):
         # self.machine_failure = False
         self.lateness = []
         self.t_between_completions = []
-        self.cumulative_reward = 0
+        self.cumulative_reward = 0.
         self.cumulative_reward_list = []
 
         if path_to_wait_times is not None:
@@ -229,7 +229,7 @@ class FactorySim(object):
 
         self.order_complete_time = 0
         self.cycle_time = []
-        self.step_reward = 0
+        self.step_reward = 0.
 
         # Create a dictionary which holds the number of wafers due in a given week of each head type
         self.due_wafers = {}
@@ -323,7 +323,7 @@ class FactorySim(object):
 
     def run_action(self, machine, wafer_choice):
         self.order_completed = False
-        self.step_reward = 0
+        self.step_reward = 0.
         # Set the machine to be unavailable to process parts because it is now busy
         assert machine.available
         machine.available = False
