@@ -239,7 +239,7 @@ while my_sim.env.now < sim_time:
     # next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
-    print(my_sim.env.now)
+
     # print(f"state dimension: {len(state)}")
     # print(f"next state dimension: {len(next_state)}")
     # print("action space dimension:", action_size)
@@ -269,7 +269,7 @@ print("### Wafers of each head type ###")
 
 print(my_sim.lateness)
 
-print(my_sim.complete_wafer_dict)
+# print(my_sim.complete_wafer_dict)
 
 # ht_seq_mean_w = dict()
 # for tup, time_values in my_sim.ht_seq_wait.items():
