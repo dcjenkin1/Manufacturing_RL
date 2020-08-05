@@ -1,5 +1,5 @@
-import tensorflow as tf
-tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
+# import tensorflow as tf
+# tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ class Config_predictron():
 
 recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
 machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
-model_dir = "DQN_model_5e6.h5"
+model_dir = "DQN_model_5e5.h5"
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -302,11 +302,14 @@ while my_sim.env.now < sim_time:
 
 predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
-alpha = 0.05
+alpha = 0.1
 for i in range(len(predictron_error)-1):
     predictron_error_avg.append(predictron_error_avg[i]*(1-alpha) + predictron_error[i+1]*alpha)
-DQN_error = np.abs(np.array(DQN_arr)-np.array(reward_episode_arr))
 
+DQN_error = np.abs(np.array(DQN_arr)-np.array(reward_episode_arr))
+DQN_error_avg = [DQN_error[0]]
+for i in range(len(predictron_error)-1):
+    DQN_error_avg.append(DQN_error_avg[i]*(1-alpha) + DQN_error[i+1]*alpha)
 
 predictron_dqn_error_avg=[DQN_error[0] - predictron_error[0]]
 for i in range(len(predictron_error)-1):
@@ -334,8 +337,9 @@ plt.legend(loc='lower center')
 
 plt.figure()
 plt.plot(predictron_error, '.', label='Predictron')
-plt.plot(predictron_error_avg, label='Running average')
-# plt.plot(DQN_error, label='DQN')
+plt.plot(predictron_error_avg, label='Running average Predictron')
+plt.plot(DQN_error, '.', label='DQN')
+plt.plot(DQN_error_avg, label='Running average DQN')
 plt.title("Absolute value estimate error")
 plt.legend()
 
