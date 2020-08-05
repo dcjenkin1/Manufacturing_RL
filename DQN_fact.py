@@ -19,13 +19,15 @@ args = parser.parse_args()
 s = args.s
 print(s)
 
-sim_time = 3e4
+sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('./ncloud/recipes.csv')
-machines = pd.read_csv('./ncloud/machines.csv')
+# recipes = pd.read_csv('./ncloud/recipes.csv')
+# machines = pd.read_csv('./ncloud/machines.csv')
+recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
+machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
