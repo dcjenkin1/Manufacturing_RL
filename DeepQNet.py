@@ -23,6 +23,7 @@ class DQN:
         self.memory = deque(maxlen=2000)
         self.model = self.create_model()
         self.target_model = self.create_model()
+        self.batch_size = 32
 
     # Create the neural network model to train the q function
     def create_model(self):
@@ -68,31 +69,44 @@ class DQN:
     def remember(self, state, action, reward, next_state, next_allowed_actions):
         self.memory.append([state, action, reward, next_state, next_allowed_actions])
 
-    # Build the replay buffer
-    def replay(self):
-        batch_size = 32
-        if len(self.memory) < batch_size:
+    # Build the replay buffer # Train the model
+    def replay(self, extern_target_model = None):        
+        if len(self.memory) < self.batch_size:
             return
-        samples = random.sample(self.memory, batch_size)
-        for sample in samples:
-            state, action, reward, new_state, new_allowed_actions = sample
-            state = np.array(state).reshape(1, self.state_space_dim)
-            target = self.target_model.predict(state)
-            action_id = self.action_space.index(action)
-            # if done:
-            #     target[0][action_id] = reward
-            # else:
-                # take max only from next_allowed_actions
-            new_state = np.array(new_state).reshape(1,self.state_space_dim)
-            next_pred = self.target_model.predict(new_state)[0]
-            next_pred = next_pred.tolist()
-            t = []
-            # print("new_allowed_actions:", new_allowed_actions)
-            for it in new_allowed_actions:
-                t.append(next_pred[self.action_space.index(it)])
-            Q_future = max(t)
-            target[0][action_id] = reward + self.gamma * Q_future
-            self.model.fit(state, target, epochs=1, verbose=1)
+        
+        if extern_target_model:
+            target_model = extern_target_model
+        else: 
+            target_model = self.target_model
+            
+        samples = random.sample(self.memory, self.batch_size)
+        states, actions, rewards, new_states, new_allowed_actions = zip(*samples)
+        states = np.array(states).reshape(self.batch_size, self.state_space_dim)
+        preds = self.model.predict(states)
+        action_ids = [self.action_space.index(action) for action in actions]
+        # if done:
+        #     target[0][action_id] = reward
+        # else:
+            # take max only from next_allowed_actions
+        new_states = np.array(new_states).reshape(self.batch_size, self.state_space_dim)
+        if extern_target_model:
+            _, next_preds = target_model.predict(new_states) #using lambda predictions
+        else:
+            next_preds = target_model.predict(new_states)
+        # next_preds = next_preds.tolist()
+        t = []
+        # print("new_allowed_actions:", new_allowed_actions)
+        for b in range(self.batch_size):
+            if extern_target_model:
+                next_target = next_preds[b]
+            else:
+                for it in new_allowed_actions[b]:
+                    t.append(next_preds[b][self.action_space.index(it)])
+                next_target = max(t)
+            
+            preds[b][action_ids[b]] = rewards[b] + self.gamma * next_target
+            
+        self.model.train_on_batch(states, preds)
 
 
     # Update our target network
