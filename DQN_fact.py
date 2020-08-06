@@ -323,12 +323,12 @@ plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
 plt.show()
 #
-# # Plot the time taken to complete each wafer
-# plt.plot(my_sim.cumulative_reward_list)
-# plt.xlabel("step")
-# plt.ylabel("Cumulative Reward")
-# plt.title("The sum of all rewards up until each time step")
-# plt.show()
+# Plot the time taken to complete each wafer
+plt.plot(my_sim.cumulative_reward_list)
+plt.xlabel("step")
+plt.ylabel("Cumulative Reward")
+plt.title("The sum of all rewards up until each time step")
+plt.show()
 
 
 
