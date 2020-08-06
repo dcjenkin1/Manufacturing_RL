@@ -13,7 +13,7 @@ import DeepQNet
 
 from predictron import Predictron, Replay_buffer
 
-sim_time = 5e6
+sim_time = 1e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
@@ -42,7 +42,7 @@ class Config_predictron():
 
 recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
 machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
-model_dir = "DQN_model_60rm.h5"
+model_dir = "DQN_model_5e5.h5"
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -67,7 +67,7 @@ modified_machine_dict = {k:v for k,v in machine_d.items() if v in ls}
 
 # Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
-    if row[2] not in ls:
+    if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
         recipes.drop(index, inplace=True)
 
 recipes = recipes.dropna()
@@ -104,6 +104,42 @@ modified_machine_dict = {k:v for k,v in modified_machine_dict.items() if v in li
 # machine_dict = {'m0': 's1', 'm2': 's2', 'm1': 's1', 'm3': 's2'}
 machine_dict = modified_machine_dict
 
+machine_dict.update({'MV3PM3': '602B'})
+machine_dict.update({'MV3PM4': '602B'})
+machine_dict.update({'MV3PM5': '602B'})
+machine_dict.update({'MV3PM6': '602B'})
+machine_dict.update({'MV3PM7': '602B'})
+machine_dict.update({'MV3PM8': '602B'})
+machine_dict.update({'MV3PM9': '602B'})
+machine_dict.update({'MV3PM10': '602B'})
+machine_dict.update({'MV3PM11': '602B'})
+machine_dict.update({'MV3PM12': '602B'})
+machine_dict.update({'MV3PM13': '602B'})
+machine_dict.update({'MV3PM14': '602B'})
+machine_dict.update({'MV3PM15': '602B'})
+machine_dict.update({'MV3PM16': '602B'})
+machine_dict.update({'MV3PM17': '602B'})
+machine_dict.update({'MV3PM18': '602B'})
+machine_dict.update({'MV3PM19': '602B'})
+machine_dict.update({'MV3PM20': '602B'})
+machine_dict.update({'MV3PM21': '602B'})
+machine_dict.update({'MV3PM22': '602B'})
+machine_dict.update({'DNS-42': 'SCRUBBER'})
+machine_dict.update({'DNS-43': 'SCRUBBER'})
+machine_dict.update({'DNS-44': 'SCRUBBER'})
+machine_dict.update({'DNS-45': 'SCRUBBER'})
+machine_dict.update({'DNS-46': 'SCRUBBER'})
+machine_dict.update({'FSI015': 'FSI DEV'})
+machine_dict.update({'FSI016': 'FSI DEV'})
+machine_dict.update({'FSI017': 'FSI DEV'})
+machine_dict.update({'FSI018': 'FSI DEV'})
+machine_dict.update({'DUV005': 'DUV 193'})
+machine_dict.update({'DUV006': 'DUV 193'})
+machine_dict.update({'DUV007': 'DUV 193'})
+machine_dict.update({'DUV008': 'DUV 193'})
+machine_dict.update({'ASHER009': 'ASH IM'})
+machine_dict.update({'ASHER0010': 'ASH IM'})
+machine_dict.update({'ASHER0011': 'ASH IM'})
 
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
@@ -113,7 +149,7 @@ wafers_per_box = 4
 
 break_mean = 1e5
 
-repair_mean = 20
+repair_mean = 120
 
 n_part_mix = 30
 
@@ -125,7 +161,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:16000}
+    d = {ht:1500}
     lead_dict.update(d)
 
     w = {ht:1}
@@ -296,6 +332,9 @@ plt.legend()
 plt.figure()
 plt.plot(DQN_error - predictron_error)
 plt.title("DQN_error - predictron_error")
+
+# Save the trained Predictron network
+model.save("Predictron_DQN_1e5.h5")
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
