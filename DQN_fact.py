@@ -19,15 +19,13 @@ args = parser.parse_args()
 s = args.s
 print(s)
 
-sim_time = 5e5
+sim_time = 3e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-# recipes = pd.read_csv('./ncloud/recipes.csv')
-# machines = pd.read_csv('./ncloud/machines.csv')
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('~/mypath/recipes.csv')
+machines = pd.read_csv('~/mypath/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -205,6 +203,7 @@ state_size = len(state)
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
 
 order_count = 0
+step_counter = 0
 
 while my_sim.env.now < sim_time:
     action = dqn_agent.choose_action(state, allowed_actions)
@@ -241,6 +240,10 @@ while my_sim.env.now < sim_time:
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    
+    step_counter += 1
+    if step_counter % 1000 == 0 and step_counter > 1:
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 
 # Save the trained DQN policy network
