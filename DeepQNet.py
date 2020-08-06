@@ -82,7 +82,7 @@ class DQN:
         samples = random.sample(self.memory, self.batch_size)
         states, actions, rewards, new_states, new_allowed_actions = zip(*samples)
         states = np.array(states).reshape(self.batch_size, self.state_space_dim)
-        preds = self.model.predict(states)
+        preds = self.target_model.predict(states)
         action_ids = [self.action_space.index(action) for action in actions]
         # if done:
         #     target[0][action_id] = reward
