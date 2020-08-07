@@ -9,13 +9,18 @@ import matplotlib.pyplot as plt
 from itertools import chain
 from keras.models import load_model
 
-sim_time = 5e5
+sim_time = 3e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
-recipes = pd.read_csv('~/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('~/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
+machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+model_dir = "DQN_predictron.h5"
+
+# with open('ht_seq_mean_w3.json', 'r') as fp:
+#     ht_seq_mean_w_l = json.load(fp)
+# print(len(machines))
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -34,9 +39,9 @@ ls = list(common_stations)
 # This dictionary has the correct set of stations
 modified_machine_dict = {k:v for k,v in machine_d.items() if v in ls}
 
-# Removing unncommon rows from recipes 
+# Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
-    if row[2] not in ls:
+    if (row[2] not in ls) or (row[3] == 0 and row[4] == 0):
         recipes.drop(index, inplace=True)
 
 recipes = recipes.dropna()
@@ -67,12 +72,48 @@ for ht in recipe_dict.keys():
 
 used_stations = set(used_stations)
 
-
 modified_machine_dict = {k:v for k,v in modified_machine_dict.items() if v in list(used_stations)}
 
 # Dictionary where the key is the name of the machine and the value is [station, proc_t]
 # machine_dict = {'m0': 's1', 'm2': 's2', 'm1': 's1', 'm3': 's2'}
 machine_dict = modified_machine_dict
+
+machine_dict.update({'MV3PM3': '602B'})
+machine_dict.update({'MV3PM4': '602B'})
+machine_dict.update({'MV3PM5': '602B'})
+machine_dict.update({'MV3PM6': '602B'})
+machine_dict.update({'MV3PM7': '602B'})
+machine_dict.update({'MV3PM8': '602B'})
+machine_dict.update({'MV3PM9': '602B'})
+machine_dict.update({'MV3PM10': '602B'})
+machine_dict.update({'MV3PM11': '602B'})
+machine_dict.update({'MV3PM12': '602B'})
+machine_dict.update({'MV3PM13': '602B'})
+machine_dict.update({'MV3PM14': '602B'})
+machine_dict.update({'MV3PM15': '602B'})
+machine_dict.update({'MV3PM16': '602B'})
+machine_dict.update({'MV3PM17': '602B'})
+machine_dict.update({'MV3PM18': '602B'})
+machine_dict.update({'MV3PM19': '602B'})
+machine_dict.update({'MV3PM20': '602B'})
+machine_dict.update({'MV3PM21': '602B'})
+machine_dict.update({'MV3PM22': '602B'})
+machine_dict.update({'DNS-42': 'SCRUBBER'})
+machine_dict.update({'DNS-43': 'SCRUBBER'})
+machine_dict.update({'DNS-44': 'SCRUBBER'})
+machine_dict.update({'DNS-45': 'SCRUBBER'})
+machine_dict.update({'DNS-46': 'SCRUBBER'})
+machine_dict.update({'FSI015': 'FSI DEV'})
+machine_dict.update({'FSI016': 'FSI DEV'})
+machine_dict.update({'FSI017': 'FSI DEV'})
+machine_dict.update({'FSI018': 'FSI DEV'})
+machine_dict.update({'DUV005': 'DUV 193'})
+machine_dict.update({'DUV006': 'DUV 193'})
+machine_dict.update({'DUV007': 'DUV 193'})
+machine_dict.update({'DUV008': 'DUV 193'})
+machine_dict.update({'ASHER009': 'ASH IM'})
+machine_dict.update({'ASHER0010': 'ASH IM'})
+machine_dict.update({'ASHER0011': 'ASH IM'})
 
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
@@ -82,7 +123,7 @@ wafers_per_box = 4
 
 break_mean = 1e5
 
-repair_mean = 20
+repair_mean = 120
 
 n_part_mix = 30
 
@@ -94,12 +135,11 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:15000}
+    d = {ht:1500}
     lead_dict.update(d)
 
     w = {ht:1}
     part_mix.update(w)
-
 
 ####################################################
 ########## CREATING THE STATE SPACE  ###############
@@ -135,7 +175,7 @@ def get_state(sim):
 #####################################################################
 ######################### LOADING THE TRAINED POLICY ################
 #####################################################################
-model = load_model("DQN_model_5e5.h5")
+model = load_model(model_dir)
 
 
 # Action function to choose the best action given the q-function if not exploring based on epsilon
