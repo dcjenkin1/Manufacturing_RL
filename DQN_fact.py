@@ -205,7 +205,7 @@ state_size = len(state)
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
 
 order_count = 0
-
+step_counter = 0
 while my_sim.env.now < sim_time:
     action = dqn_agent.choose_action(state, allowed_actions)
 
@@ -241,7 +241,9 @@ while my_sim.env.now < sim_time:
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
-
+    step_counter += 1
+    if step_counter % 1000 == 0 and step_counter > 1:
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 # Save the trained DQN policy network
 dqn_agent.save_model("DQN_model_60rm.h5")
