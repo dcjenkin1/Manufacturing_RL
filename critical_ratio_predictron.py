@@ -31,7 +31,7 @@ class Config_predictron():
         self.predictron_update_steps = 50
         self.max_depth = 16
 
-sim_time = 5e5
+sim_time = 1e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
@@ -281,6 +281,8 @@ plt.plot(preturn_loss_arr)
 plt.figure()
 plt.plot(lambda_preturn_loss_arr)
 
+# Save the trained Predictron network
+model.save("Predictron_CR_1e5.h5")
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
