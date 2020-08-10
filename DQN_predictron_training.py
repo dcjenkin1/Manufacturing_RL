@@ -17,6 +17,27 @@ import datetime
 
 from predictron import Predictron, Replay_buffer
 
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
+
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
+parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
+parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--save_dir", default='./', help="Path save log files in")
+args = parser.parse_args()
+
+sim_time = parser.sim_time
+recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
+machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
+dqn_model_dir = args.dqn_model_dir
+predictron_model_dir = args.predictron_model_dir
+
+WEEK = 24*7
+NO_OF_WEEKS = math.ceil(sim_time/WEEK)
+num_seq_steps = 20
+
 class Config_predictron():
     def __init__(self):
         self.train_dir = './ckpts/predictron_train'
@@ -39,27 +60,9 @@ class Config_predictron():
         
         self.DQN_train_steps = 10000
         self.Predictron_train_steps = 5000
+        
+        self.state_rep_size = args.state_rep_size
 
-id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
-
-parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
-parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
-parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
-parser.add_argument("--save_dir", default='./', help="Path save log files in")
-args = parser.parse_args()
-
-sim_time = parser.sim_time
-recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
-machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
-dqn_model_dir = args.dqn_model_dir
-predictron_model_dir = args.predictron_model_dir
-
-WEEK = 24*7
-NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
