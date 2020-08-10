@@ -28,7 +28,7 @@ parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to fac
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
 args = parser.parse_args()
 
-sim_time = parser.sim_time
+sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 dqn_model_dir = args.dqn_model_dir
@@ -337,7 +337,7 @@ while my_sim.env.now < sim_time:
                 reward_episode_arr.append(reward_episode)
                 
                 print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
-            
+        
         # record the information for use again in the next training example
         mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
@@ -350,6 +350,9 @@ while my_sim.env.now < sim_time:
     elif not TRAIN_DQN and step_counter >= config.Predictron_train_steps:
         TRAIN_DQN = True
         step_counter = 0
+
+dqn_agent.save_model("DQN_predictron.h5")
+predictron.model.save("Predictron.h5")
 
 predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
@@ -445,8 +448,7 @@ plt.ylim((-1,2.5))
 # print(i)
 
 
-dqn_agent.save_model("DQN_predictron.h5")
-predictron.model.save("Predictron.h5")
+
 
 #Wafers of each head type
 print("### Wafers of each head type ###")
@@ -492,7 +494,7 @@ cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv(args.save_dir+'util'+id+'.csv')
+df.to_csv(args.save_dir+'util'+id+'_srs_'+str(args.state_rep_size)+'.csv')
 # print(df)
 
 # # Plot the time taken to complete each wafer
