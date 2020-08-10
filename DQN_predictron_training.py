@@ -12,14 +12,10 @@ from itertools import chain
 import json
 import queue
 import DeepQNet
+import argparse
+import datetime
 
 from predictron import Predictron, Replay_buffer
-
-
-sim_time = 1e6
-WEEK = 24*7
-NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
 
 class Config_predictron():
     def __init__(self):
@@ -44,11 +40,26 @@ class Config_predictron():
         self.DQN_train_steps = 10000
         self.Predictron_train_steps = 5000
 
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
-model_dir = "DQN_model_5e5.h5"
-predictron_model_dir = "Predictron_DQN_1e5.h5"
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
+parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
+parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--save_dir", default='./', help="Path save log files in")
+args = parser.parse_args()
+
+sim_time = parser.sim_time
+recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
+machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
+dqn_model_dir = args.dqn_model_dir
+predictron_model_dir = args.predictron_model_dir
+
+WEEK = 24*7
+NO_OF_WEEKS = math.ceil(sim_time/WEEK)
+num_seq_steps = 20
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -249,7 +260,7 @@ reward_episode_arr = []
 
 # Creating the DQN agent
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_max=0., gamma=0.99)
-dqn_agent.load_model(model_dir)
+dqn_agent.load_model(dqn_model_dir)
 order_count = 0
 
 TRAIN_DQN = True
@@ -478,7 +489,7 @@ cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv('util_inter_arr.csv')
+df.to_csv(args.save_dir+'util'+id+'.csv')
 # print(df)
 
 # # Plot the time taken to complete each wafer
