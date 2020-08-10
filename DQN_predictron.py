@@ -321,6 +321,10 @@ while my_sim.env.now < sim_time:
     # record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
+    
+# Save the trained Predictron network
+model.save('./Predictron_DQN_' + str(sim_time) + '_dense_' + str(args.state_rep_size) + '.h5')
+
 
 plt.figure()
 plt.plot(preturn_loss_arr)
@@ -350,8 +354,7 @@ plt.figure()
 plt.plot(DQN_error - predictron_error)
 plt.title("DQN_error - predictron_error")
 
-# Save the trained Predictron network
-model.save('./Predictron_DQN_' + str(sim_time) + '_dense_' + str(args.state_rep_size) + '.h5')
+
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
