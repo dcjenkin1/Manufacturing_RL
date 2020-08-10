@@ -26,7 +26,7 @@ args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
-sim_time = parser.sim_time
+sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 dqn_model_dir = args.dqn_model_dir
