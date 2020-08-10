@@ -256,7 +256,7 @@ print(my_sim.lateness)
 print(np.mean(my_sim.lateness[-1000:]))
 
 # Plot the time taken to complete each wafer
-plt.plot(my_sim.lateness)
+plt.plot(my_sim.lateness, '.')
 plt.xlabel("Wafers")
 plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
