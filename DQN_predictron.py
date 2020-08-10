@@ -10,13 +10,12 @@ from itertools import chain
 import json
 import queue
 import DeepQNet
+import argparse
+import datetime
 
 from predictron import Predictron, Replay_buffer
 
-sim_time = 1e5
-WEEK = 24*7
-NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+
 
 class Config_predictron():
     def __init__(self):
@@ -38,11 +37,28 @@ class Config_predictron():
         self.predictron_update_steps = 50
         self.max_depth = 16
 
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
+parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
+parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+parser.add_argument("--sim_time", default=1e5, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--save_dir", default='./', help="Path save log files in")
+args = parser.parse_args()
+
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
+
+sim_time = parser.sim_time
+recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
+machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
+dqn_model_dir = args.dqn_model_dir
+predictron_model_dir = args.predictron_model_dir
 
 
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
-model_dir = "DQN_model_5e5.h5"
+WEEK = 24*7
+NO_OF_WEEKS = math.ceil(sim_time/WEEK)
+num_seq_steps = 20
+
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -242,7 +258,7 @@ reward_episode_arr = []
 
 # Creating the DQN agent
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_max=0., gamma=0.99)
-dqn_agent.load_model(model_dir)
+dqn_agent.load_model(dqn_model_dir)
 
 
 while my_sim.env.now < sim_time:
@@ -334,7 +350,7 @@ plt.plot(DQN_error - predictron_error)
 plt.title("DQN_error - predictron_error")
 
 # Save the trained Predictron network
-model.save("Predictron_DQN_1e5.h5")
+model.save('./Predictron_DQN_' + str(sim_time) + '_dense_' + str(args.state_rep_size) + '.h5')
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
@@ -390,13 +406,13 @@ coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for stati
 # print(std_inter)
 # print(coeff_var)
 #
-print(np.mean(my_sim.lateness[-1000:]))
+print(np.mean(my_sim.lateness[-10000:]))
 
 cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv('util_inter_arr.csv')
+df.to_csv(args.save_dir+'util'+id+'.csv')
 # print(df)
 
 # # Plot the time taken to complete each wafer
