@@ -351,8 +351,8 @@ while my_sim.env.now < sim_time:
         TRAIN_DQN = True
         step_counter = 0
 
-dqn_agent.save_model("DQN_predictron.h5")
-predictron.model.save("Predictron.h5")
+dqn_agent.save_model("DQN_predictron_dense_"+str(args.state_rep_size)+".h5")
+predictron.model.save(args.predictron_model_dir+'Predictron_dqn_dense_'+str(args.state_rep_size)+'.h5')
 
 predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
