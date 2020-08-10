@@ -9,15 +9,16 @@ import matplotlib.pyplot as plt
 from itertools import chain
 import DeepQNet
 import argparse
+import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--s", default='./', help="path to save results")
-id = str(int(np.ceil(random.random()*10000)))
+parser.add_argument("--save_dir", default='./', help="Path save log files in")
 
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
 
 args = parser.parse_args()
-s = args.s
-print(s)
+s = args.save_dir
 
 sim_time = 5e5
 WEEK = 24*7
@@ -313,7 +314,7 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, stati
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(s+'util'+id+'.csv')
+df.to_csv(save_dir+'util'+id+'.csv')
 # print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
 #   f.write('\n'.join(my_sim.lateness))
