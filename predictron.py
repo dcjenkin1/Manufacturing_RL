@@ -26,6 +26,7 @@ class Predictron:
         self.beta_2 = config.beta_2
         self.epsilon = config.epsilon
         self.model = None
+        self.state_rep_size = config.state_rep_size
       
         # Tensor rewards with shape [batch_size, max_depth + 1]
         self.rewards = None
@@ -60,7 +61,7 @@ class Predictron:
         f_layer1 = layers.Dense(32, activation='relu')(obs) # conv 3x3 stride 1 if spacial correlation in obs
         f_bn1 = layers.BatchNormalization(axis=1)(f_layer1)
         # f_layer2 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(f_bn1) # Convolution for spatially correlated inputs
-        f_layer2 = layers.Dense(32, activation='relu')(f_bn1) # conv 3x3 stride 1 if spacial correlation in obs
+        f_layer2 = layers.Dense(self.state_rep_size, activation='relu')(f_bn1) # conv 3x3 stride 1 if spacial correlation in obs
         state = layers.BatchNormalization(axis=1,name='f')(f_layer2)
         
         rewards_arr = []
