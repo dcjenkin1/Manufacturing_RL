@@ -32,7 +32,7 @@ sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 dqn_model_dir = args.dqn_model_dir
-predictron_model_dir = args.predictron_model_dir+'Predictron_DQN_100000.0_dense_'+str(args.state_rep_size)+'_base.h5'
+predictron_model_dir = args.predictron_model_dir+'Predictron_DQN_100000.0_dense_'+str(args.state_rep_size)+'.h5'
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
