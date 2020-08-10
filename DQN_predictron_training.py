@@ -488,7 +488,7 @@ coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for stati
 # print(std_inter)
 # print(coeff_var)
 #
-print(np.mean(my_sim.lateness[-1000:]))
+print(np.mean(my_sim.lateness[-10000:]))
 
 cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
