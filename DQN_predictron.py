@@ -15,28 +15,6 @@ import datetime
 
 from predictron import Predictron, Replay_buffer
 
-
-
-class Config_predictron():
-    def __init__(self):
-        self.train_dir = './ckpts/predictron_train'
-        # self.num_gpus = 1
-        
-        # adam optimizer:
-        self.learning_rate = 1e-3
-        self.beta_1 = 0.9
-        self.beta_2 = 0.999
-        self.epsilon = 1e-8
-        
-        self.epochs = 5000
-        self.batch_size = 128
-        self.episode_length = 500
-        self.burnin = 3e4
-        self.gamma = 0.99
-        self.replay_memory_size = 100000
-        self.predictron_update_steps = 50
-        self.max_depth = 16
-
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
 parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
@@ -59,6 +37,29 @@ WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
 
+
+
+class Config_predictron():
+    def __init__(self):
+        self.train_dir = './ckpts/predictron_train'
+        # self.num_gpus = 1
+        
+        # adam optimizer:
+        self.learning_rate = 1e-3
+        self.beta_1 = 0.9
+        self.beta_2 = 0.999
+        self.epsilon = 1e-8
+        
+        self.epochs = 5000
+        self.batch_size = 128
+        self.episode_length = 500
+        self.burnin = 3e4
+        self.gamma = 0.99
+        self.replay_memory_size = 100000
+        self.predictron_update_steps = 50
+        self.max_depth = 16
+        
+        self.state_rep_size = args.state_rep_size
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
