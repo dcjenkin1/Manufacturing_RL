@@ -8,15 +8,32 @@ import math
 import matplotlib.pyplot as plt
 from itertools import chain
 from keras.models import load_model
+import argparse
+import datetime
 
-sim_time = 3e5
+
+
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--save_dir", default='./', help="Path save log files in")
+args = parser.parse_args()
+
+
+
+
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
+
+sim_time = args.sim_time
+recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
+machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
+model_dir = "DQN_predictron_dense_"+str(args.state_rep_size)+".h5"
+
+
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 20
-
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
-model_dir = "DQN_predictron.h5"
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -252,8 +269,8 @@ print(my_sim.complete_wafer_dict)
 # plt.show()
 
 print(my_sim.lateness)
-
-print(np.mean(my_sim.lateness[-1000:]))
+print(np.mean(my_sim.lateness))
+print(np.mean(my_sim.lateness[-10000:]))
 
 # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness, '.')
