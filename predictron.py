@@ -125,7 +125,7 @@ class Predictron:
         net_fc2 = layers.Dense(32, activation='relu')(net_bn1)
         net_bn2 = layers.BatchNormalization(axis=1)(net_fc2)
         # net_conv3 = layers.Conv2D(32, [3,3], activation='relu')(net_bn2)
-        net_fc3 = layers.Dense(32, activation='relu')(net_bn2)
+        net_fc3 = layers.Dense(self.state_rep_size, activation='relu')(net_bn2)
         net_out = layers.BatchNormalization(axis=1)(net_fc3)
         
         net_flatten = layers.Flatten()(net_bn1) # no effect when fc
