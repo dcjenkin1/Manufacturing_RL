@@ -106,7 +106,7 @@ class DQN:
             
             preds[b][action_ids[b]] = rewards[b] + self.gamma * next_target
             
-        self.model.train_on_batch(states, preds)
+        return self.model.train_on_batch(states, preds)
 
 
     # Update our target network
