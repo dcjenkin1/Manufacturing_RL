@@ -268,6 +268,9 @@ order_count = 0
 
 TRAIN_DQN = True
 step_counter = 0
+
+dqn_loss_arr = []
+pred_loss_arr = []
 while my_sim.env.now < sim_time:
     
     action = dqn_agent.choose_action(state, allowed_actions)
@@ -290,7 +293,8 @@ while my_sim.env.now < sim_time:
             print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         if my_sim.order_completed:
             # After each wafer completed, train the policy network 
-            dqn_agent.replay(extern_target_model = predictron.model)
+            loss = dqn_agent.replay(extern_target_model = predictron.model)
+            dqn_loss_arr.append(np.mean(loss))
             order_count += 1
             if order_count >= 1:
                 # After every 20 processes update the target network and reset the order count
@@ -380,6 +384,9 @@ plt.plot(preturn_loss_arr)
 
 plt.figure()
 plt.plot(lambda_preturn_loss_arr)
+
+plt.figure()
+plt.plot(dqn_loss_arr)
 
 plt.figure()
 plt.plot(reward_episode_arr, '.', label='Target')
