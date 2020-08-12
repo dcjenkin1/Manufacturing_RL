@@ -28,7 +28,7 @@ id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
-model_dir = "DQN_predictron_dense_"+str(args.state_rep_size)+".h5"
+model_dir = "DQN_predictron_fully_"+str(args.state_rep_size)+".h5"
 
 
 WEEK = 24*7
