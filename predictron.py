@@ -58,7 +58,7 @@ class Predictron:
 
         obs = keras.Input(shape=(self.state_size))
         # f_layer1 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(obs) # Convolution for spatially correlated inputs
-        f_layer1 = layers.Dense(self.state_rep_size, activation='relu')(obs) # conv 3x3 stride 1 if spacial correlation in obs
+        f_layer1 = layers.Dense(32, activation='relu')(obs) # conv 3x3 stride 1 if spacial correlation in obs
         f_bn1 = layers.BatchNormalization(axis=1)(f_layer1)
         # f_layer2 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(f_bn1) # Convolution for spatially correlated inputs
         f_layer2 = layers.Dense(self.state_rep_size, activation='relu')(f_bn1) # conv 3x3 stride 1 if spacial correlation in obs
@@ -118,11 +118,11 @@ class Predictron:
     def core(self, state):        
         # State_next
         # net_conv1 = layers.Conv2D(32, [3,3], activation='relu')(state) # Convolution for spatially correlated inputs
-        net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(state)
+        net_fc1 = layers.Dense(32, activation='relu')(state)
         net_bn1 = layers.BatchNormalization(axis=1)(net_fc1)
         
         # net_conv2 = layers.Conv2D(32, [3,3], activation='relu')(net_bn1)
-        net_fc2 = layers.Dense(self.state_rep_size, activation='relu')(net_bn1)
+        net_fc2 = layers.Dense(32, activation='relu')(net_bn1)
         net_bn2 = layers.BatchNormalization(axis=1)(net_fc2)
         # net_conv3 = layers.Conv2D(32, [3,3], activation='relu')(net_bn2)
         net_fc3 = layers.Dense(self.state_rep_size, activation='relu')(net_bn2)
