@@ -17,7 +17,7 @@ from predictron import Predictron, Replay_buffer
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
-parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
+# parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
@@ -30,7 +30,7 @@ sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 dqn_model_dir = args.dqn_model_dir
-predictron_model_dir = args.predictron_model_dir
+# predictron_model_dir = args.predictron_model_dir
 
 
 WEEK = 24*7
@@ -323,7 +323,7 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save('./Predictron_DQN_' + str(sim_time) + '_dense_' + str(args.state_rep_size) + '.h5')
+model.save('./Predictron_DQN_' + str(sim_time) + '_full_' + str(args.state_rep_size) + '.h5')
 
 
 plt.figure()
