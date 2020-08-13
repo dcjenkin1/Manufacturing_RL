@@ -16,7 +16,7 @@ import datetime
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='D:/mypath/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
 args = parser.parse_args()
 
