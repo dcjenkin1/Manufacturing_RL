@@ -15,7 +15,7 @@ import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=3e3, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=3e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='DQN_model_5e5.h5', help="Path to DQN model")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
