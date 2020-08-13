@@ -34,6 +34,10 @@ class Machine(object):
         self.wafer_being_proc = None
         self.parts_made = 0
         self.break_mean = break_mean
+        
+        self.random = None
+        if seed is not None:
+            self.random = random.Random(seed)
 
         if break_mean is not None:
             self.time_to_fail = self.time_to_failure()
@@ -42,10 +46,6 @@ class Machine(object):
         self.repair_mean = repair_mean
         self.total_operational_time = 0
         self.takt_times = []
-        
-        self.random = None
-        if seed is not None:
-            self.random = random.Random(seed)
             
 
     def time_to_failure(self):
