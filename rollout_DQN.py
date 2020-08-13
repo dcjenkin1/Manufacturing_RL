@@ -15,14 +15,15 @@ import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
+parser.add_argument("--sim_time", default=3e3, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='DQN_model_5e5.h5', help="Path to DQN model")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
+parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
 args = parser.parse_args()
 
 
-seed = 0
+seed = args.seed
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
