@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--model_dir", default='DQN_model_5e5.h5', help="Path to DQN model")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
 args = parser.parse_args()
 
@@ -28,7 +29,7 @@ id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
-model_dir = "DQN_predictron_dense_"+str(args.state_rep_size)+".h5"
+model_dir = args.model_dir
 
 
 WEEK = 24*7
