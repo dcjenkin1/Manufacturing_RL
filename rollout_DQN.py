@@ -21,7 +21,7 @@ parser.add_argument("--save_dir", default='./', help="Path save log files in")
 args = parser.parse_args()
 
 
-
+seed = 0
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
@@ -210,7 +210,7 @@ def choose_action(state, allowed_actions, action_space):
 
 
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, seed)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice

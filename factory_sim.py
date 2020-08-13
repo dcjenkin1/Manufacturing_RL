@@ -25,7 +25,7 @@ class wafer_box(object):
 ########## CREATING THE MACHINE CLASS ##############
 ####################################################
 class Machine(object):
-    def __init__(self, sim_inst, name, station, break_mean=None, repair_mean=None):
+    def __init__(self, sim_inst, name, station, break_mean=None, repair_mean=None, seed=None):
         self.env = sim_inst.env
         self.name = name
         self.station = station
@@ -42,14 +42,25 @@ class Machine(object):
         self.repair_mean = repair_mean
         self.total_operational_time = 0
         self.takt_times = []
+        
+        if seed is not None:
+            self.random = random.Random(seed)
+        else:
+            self.random = None
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
-        return random.expovariate(1/self.break_mean)
+        if self.random is not None:
+            return self.random.expovariate(1/self.break_mean)
+        else:
+            return random.expovariate(1/self.break_mean)
 
     def time_to_repair(self):
         """Return time until repair for a machine."""
-        return random.expovariate(1/self.repair_mean)
+        if self.random is not None:
+            return self.random.expovariate(1/self.repair_mean)
+        else:
+            return random.expovariate(1/self.repair_mean)
 
     def break_machine(self):
         """Break the machine after break_time"""
@@ -166,7 +177,7 @@ class Machine(object):
 class FactorySim(object):
     #Initialize simpy environment and set the amount of time the simulation will run for
     def __init__(self, sim_time, m_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, path_to_wait_times=None, break_mean=None,
-                 repair_mean=None):
+                 repair_mean=None, seed=None):
         self.break_mean = break_mean
         self.repair_mean = repair_mean
         self.order_completed = False
@@ -184,6 +195,7 @@ class FactorySim(object):
         self.t_between_completions = []
         self.cumulative_reward = 0.
         self.cumulative_reward_list = []
+        self.seed = seed
 
         if path_to_wait_times is not None:
             with open(path_to_wait_times, 'r') as fp:
@@ -202,7 +214,7 @@ class FactorySim(object):
         # Dictionary where the key is the name of the machine and the value is the station
         self.machine_dict = m_dict
 
-        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean) for mach in self.machine_dict.items()]
+        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean, self.seed) for mach in self.machine_dict.items()]
 
         # create a list of all the station names
         self.stations = list(set(list(self.machine_dict.values())))
