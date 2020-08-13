@@ -43,10 +43,10 @@ class Machine(object):
         self.total_operational_time = 0
         self.takt_times = []
         
+        self.random = None
         if seed is not None:
             self.random = random.Random(seed)
-        else:
-            self.random = None
+            
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
