@@ -214,7 +214,7 @@ class FactorySim(object):
         # Dictionary where the key is the name of the machine and the value is the station
         self.machine_dict = m_dict
 
-        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean, self.seed) for mach in self.machine_dict.items()]
+        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean, seed=self.seed) for mach in self.machine_dict.items()]
 
         # create a list of all the station names
         self.stations = list(set(list(self.machine_dict.values())))
