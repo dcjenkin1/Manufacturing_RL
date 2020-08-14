@@ -131,22 +131,22 @@ class Predictron:
         net_flatten = layers.Flatten()(net_bn1) # no effect when fc
         
         # Reward
-        reward_net_fc1 = layers.Dense(32, activation='relu')(net_flatten)
+        reward_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(net_flatten)
         reward_net_bn1 = layers.BatchNormalization(axis=1)(reward_net_fc1)
         reward_net_out = layers.Dense(1)(reward_net_bn1)
         
         # Gamma
-        gamma_net_fc1 = layers.Dense(32, activation='relu')(net_flatten)
+        gamma_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(net_flatten)
         gamma_net_bn1 = layers.BatchNormalization(axis=1)(gamma_net_fc1)
         gamma_net_out = layers.Dense(1, activation='sigmoid')(gamma_net_bn1)
         
         # Lambda
-        lambda_net_fc1 = layers.Dense(32, activation='relu')(net_flatten)
+        lambda_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(net_flatten)
         lambda_net_bn1 = layers.BatchNormalization(axis=1)(lambda_net_fc1)
         lambda_net_out = layers.Dense(1, activation='sigmoid')(lambda_net_bn1)
         
         # Value
-        value_net_fc1 = layers.Dense(32, activation='relu')(layers.Flatten()(state))
+        value_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(layers.Flatten()(state))
         value_net_bn1 = layers.BatchNormalization(axis=1)(value_net_fc1)
         value_net_out = layers.Dense(1)(value_net_bn1)
     
