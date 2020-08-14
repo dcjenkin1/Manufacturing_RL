@@ -260,7 +260,6 @@ replay_buffer = Replay_buffer(memory_size = config.replay_memory_size)
 
 predictron = Predictron(config)
 model = predictron.model
-model.load_weights(predictron_model_dir)
 preturn_loss_arr = []
 max_preturn_loss = 0
 lambda_preturn_loss_arr = []
