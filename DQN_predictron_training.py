@@ -36,8 +36,8 @@ machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 
 model_dir = args.save_dir+'models/'+str(id)+'/'
 pretrained_dqn_model_dir = args.dqn_model_dir
-predictron_model_dir = model_dir+'Predictron_'+args.predictron_typetype+'_srs_'+str(args.state_rep_size)+'.h5'
-dqn_model_dir = model_dir+'DQN_'+args.predictron_typetype+'_srs_'+str(args.state_rep_size)+'.h5'
+predictron_model_dir = model_dir+'Predictron_'+args.predictron_type+'_srs_'+str(args.state_rep_size)+'.h5'
+dqn_model_dir = model_dir+'DQN_'+args.predictron_type+'_srs_'+str(args.state_rep_size)+'.h5'
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
