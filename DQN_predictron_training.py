@@ -66,8 +66,8 @@ class Config_predictron():
         self.predictron_update_steps = 50
         self.max_depth = 16
         
-        self.DQN_train_steps = 1e4
-        self.Predictron_train_steps = 1e4
+        self.DQN_train_steps = 5e3
+        self.Predictron_train_steps = 5e3
         self.Predictron_train_steps_initial = 5e4
         
         self.state_rep_size = args.state_rep_size
