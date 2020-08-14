@@ -4,6 +4,7 @@ import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
 import math 
+import os
 # import matplotlib
 # import random
 # matplotlib.use('TkAgg')
@@ -21,18 +22,25 @@ id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
-parser.add_argument("--predictron_model_dir", default='./', help="Path to the Predictron model")
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=3e5, help="Simulation minutes")
+parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
+parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
-parser.add_argument("--save_dir", default='./', help="Path save log files in")
+parser.add_argument("--save_dir", default='./data/', help="Path save models and log files in")
 args = parser.parse_args()
 
 sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
-dqn_model_dir = args.dqn_model_dir
-predictron_model_dir = args.predictron_model_dir+'Predictron_DQN_100000.0_full_'+str(args.state_rep_size)+'.h5'
+
+
+model_dir = args.save_dir+'models/'+str(id)+'/'
+pretrained_dqn_model_dir = args.dqn_model_dir
+predictron_model_dir = model_dir+'Predictron_'+args.predictron_typetype+'_srs_'+str(args.state_rep_size)+'.h5'
+dqn_model_dir = model_dir+'DQN_'+args.predictron_typetype+'_srs_'+str(args.state_rep_size)+'.h5'
+
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
@@ -40,7 +48,7 @@ num_seq_steps = 20
 
 class Config_predictron():
     def __init__(self):
-        self.train_dir = './ckpts/predictron_train'
+        # self.train_dir = './ckpts/predictron_train'
         # self.num_gpus = 1
         
         # adam optimizer:
@@ -59,7 +67,8 @@ class Config_predictron():
         self.max_depth = 16
         
         self.DQN_train_steps = 10000
-        self.Predictron_train_steps = 5000
+        self.Predictron_train_steps = 10000
+        self.Predictron_train_steps_initial = 1e5
         
         self.state_rep_size = args.state_rep_size
 
@@ -263,14 +272,15 @@ reward_episode_arr = []
 
 # Creating the DQN agent
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_max=0., gamma=0.99)
-dqn_agent.load_model(dqn_model_dir)
+dqn_agent.load_model(pretrained_dqn_model_dir)
 order_count = 0
 
-TRAIN_DQN = True
+TRAIN_DQN = False
 step_counter = 0
 
 dqn_loss_arr = []
 pred_loss_arr = []
+Predictron_train_steps = config.Predictron_train_steps_initial
 while my_sim.env.now < sim_time:
     
     action = dqn_agent.choose_action(state, allowed_actions)
@@ -315,7 +325,7 @@ while my_sim.env.now < sim_time:
             
         if step_counter > config.episode_length:
             replay_buffer.put((state_episode, reward_episode))
-            if step_counter > config.episode_length+config.batch_size and (step_counter % config.predictron_update_steps) == 0:
+            if step_counter > config.episode_length+config.batch_size: # and (step_counter % config.predictron_update_steps) == 0:
                 
                 data = np.array(replay_buffer.get(config.batch_size))
                 states = np.array([np.array(x) for x in data[:,0]])
@@ -351,12 +361,13 @@ while my_sim.env.now < sim_time:
     if TRAIN_DQN and step_counter >= config.DQN_train_steps:
         TRAIN_DQN = False
         step_counter = 0
-    elif not TRAIN_DQN and step_counter >= config.Predictron_train_steps:
+    elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
+        Predictron_train_steps = config.Predictron_train_steps
         TRAIN_DQN = True
         step_counter = 0
 
-dqn_agent.save_model("DQN_predictron_full_"+str(args.state_rep_size)+".h5")
-predictron.model.save(args.predictron_model_dir+'Predictron_dqn_full_'+str(args.state_rep_size)+'.h5')
+dqn_agent.save_model(dqn_model_dir)
+predictron.model.save(predictron_model_dir)
 
 predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
@@ -378,6 +389,53 @@ predictron_ratio_error_avg = [predictron_ratio_error[0]]
 for i in range(len(predictron_error)-1):
     predictron_ratio_error_avg.append(predictron_ratio_error_avg[i]*(1-alpha) + predictron_ratio_error[i+1]*alpha)
 
+
+#Wafers of each head type
+print("### Wafers of each head type ###")
+
+print(my_sim.lateness)
+
+print(my_sim.complete_wafer_dict)
+
+# ht_seq_mean_w = dict()
+# for tup, time_values in my_sim.ht_seq_wait.items():
+#     ht_seq_mean_w[tup] = np.mean(time_values)
+
+# with open('ht_seq_mean_wn.json', 'w') as fp:
+#     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
+
+# Total wafers produced
+print("Total wafers produced:", len(my_sim.cycle_time))
+
+# # utilization
+# operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
+# mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
+# mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
+#              for station in my_sim.stations}
+# # stdev_util = {station: np.std(mach_util)
+
+# inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
+#                                                     my_sim.arrival_times[station][1:])] for station in my_sim.stations}
+# mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+# std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+# coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+
+# print(operational_times)
+# print(mean_util)
+# # print(stdev_util)
+# print(inter_arrival_times)
+# print(mean_inter)
+# print(std_inter)
+# print(coeff_var)
+#
+print("Mean lateness of last 10000 minutes", np.mean(my_sim.lateness[-10000:]))
+
+# cols = [mean_util, mean_inter, std_inter, coeff_var]
+# df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+#                   'coefficient_of_var_interarrival'])
+# df = df.transpose()
+# df.to_csv(args.save_dir+'util'+id+'_srs_'+str(args.state_rep_size)+'.csv')
+# print(df)
 
 plt.figure()
 plt.plot(preturn_loss_arr)
@@ -454,55 +512,6 @@ plt.ylim((-1,2.5))
 # print(my_sim.get_proc_time('ASGA', 99, 4))
 # print(i)
 
-
-
-
-#Wafers of each head type
-print("### Wafers of each head type ###")
-
-print(my_sim.lateness)
-
-print(my_sim.complete_wafer_dict)
-
-# ht_seq_mean_w = dict()
-# for tup, time_values in my_sim.ht_seq_wait.items():
-#     ht_seq_mean_w[tup] = np.mean(time_values)
-
-# with open('ht_seq_mean_wn.json', 'w') as fp:
-#     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
-
-# Total wafers produced
-print("Total wafers produced:", len(my_sim.cycle_time))
-
-# utilization
-operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
-mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
-mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
-             for station in my_sim.stations}
-# stdev_util = {station: np.std(mach_util)
-
-inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
-                                                    my_sim.arrival_times[station][1:])] for station in my_sim.stations}
-mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
-std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
-coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
-
-# print(operational_times)
-# print(mean_util)
-# # print(stdev_util)
-# print(inter_arrival_times)
-# print(mean_inter)
-# print(std_inter)
-# print(coeff_var)
-#
-print(np.mean(my_sim.lateness[-10000:]))
-
-cols = [mean_util, mean_inter, std_inter, coeff_var]
-df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival'])
-df = df.transpose()
-df.to_csv(args.save_dir+'util'+id+'_srs_'+str(args.state_rep_size)+'.csv')
-# print(df)
 
 # # Plot the time taken to complete each wafer
 plt.figure()
