@@ -25,7 +25,7 @@ parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path 
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='D:/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save models and log files in")
 args = parser.parse_args()
 
@@ -60,15 +60,15 @@ class Config_predictron():
         self.epochs = 5000
         self.batch_size = 128
         self.episode_length = 500
-        self.burnin = 1e4
+        self.burnin = 3e4
         self.gamma = 0.99
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
         self.max_depth = 16
         
-        self.DQN_train_steps = 10000
-        self.Predictron_train_steps = 10000
-        self.Predictron_train_steps_initial = 1e5
+        self.DQN_train_steps = 1e4
+        self.Predictron_train_steps = 1e4
+        self.Predictron_train_steps_initial = 5e4
         
         self.state_rep_size = args.state_rep_size
 
@@ -300,16 +300,17 @@ while my_sim.env.now < sim_time:
         dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
         if step_counter % 1000 == 0 and step_counter > 1:
             print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
-        if my_sim.order_completed:
-            # After each wafer completed, train the policy network 
-            loss = dqn_agent.replay(extern_target_model = predictron.model)
+        # if my_sim.order_completed:
+        # After each wafer completed, train the policy network 
+        loss = dqn_agent.replay(extern_target_model = predictron.model)
+        if loss is not None:
             dqn_loss_arr.append(np.mean(loss))
-            order_count += 1
-            if order_count >= 1:
-                # After every 20 processes update the target network and reset the order count
-                dqn_agent.train_target()
-                order_count = 0
-                # Record the information for use again in the next training example
+        order_count += 1
+        if order_count >= 1:
+            # After every 20 processes update the target network and reset the order count
+            dqn_agent.train_target()
+            order_count = 0
+            # Record the information for use again in the next training example
                 
         mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
@@ -321,10 +322,9 @@ while my_sim.env.now < sim_time:
         reward_queue = [config.gamma*x + reward for x in reward_queue]
         reward_episode = reward_queue.pop(0)
         reward_queue.append(0.)
-            
         if step_counter > config.episode_length:
             replay_buffer.put((state_episode, reward_episode))
-            if step_counter > config.episode_length+config.batch_size: # and (step_counter % config.predictron_update_steps) == 0:
+            if step_counter > config.episode_length+config.batch_size and my_sim.order_completed: # and (step_counter % config.predictron_update_steps) == 0:
                 
                 data = np.array(replay_buffer.get(config.batch_size))
                 states = np.array([np.array(x) for x in data[:,0]])
