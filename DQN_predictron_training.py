@@ -25,7 +25,7 @@ parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path 
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='D:/mypath/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save models and log files in")
 args = parser.parse_args()
 
