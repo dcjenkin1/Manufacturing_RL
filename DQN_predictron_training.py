@@ -34,7 +34,7 @@ recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 
 
-model_dir = args.save_dir+'models/'+str(id)+'/'
+model_dir = args.save_dir+'models/srs_'+str(args.state_rep_size)+'/'+str(id)+'/'
 pretrained_dqn_model_dir = args.dqn_model_dir
 predictron_model_dir = model_dir+'Predictron_'+args.predictron_type+'_srs_'+str(args.state_rep_size)+'.h5'
 dqn_model_dir = model_dir+'DQN_'+args.predictron_type+'_srs_'+str(args.state_rep_size)+'.h5'
@@ -44,7 +44,7 @@ if not os.path.exists(model_dir):
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+num_seq_steps = 40
 
 class Config_predictron():
     def __init__(self):
@@ -169,6 +169,35 @@ machine_dict.update({'DUV008': 'DUV 193'})
 machine_dict.update({'ASHER009': 'ASH IM'})
 machine_dict.update({'ASHER0010': 'ASH IM'})
 machine_dict.update({'ASHER0011': 'ASH IM'})
+machine_dict.update({'BLUEM-6': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-7': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-8': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-9': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-10': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-11': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-12': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-13': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-14': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-15': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-16': 'BLUEMOVEN'})
+machine_dict.update({'Z660-14': 'Z66013'})
+machine_dict.update({'Z660-15': 'Z66013'})
+machine_dict.update({'Z660-16': 'Z66013'})
+machine_dict.update({'Z660-17': 'Z66013'})
+machine_dict.update({'Z660-18': 'Z66013'})
+machine_dict.update({'INS-3006n1': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'INS-3006n1': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'INS-3006n3': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'SST-8': 'HOTSST'})
+machine_dict.update({'SST-9': 'HOTSST'})
+machine_dict.update({'SST-10': 'HOTSST'})
+machine_dict.update({'INS-3012n1': 'LEICA PHOTO'})
+machine_dict.update({'WRKBAKE-02n1': 'WRINKLE BAKE'})
+machine_dict.update({'INS-3015n1': 'LEICA ETCH'})
+machine_dict.update({'EMERALD-3n1': 'EMERALD'})
+machine_dict.update({'EMERALD-3n2': 'EMERALD'})
+machine_dict.update({'BSETGAPCP2n1': 'GAPETCH'})
+machine_dict.update({'BSETGAPCP2n2': 'GAPETCH'})
 
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
@@ -190,7 +219,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:1500}
+    d = {ht:1900}
     lead_dict.update(d)
 
     w = {ht:1}
