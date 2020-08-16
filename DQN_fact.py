@@ -27,8 +27,8 @@ num_seq_steps = 40
 
 # recipes = pd.read_csv('./ncloud/recipes.csv')
 # machines = pd.read_csv('./ncloud/machines.csv')
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('~/mypath/recipes.csv')
+machines = pd.read_csv('~/mypath/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
