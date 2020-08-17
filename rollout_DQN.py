@@ -289,5 +289,10 @@ plt.title("The sum of all rewards up until each time step")
 plt.show()
 
 
+data_dir = os.path.dirname(args.model_dir)+'/data/'
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+
+np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
 
 
