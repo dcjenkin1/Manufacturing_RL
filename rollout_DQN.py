@@ -35,7 +35,7 @@ model_dir = args.model_dir
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+num_seq_steps = 40
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -234,7 +234,7 @@ def choose_action(state, allowed_actions, action_space):
     temp = []
     for item in allowed_actions:
         temp.append(pred[action_space.index(item)])
-    print(" ********************* CHOOSING A PREDICTED ACTION **********************")
+    # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
     return allowed_actions[np.argmax(temp)]
 
 
@@ -265,16 +265,16 @@ while my_sim.env.now < sim_time:
                         action[1])
 
     my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:'+ str(my_sim.step_reward))
+    # print('Step Reward:'+ str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
