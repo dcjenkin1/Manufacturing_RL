@@ -50,7 +50,6 @@ class Machine(object):
     def time_to_failure(self):
         """Return time until next failure for a machine."""
         x = random.expovariate(1/self.break_mean)
-        print(x)
         return x#random.expovariate(1/self.break_mean)
 
     def time_to_repair(self):
