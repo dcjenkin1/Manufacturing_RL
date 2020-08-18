@@ -16,7 +16,7 @@ import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=3e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='DQN_model_5e5.h5', help="Path to DQN model")
 parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
@@ -257,7 +257,7 @@ state_size = len(state)
 
 
 order_count = 0
-
+step_count = 0
 while my_sim.env.now < sim_time:
     action = choose_action(state, allowed_actions, action_space)
 
@@ -278,10 +278,14 @@ while my_sim.env.now < sim_time:
     # record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
-
+    
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    
+    step_counter += 1
+    if step_counter % 1000 == 0 and step_counter > 1:
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 
 # Total wafers produced
