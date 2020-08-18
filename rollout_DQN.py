@@ -16,10 +16,9 @@ import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=3e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='DQN_model_5e5.h5', help="Path to DQN model")
-parser.add_argument("--save_dir", default='./', help="Path save log files in")
 parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
 args = parser.parse_args()
 
@@ -206,7 +205,7 @@ def choose_action(state, allowed_actions, action_space):
     temp = []
     for item in allowed_actions:
         temp.append(pred[action_space.index(item)])
-    print(" ********************* CHOOSING A PREDICTED ACTION **********************")
+    # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
     return allowed_actions[np.argmax(temp)]
 
 
@@ -229,7 +228,7 @@ state_size = len(state)
 
 
 order_count = 0
-
+step_count = 0
 while my_sim.env.now < sim_time:
     action = choose_action(state, allowed_actions, action_space)
 
@@ -237,16 +236,16 @@ while my_sim.env.now < sim_time:
                         action[1])
 
     my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:'+ str(my_sim.step_reward))
+    # print('Step Reward:'+ str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
@@ -254,6 +253,11 @@ while my_sim.env.now < sim_time:
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    
+    step_counter += 1
+    if step_counter % 1000 == 0 and step_counter > 1:
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+        print("Mean lateness: ", np.mean(my_sim.lateness))
 
 
 # Total wafers produced
@@ -295,5 +299,3 @@ if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
 np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
-
-
