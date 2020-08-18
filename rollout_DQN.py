@@ -257,7 +257,7 @@ state_size = len(state)
 
 
 order_count = 0
-step_count = 0
+step_counter = 0
 while my_sim.env.now < sim_time:
     action = choose_action(state, allowed_actions, action_space)
 
