@@ -35,9 +35,8 @@ class Machine(object):
         self.parts_made = 0
         self.break_mean = break_mean
         
-        self.random = None
         if seed is not None:
-            self.random = random.Random(seed)
+            random.seed(seed)
 
         if break_mean is not None:
             self.time_to_fail = self.time_to_failure()
@@ -50,17 +49,13 @@ class Machine(object):
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
-        if self.random is not None:
-            return self.random.expovariate(1/self.break_mean)
-        else:
-            return random.expovariate(1/self.break_mean)
+        x = random.expovariate(1/self.break_mean)
+        print(x)
+        return x#random.expovariate(1/self.break_mean)
 
     def time_to_repair(self):
         """Return time until repair for a machine."""
-        if self.random is not None:
-            return self.random.expovariate(1/self.repair_mean)
-        else:
-            return random.expovariate(1/self.repair_mean)
+        return random.expovariate(1/self.repair_mean)
 
     def break_machine(self):
         """Break the machine after break_time"""
