@@ -2,6 +2,7 @@ import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
 import math 
+import os
 # import matplotlib
 # import random
 # matplotlib.use('TkAgg')
