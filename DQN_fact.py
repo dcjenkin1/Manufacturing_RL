@@ -20,15 +20,15 @@ id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np
 args = parser.parse_args()
 s = args.save_dir
 
-sim_time = 1e5
+sim_time = 5e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 40
 
-recipes = pd.read_csv('./ncloud/recipes.csv')
-machines = pd.read_csv('./ncloud/machines.csv')
-# recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-# machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+# recipes = pd.read_csv('./ncloud/recipes.csv')
+# machines = pd.read_csv('./ncloud/machines.csv')
+recipes = pd.read_csv('~/mypath/recipes.csv')
+machines = pd.read_csv('~/mypath/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -343,7 +343,7 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, stati
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(save_dir+'util'+id+'.csv')
+df.to_csv(args.save_dir+'util'+id+'.csv')
 # print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
 #   f.write('\n'.join(my_sim.lateness))

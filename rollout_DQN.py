@@ -2,6 +2,7 @@ import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
 import math 
+import os
 # import matplotlib
 # import random
 # matplotlib.use('TkAgg')
@@ -15,10 +16,9 @@ import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=3e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='DQN_model_5e5.h5', help="Path to DQN model")
-parser.add_argument("--save_dir", default='./', help="Path save log files in")
 parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
 args = parser.parse_args()
 
@@ -35,7 +35,7 @@ model_dir = args.model_dir
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+num_seq_steps = 40
 
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
@@ -133,6 +133,35 @@ machine_dict.update({'DUV008': 'DUV 193'})
 machine_dict.update({'ASHER009': 'ASH IM'})
 machine_dict.update({'ASHER0010': 'ASH IM'})
 machine_dict.update({'ASHER0011': 'ASH IM'})
+machine_dict.update({'BLUEM-6': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-7': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-8': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-9': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-10': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-11': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-12': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-13': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-14': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-15': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-16': 'BLUEMOVEN'})
+machine_dict.update({'Z660-14': 'Z66013'})
+machine_dict.update({'Z660-15': 'Z66013'})
+machine_dict.update({'Z660-16': 'Z66013'})
+machine_dict.update({'Z660-17': 'Z66013'})
+machine_dict.update({'Z660-18': 'Z66013'})
+machine_dict.update({'INS-3006n1': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'INS-3006n1': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'INS-3006n3': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'SST-8': 'HOTSST'})
+machine_dict.update({'SST-9': 'HOTSST'})
+machine_dict.update({'SST-10': 'HOTSST'})
+machine_dict.update({'INS-3012n1': 'LEICA PHOTO'})
+machine_dict.update({'WRKBAKE-02n1': 'WRINKLE BAKE'})
+machine_dict.update({'INS-3015n1': 'LEICA ETCH'})
+machine_dict.update({'EMERALD-3n1': 'EMERALD'})
+machine_dict.update({'EMERALD-3n2': 'EMERALD'})
+machine_dict.update({'BSETGAPCP2n1': 'GAPETCH'})
+machine_dict.update({'BSETGAPCP2n2': 'GAPETCH'})
 
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
@@ -154,7 +183,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:1500}
+    d = {ht:1900}
     lead_dict.update(d)
 
     w = {ht:1}
@@ -205,7 +234,7 @@ def choose_action(state, allowed_actions, action_space):
     temp = []
     for item in allowed_actions:
         temp.append(pred[action_space.index(item)])
-    print(" ********************* CHOOSING A PREDICTED ACTION **********************")
+    # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
     return allowed_actions[np.argmax(temp)]
 
 
@@ -228,7 +257,7 @@ state_size = len(state)
 
 
 order_count = 0
-
+step_counter = 0
 while my_sim.env.now < sim_time:
     action = choose_action(state, allowed_actions, action_space)
 
@@ -236,23 +265,28 @@ while my_sim.env.now < sim_time:
                         action[1])
 
     my_sim.run_action(mach, wafer_choice)
-    print('Step Reward:'+ str(my_sim.step_reward))
+    # print('Step Reward:'+ str(my_sim.step_reward))
     # Record the machine, state, allowed actions and reward at the new time step
     next_mach = my_sim.next_machine
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    print(f"state dimension: {len(state)}")
-    print(f"next state dimension: {len(next_state)}")
-    print("action space dimension:", action_size)
+    # print(f"state dimension: {len(state)}")
+    # print(f"next state dimension: {len(next_state)}")
+    # print("action space dimension:", action_size)
     # record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
-
+    
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    
+    step_counter += 1
+    if step_counter % 1000 == 0 and step_counter > 1:
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+        print("Mean lateness: ", np.mean(my_sim.lateness))
 
 
 # Total wafers produced
@@ -289,5 +323,8 @@ plt.title("The sum of all rewards up until each time step")
 plt.show()
 
 
+data_dir = os.path.dirname(args.model_dir)+'/data/'
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
 
-
+np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
