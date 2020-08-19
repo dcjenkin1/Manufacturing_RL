@@ -17,7 +17,7 @@ from PDQN import PDQN, Replay_buffer
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=1e5, help="Simulation minutes")
+parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
 args = parser.parse_args()
