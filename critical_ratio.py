@@ -139,7 +139,7 @@ part_mix = {}
 
 
 for ht in head_types:
-    d = {ht:1500}
+    d = {ht:1900}
     lead_dict.update(d)
 
     w = {ht:1}

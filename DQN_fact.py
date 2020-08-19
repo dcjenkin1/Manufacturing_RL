@@ -20,15 +20,15 @@ id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np
 args = parser.parse_args()
 s = args.save_dir
 
-sim_time = 5e5
+sim_time = 1e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 num_seq_steps = 40
 
-# recipes = pd.read_csv('./ncloud/recipes.csv')
-# machines = pd.read_csv('./ncloud/machines.csv')
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('./ncloud/recipes.csv')
+machines = pd.read_csv('./ncloud/machines.csv')
+# recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
+# machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
