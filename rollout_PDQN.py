@@ -19,7 +19,7 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='PDQN_100000.0_full_32.h5', help="Path to DQN model")
-parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
+parser.add_argument("--seed", default=1, type=int, help="seed for random functions")
 args = parser.parse_args()
 
 
