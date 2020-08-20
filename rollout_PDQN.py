@@ -19,7 +19,7 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='PDQN_100000.0_full_32.h5', help="Path to DQN model")
-parser.add_argument("--seed", default=2, type=int, help="seed for random functions")
+parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
 args = parser.parse_args()
 
 
@@ -280,11 +280,13 @@ print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
-data_dir = os.path.dirname(args.model_dir)+'/data/'
+path,file=os.path.split(args.model_dir)
+data_dir = './'+path+'/data/'
+
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
-np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
+np.savetxt(data_dir+'wafer_lateness_'+file[:-3]+'_'+id+'.csv', np.array(my_sim.lateness), delimiter=',')
 
 
 # Plot the time taken to complete each wafer
