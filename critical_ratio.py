@@ -12,19 +12,21 @@ import argparse
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--s", default='./', help="path to save results")
-id = str(int(np.ceil(random.random()*10000)))
+parser.add_argument("--save_dir", default='./', help="Path save log files in")
 
 
 args = parser.parse_args()
-s = args.s
-print(s)
-sim_time = 3e4
+s = args.save_dir
+
+sim_time = 5e4
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
+num_seq_steps = 40
 
 recipes = pd.read_csv('./ncloud/recipes.csv')
 machines = pd.read_csv('./ncloud/machines.csv')
+# recipes = pd.read_csv('~/mypath/recipes.csv')
+# machines = pd.read_csv('~/mypath/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -34,14 +36,14 @@ for index, row in machines.iterrows():
     d = {row[0]:row[1]}
     machine_d.update(d)
 
-# Modifying the above list to match the stations from the two datasets 
+# Modifying the above list to match the stations from the two datasets
 a = machines.TOOLSET.unique()
 b = recipes.TOOLSET.unique()
 common_stations = (set(a) & set(b))
 ls = list(common_stations)
 
 # This dictionary has the correct set of stations
-modified_machine_dict = {k:v for k,v in machine_d.items() if v in ls}
+modified_machine_dict = {k: v for k, v in machine_d.items() if v in ls}
 
 # Removing uncommon rows from recipes
 for index, row in recipes.iterrows():
@@ -118,6 +120,35 @@ machine_dict.update({'DUV008': 'DUV 193'})
 machine_dict.update({'ASHER009': 'ASH IM'})
 machine_dict.update({'ASHER0010': 'ASH IM'})
 machine_dict.update({'ASHER0011': 'ASH IM'})
+machine_dict.update({'BLUEM-6': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-7': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-8': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-9': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-10': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-11': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-12': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-13': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-14': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-15': 'BLUEMOVEN'})
+machine_dict.update({'BLUEM-16': 'BLUEMOVEN'})
+machine_dict.update({'Z660-14': 'Z66013'})
+machine_dict.update({'Z660-15': 'Z66013'})
+machine_dict.update({'Z660-16': 'Z66013'})
+machine_dict.update({'Z660-17': 'Z66013'})
+machine_dict.update({'Z660-18': 'Z66013'})
+machine_dict.update({'INS-3006n1': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'INS-3006n1': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'INS-3006n3': 'SPOTCHECK LIFTOFF'})
+machine_dict.update({'SST-8': 'HOTSST'})
+machine_dict.update({'SST-9': 'HOTSST'})
+machine_dict.update({'SST-10': 'HOTSST'})
+machine_dict.update({'INS-3012n1': 'LEICA PHOTO'})
+machine_dict.update({'WRKBAKE-02n1': 'WRINKLE BAKE'})
+machine_dict.update({'INS-3015n1': 'LEICA ETCH'})
+machine_dict.update({'EMERALD-3n1': 'EMERALD'})
+machine_dict.update({'EMERALD-3n2': 'EMERALD'})
+machine_dict.update({'BSETGAPCP2n1': 'GAPETCH'})
+machine_dict.update({'BSETGAPCP2n2': 'GAPETCH'})
 
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
@@ -127,7 +158,7 @@ wafers_per_box = 4
 
 break_mean = 1e5
 
-repair_mean = 20
+repair_mean = 120
 
 n_part_mix = 30
 
@@ -230,6 +261,7 @@ action_space = list(chain.from_iterable(my_sim.station_HT_seq.values()))
 action_size = len(action_space)
 
 while my_sim.env.now < sim_time:
+    print(my_sim.env.now)
     wafer = choose_action(my_sim)
 
     my_sim.run_action(mach, wafer)
@@ -333,8 +365,8 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, stati
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(s+'util'+id+'.csv')
-print(id)
+df.to_csv(args.save_dir+'util'+id+'.csv')
+# print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
 #   f.write('\n'.join(my_sim.lateness))
 
@@ -345,12 +377,12 @@ plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
 plt.show()
 #
-# # Plot the time taken to complete each wafer
-# plt.plot(my_sim.cumulative_reward_list)
-# plt.xlabel("step")
-# plt.ylabel("Cumulative Reward")
-# plt.title("The sum of all rewards up until each time step")
-# plt.show()
+# Plot the time taken to complete each wafer
+plt.plot(my_sim.cumulative_reward_list)
+plt.xlabel("step")
+plt.ylabel("Cumulative Reward")
+plt.title("The sum of all rewards up until each time step")
+plt.show()
 
 
 
