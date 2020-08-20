@@ -308,6 +308,12 @@ print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
+data_dir = os.path.dirname(args.model_dir)+'/data/'
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+
+np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
+
 # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness, '.')
 plt.xlabel("Wafers")
@@ -323,8 +329,4 @@ plt.title("The sum of all rewards up until each time step")
 plt.show()
 
 
-data_dir = os.path.dirname(args.model_dir)+'/data/'
-if not os.path.exists(data_dir):
-    os.makedirs(data_dir)
 
-np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
