@@ -44,7 +44,6 @@ class Machine(object):
         self.repair_mean = repair_mean
         self.total_operational_time = 0
         self.takt_times = []
-        print(random.randint(1,1000))
             
 
     def time_to_failure(self):
