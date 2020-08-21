@@ -56,8 +56,11 @@ class Config_predictron():
         self.beta_1 = 0.9
         self.beta_2 = 0.999
         self.epsilon = 1e-8
+                
+        self.l2_weight=0.01
+        self.dropout_rate=0.2
         
-        self.epochs = 5000
+        
         self.batch_size = 128
         self.episode_length = 500
         self.burnin = 3e4

@@ -19,7 +19,7 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='PDQN_100000.0_full_32.h5', help="Path to DQN model")
-parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
+parser.add_argument("--seed", default=1, type=int, help="seed for random functions")
 args = parser.parse_args()
 
 
@@ -266,8 +266,8 @@ print("Total wafers produced:", len(my_sim.cycle_time))
 
 
 #Wafers of each head type
-print("### Wafers of each head type ###")
-print(my_sim.complete_wafer_dict)
+# print("### Wafers of each head type ###")
+# print(my_sim.complete_wafer_dict)
 #
 # # Plot the time taken to complete each wafer
 # plt.plot(my_sim.lateness)
@@ -276,7 +276,7 @@ print(my_sim.complete_wafer_dict)
 # plt.title("The amount of time each wafer was late (DQN)")
 # plt.show()
 
-print(my_sim.lateness)
+# print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
