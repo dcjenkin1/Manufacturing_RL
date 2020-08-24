@@ -312,11 +312,17 @@ print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
-data_dir = './'+os.path.dirname(args.model_dir)+'/data/'
+path,file=os.path.split(args.model_dir)
+data_dir = './'+path+'/data/'
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
 np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
+cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
+df = df.transpose()
+df.to_csv(data_dir+'util.csv')
 
 # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness, '.')
