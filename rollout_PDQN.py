@@ -280,6 +280,19 @@ print("Total wafers produced:", len(my_sim.cycle_time))
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
+operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
+mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
+mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
+             for station in my_sim.stations}
+# stdev_util = {station: np.std(mach_util)
+
+inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
+                                                    my_sim.arrival_times[station][1:])] for station in my_sim.stations}
+mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+
+
 path,file=os.path.split(args.model_dir)
 data_dir = './'+path+'/data/'
 if not os.path.exists(data_dir):
