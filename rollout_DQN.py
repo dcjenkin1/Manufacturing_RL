@@ -308,6 +308,31 @@ print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
+operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
+mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
+mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
+             for station in my_sim.stations}
+# stdev_util = {station: np.std(mach_util)
+
+inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
+                                                    my_sim.arrival_times[station][1:])] for station in my_sim.stations}
+mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
+coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+
+
+path,file=os.path.split(args.model_dir)
+data_dir = './'+path+'/data/'
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+
+np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')
+cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
+df = df.transpose()
+df.to_csv(data_dir+'util.csv')
+
 # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness, '.')
 plt.xlabel("Wafers")
@@ -323,8 +348,4 @@ plt.title("The sum of all rewards up until each time step")
 plt.show()
 
 
-data_dir = os.path.dirname(args.model_dir)+'/data/'
-if not os.path.exists(data_dir):
-    os.makedirs(data_dir)
 
-np.savetxt(data_dir+'wafer_lateness.csv', np.array(my_sim.lateness), delimiter=',')

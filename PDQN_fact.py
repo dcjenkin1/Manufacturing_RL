@@ -17,7 +17,7 @@ from PDQN import PDQN, Replay_buffer
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
 args = parser.parse_args()
@@ -29,6 +29,7 @@ recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 # predictron_model_dir = args.predictron_model_dir
 
+model_dir = args.save_dir+'models/PDN/srs_'+str(args.state_rep_size)+'/'+str(id)+'/'
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
@@ -38,7 +39,6 @@ num_seq_steps = 40
 
 class Config_predictron():
     def __init__(self):
-        self.train_dir = './ckpts/predictron_train'
         # self.num_gpus = 1
         
         # adam optimizer:
@@ -50,7 +50,9 @@ class Config_predictron():
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.999
         
-        self.epochs = 5000
+        self.l2_weight=0.01
+        self.dropout_rate=0.2
+        
         self.batch_size = 128
         self.episode_length = 500
         self.burnin = 3e4
@@ -368,7 +370,7 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save('./PDQN_' + str(sim_time) + '_full_' + str(args.state_rep_size) + '.h5')
+model.save(model_dir+'PDN_' + str(args.state_rep_size) + str(sim_time) + '_' + '.h5')
 
 
 plt.figure()

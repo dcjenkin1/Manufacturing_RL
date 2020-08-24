@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from keras.regularizers import l2
 
 
 ########################################################################################################################################
@@ -33,6 +34,8 @@ class PDQN:
         self.epsilon = config.epsilon
         self.epsilon_min = config.epsilon_min
         self.epsilon_decay = config.epsilon_decay
+        self.l2_weight = config.l2_weight
+        self.dropout_rate = config.dropout_rate
         self.model = None
         self.state_rep_size = config.state_rep_size
       
@@ -85,15 +88,16 @@ class PDQN:
 
         obs = keras.Input(shape=(self.state_size))
         # f_layer1 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(obs) # Convolution for spatially correlated inputs
-        f_layer1 = layers.Dense(self.state_rep_size, activation='relu')(obs) # conv 3x3 stride 1 if spacial correlation in obs
+        f_layer1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(obs) # conv 3x3 stride 1 if spacial correlation in obs
         f_bn1 = layers.BatchNormalization(axis=1)(f_layer1)
+        f_bn1 = layers.Dropout(self.dropout_rate)(f_bn1)
         # f_layer2 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(f_bn1) # Convolution for spatially correlated inputs
-        f_layer2 = layers.Dense(self.state_rep_size, activation='relu')(f_bn1) # conv 3x3 stride 1 if spacial correlation in obs
+        f_layer2 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(f_bn1) # conv 3x3 stride 1 if spacial correlation in obs
         state = layers.BatchNormalization(axis=1,name='f')(f_layer2)
         
-        adv_layer1 = layers.Dense(self.state_rep_size, activation='relu')(state) 
+        adv_layer1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(state) 
         adv_bn1 = layers.BatchNormalization(axis=1)(adv_layer1)
-        advantage = layers.Dense(self.action_size, activation='relu')(adv_bn1) 
+        advantage = layers.Dense(self.action_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(adv_bn1) 
         self.advantages = layers.Subtract()([advantage, keras.backend.mean(advantage, keepdims=True)])
         
         rewards_arr = []
@@ -160,37 +164,40 @@ class PDQN:
     def core(self, state):        
         # State_next
         # net_conv1 = layers.Conv2D(32, [3,3], activation='relu')(state) # Convolution for spatially correlated inputs
-        net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(state)
+        net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(state)
         net_bn1 = layers.BatchNormalization(axis=1)(net_fc1)
+        net_bn1 = layers.Dropout(self.dropout_rate)(net_bn1)
         
         # net_conv2 = layers.Conv2D(32, [3,3], activation='relu')(net_bn1)
-        net_fc2 = layers.Dense(self.state_rep_size, activation='relu')(net_bn1)
+        net_fc2 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_bn1)
         net_bn2 = layers.BatchNormalization(axis=1)(net_fc2)
+        net_bn2 = layers.Dropout(self.dropout_rate)(net_bn2)
+        
         # net_conv3 = layers.Conv2D(32, [3,3], activation='relu')(net_bn2)
-        net_fc3 = layers.Dense(self.state_rep_size, activation='relu')(net_bn2)
+        net_fc3 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_bn2)
         net_out = layers.BatchNormalization(axis=1)(net_fc3)
         
         net_flatten = layers.Flatten()(net_bn1) # no effect when fc
         
         # Reward
-        reward_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(net_flatten)
+        reward_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         reward_net_bn1 = layers.BatchNormalization(axis=1)(reward_net_fc1)
-        reward_net_out = layers.Dense(1)(reward_net_bn1)
+        reward_net_out = layers.Dense(1, kernel_regularizer=l2(self.l2_weight))(reward_net_bn1)
         
         # Gamma
-        gamma_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(net_flatten)
+        gamma_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         gamma_net_bn1 = layers.BatchNormalization(axis=1)(gamma_net_fc1)
-        gamma_net_out = layers.Dense(1, activation='sigmoid')(gamma_net_bn1)
+        gamma_net_out = layers.Dense(1, activation='sigmoid', kernel_regularizer=l2(self.l2_weight))(gamma_net_bn1)
         
         # Lambda
-        lambda_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(net_flatten)
+        lambda_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         lambda_net_bn1 = layers.BatchNormalization(axis=1)(lambda_net_fc1)
-        lambda_net_out = layers.Dense(1, activation='sigmoid')(lambda_net_bn1)
+        lambda_net_out = layers.Dense(1, activation='sigmoid', kernel_regularizer=l2(self.l2_weight))(lambda_net_bn1)
         
         # Value
-        value_net_fc1 = layers.Dense(self.state_rep_size, activation='relu')(layers.Flatten()(state))
+        value_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(layers.Flatten()(state))
         value_net_bn1 = layers.BatchNormalization(axis=1)(value_net_fc1)
-        value_net_out = layers.Dense(1)(value_net_bn1)
+        value_net_out = layers.Dense(1, kernel_regularizer=l2(self.l2_weight))(value_net_bn1)
     
         return net_out, reward_net_out, gamma_net_out, lambda_net_out, value_net_out
     
