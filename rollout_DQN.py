@@ -308,7 +308,7 @@ print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
-data_dir = os.path.dirname(args.model_dir)+'/data/'
+data_dir = './'+os.path.dirname(args.model_dir)+'/data/'
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
