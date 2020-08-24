@@ -29,6 +29,7 @@ recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
 machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 # predictron_model_dir = args.predictron_model_dir
 
+model_dir = args.save_dir+'models/PDN/srs_'+str(args.state_rep_size)+'/'+str(id)+'/'
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
@@ -38,7 +39,6 @@ num_seq_steps = 20
 
 class Config_predictron():
     def __init__(self):
-        self.train_dir = './ckpts/predictron_train'
         # self.num_gpus = 1
         
         # adam optimizer:
@@ -339,7 +339,7 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save('./PDQN_' + str(sim_time) + '_full_' + str(args.state_rep_size) + '.h5')
+model.save(model_dir+'PDN_' + str(args.state_rep_size) + str(sim_time) + '_' + '.h5')
 
 
 plt.figure()
