@@ -9,6 +9,7 @@ from threading import Thread
 from queue import Queue
 
 num_seeds=10
+num_workers = 33
 
 DQN_dir_list = ("DQN_model_5e5.h5",\
                 "data/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
@@ -56,7 +57,7 @@ def worker():
         q.task_done()
 
 q = Queue()
-for i in DQN_dir_list+PDN_dir_list:
+for i in range(num_workers):
     t = Thread(target=worker)
     t.setDaemon(True)
     t.start()
