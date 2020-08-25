@@ -56,7 +56,7 @@ def worker():
         q.task_done()
 
 q = Queue()
-for i in DQN_dir_list#+PDN_dir_list:
+for i in DQN_dir_list:#+PDN_dir_list:
     t = Thread(target=worker)
     t.setDaemon(True)
     t.start()
