@@ -19,7 +19,7 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='PDQN_100000.0_full_32.h5', help="Path to DQN model")
-parser.add_argument("--seed", default=1, type=int, help="seed for random functions")
+parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
 args = parser.parse_args()
 
 
@@ -232,7 +232,6 @@ model = load_model(model_dir)
 def choose_action(state, allowed_actions, action_space):
     state = np.array(state).reshape(1, state_size)
     pred = model.predict(state)[1]
-    
     pred = sum(pred.tolist(), [])
     temp = []
     for item in allowed_actions:
@@ -244,7 +243,7 @@ def choose_action(state, allowed_actions, action_space):
 
 
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, seed=seed)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean=break_mean, repair_mean=repair_mean, seed=seed)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -312,10 +311,26 @@ print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print(np.mean(my_sim.lateness[-10000:]))
 
+# utilization
 operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
+# mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+# std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+#
+# mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+#                            station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
 # stdev_util = {station: np.std(mach_util)
 
 inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
@@ -323,10 +338,11 @@ inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_
 mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
-
+machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
+                        my_sim.stations}
 
 path,file=os.path.split(args.model_dir)
-data_dir = './'+path+'/data/'
+data_dir = './'+path+'/data/seed_'+seed+'/'+str(id)+'/'
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 

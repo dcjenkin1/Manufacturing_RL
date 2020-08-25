@@ -11,6 +11,7 @@ import json
 import queue
 import argparse
 import datetime
+import os
 
 from PDQN import PDQN, Replay_buffer
 
@@ -19,7 +20,7 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
-parser.add_argument("--save_dir", default='./', help="Path save log files in")
+parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
@@ -30,6 +31,8 @@ machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
 # predictron_model_dir = args.predictron_model_dir
 
 model_dir = args.save_dir+'models/PDN/srs_'+str(args.state_rep_size)+'/'+str(id)+'/'
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
 
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
@@ -191,7 +194,7 @@ machine_dict.update({'EMERALD-3n2': 'EMERALD'})
 machine_dict.update({'BSETGAPCP2n1': 'GAPETCH'})
 machine_dict.update({'BSETGAPCP2n2': 'GAPETCH'})
 
-print(len(machine_dict))
+# print(len(machine_dict))
 # recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
 # recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
 recipes = recipe_dict
@@ -370,7 +373,7 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save(model_dir+'PDN_' + str(args.state_rep_size) + str(sim_time) + '_' + '.h5')
+model.save(model_dir+'PDN_' + str(args.state_rep_size) + '_' + str(int(sim_time)) + '.h5')
 
 
 plt.figure()
@@ -435,6 +438,21 @@ operational_times = {mach: mach.total_operational_time for mach in my_sim.machin
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
+# mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+# std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+#
+# mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+#                            station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
 # stdev_util = {station: np.std(mach_util)
 
 inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
@@ -442,7 +460,8 @@ inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_
 mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
-
+machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
+                        my_sim.stations}
 # print(operational_times)
 # print(mean_util)
 # # print(stdev_util)
