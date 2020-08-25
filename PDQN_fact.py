@@ -20,6 +20,7 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
+parser.add_argument("--dropout", default=False, type=bool, help="Use dropout and regression")
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
@@ -51,6 +52,7 @@ class Config_predictron():
         self.epsilon_decay = 0.999
 
         self.l2_weight=0.01
+        self.dropout=args.dropout
         self.dropout_rate=0.2
 
         self.batch_size = 128
@@ -339,7 +341,10 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save(model_dir+'PDN_' + str(args.state_rep_size) + str(sim_time) + '_' + '.h5')
+if args.dropout:
+    model.save(model_dir+'PDN_' + str(args.state_rep_size) + '_' + str(sim_time) + '_dropout' + '.h5')
+else:
+    model.save(model_dir+'PDN_' + str(args.state_rep_size) + '_' + str(sim_time) + '.h5')
 
 
 plt.figure()
@@ -404,6 +409,21 @@ operational_times = {mach: mach.total_operational_time for mach in my_sim.machin
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
+# mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+# std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+#
+# mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+#                            station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
 # stdev_util = {station: np.std(mach_util)
 
 inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
@@ -411,6 +431,8 @@ inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_
 mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
+machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
+                        my_sim.stations}
 
 # print(operational_times)
 # print(mean_util)
