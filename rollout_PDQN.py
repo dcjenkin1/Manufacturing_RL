@@ -232,11 +232,7 @@ model = load_model(model_dir)
 def choose_action(state, allowed_actions, action_space):
     state = np.array(state).reshape(1, state_size)
     pred = model.predict(state)[1]
-    
-    pred = model.predict(state)[1]
-    print(pred)
     pred = sum(pred.tolist(), [])
-    print(pred)
     temp = []
     for item in allowed_actions:
         temp.append(pred[0][action_space.index(item)])
