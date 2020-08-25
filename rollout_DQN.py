@@ -241,7 +241,7 @@ def choose_action(state, allowed_actions, action_space):
 
 
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, seed=seed)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean=break_mean, repair_mean=repair_mean, seed=seed)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
