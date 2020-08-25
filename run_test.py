@@ -66,9 +66,9 @@ for seed in range(num_seeds):
         item = "python rollout_DQN.py --model_dir="+item+" --seed="+str(seed)
         print(item)
         q.put(item)
-    for item_ in PDN_dir_list:
-        item = "python rollout_PDQN.py --model_dir="+item_+" --seed="+str(seed)
-        print(item)
-        q.put(item)
+    # for item_ in PDN_dir_list:
+    #     item = "python rollout_PDQN.py --model_dir="+item_+" --seed="+str(seed)
+    #     print(item)
+    #     q.put(item)
         
 q.join()
