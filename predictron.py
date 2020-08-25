@@ -26,8 +26,12 @@ class Predictron:
         self.beta_1 = config.beta_1
         self.beta_2 = config.beta_2
         self.epsilon = config.epsilon
-        self.l2_weight = config.l2_weight
-        self.dropout_rate = config.dropout_rate
+        if config.dropout:
+            self.l2_weight = config.l2_weight
+            self.dropout_rate = config.dropout_rate
+        else:
+            self.l2_weight = 0.
+            self.dropout_rate = 0.
         self.model = None
         self.state_rep_size = config.state_rep_size
       
