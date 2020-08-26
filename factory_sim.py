@@ -70,7 +70,7 @@ class Machine(object):
         # This function defines a process where a part of head type HT and sequence step seq is processed on the machine
 
         # get the amount of time it takes for the operation to run
-        proc_t = sim_inst.get_proc_time(wafer.HT, wafer.seq, wafer.number_wafers)
+        proc_t = sim_inst.get_proc_time(wafer.HT, wafer.seq)
 
         done_in = proc_t
 
@@ -259,7 +259,7 @@ class FactorySim(object):
             for seq, step in enumerate(self.recipes[HT]):
                 self.ht_seq_wait[(HT, seq)] = []
 
-    def get_proc_time(self, ht, seq, num_waf):
+    def get_proc_time(self, ht, seq):
         proc_step = self.recipes[ht][seq]
         # A = proc_step[1]
         # B = proc_step[2]
@@ -276,17 +276,17 @@ class FactorySim(object):
         #     proc_t += unload
         return proc_step[1]
 
-    def get_rem_shop_time(self, ht, seq, num_waf):
+    def get_rem_shop_time(self, ht, seq):
         steps = self.recipes[ht]
         n_steps = len(steps)
 
         rem_shop_t = 0
         if self.wait_times is not None:
             for i in range(seq, n_steps):
-                rem_shop_t = rem_shop_t + self.get_proc_time(ht, i, num_waf) + self.wait_times[str((ht, seq))]
+                rem_shop_t = rem_shop_t + self.get_proc_time(ht, i) + self.wait_times[str((ht, seq))]
         else:
             for i in range(seq, n_steps):
-                rem_shop_t = rem_shop_t + self.get_proc_time(ht, i, num_waf)
+                rem_shop_t = rem_shop_t + self.get_proc_time(ht, i)
 
         # assert(rem_shop_t>0)
         return rem_shop_t

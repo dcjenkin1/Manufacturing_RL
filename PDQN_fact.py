@@ -273,10 +273,6 @@ def get_state(sim):
     # print(len(state_rep))
     return state_rep
 
-# break_repair_WIP['break_mean'] = 1e5
-# break_repair_WIP['repair_mean'] = 120
-# break_repair_WIP['n_batch_wip'] = 30
-
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
                              break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'])

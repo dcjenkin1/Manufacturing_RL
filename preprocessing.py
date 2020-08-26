@@ -181,9 +181,6 @@ with open('due_date_lead.json', 'w') as fp:
 
 with open('part_mix.json', 'w') as fp:
     json.dump(part_mix, fp)
-    
-with open('break_repair_wip.json', 'r') as f:
-    distros_dict = json.load(f)
 
 print(break_repair_WIP)
 print(distros_dict)
