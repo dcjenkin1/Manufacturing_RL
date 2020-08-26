@@ -4,11 +4,12 @@ import json
 import math
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--factory_file_dir", default='./ncloud/', help="Path to factory setup files")
+parser.add_argument("--load_file_dir", default='~/Documents/workspace/WDsim/data/', help="Path to load factory setup csv files")
+parser.add_argument("--save_file_dir", default='./b40_setup/', help="Path to save factory setup json files")
 args = parser.parse_args()
 
-recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
-machines = pd.read_csv(args.factory_file_dir + 'machines.csv')
+recipes = pd.read_csv(args.load_file_dir + 'recipes.csv')
+machines = pd.read_csv(args.load_file_dir + 'machines.csv')
 
 num_seq_steps = 40
 num_waf = 4
@@ -167,23 +168,20 @@ break_repair_WIP['break_mean'] = 1e5
 break_repair_WIP['repair_mean'] = 120
 break_repair_WIP['n_batch_wip'] = 30
 
-with open('break_repair_wip.json', 'w') as fp:
+with open(args.save_file_dir+'break_repair_wip.json', 'w') as fp:
     json.dump(break_repair_WIP, fp)
 
-with open('machines.json', 'w') as fp:
+with open(args.save_file_dir+'machines.json', 'w') as fp:
     json.dump(machine_dict, fp)
 
-with open('recipes.json', 'w') as fp:
+with open(args.save_file_dir+'recipes.json', 'w') as fp:
     json.dump(recipes, fp)
 
-with open('due_date_lead.json', 'w') as fp:
+with open(args.save_file_dir+'due_date_lead.json', 'w') as fp:
     json.dump(lead_dict, fp)
 
-with open('part_mix.json', 'w') as fp:
+with open(args.save_file_dir+'part_mix.json', 'w') as fp:
     json.dump(part_mix, fp)
-
-print(break_repair_WIP)
-print(distros_dict)
 
 
 
