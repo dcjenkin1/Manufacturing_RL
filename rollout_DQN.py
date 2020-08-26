@@ -342,7 +342,7 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 path,file=os.path.split(args.model_dir)
 if path == '':
     path = './'
-data_dir = path+'/data/seed_'+seed+'/'+str(id)+'/'
+data_dir = os.path.join(path,'data/seed_'+str(seed)+'/'+str(id)+'/')
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
