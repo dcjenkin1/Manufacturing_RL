@@ -12,13 +12,13 @@ import argparse
 import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--s", default='./', help="path to save results")
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
-
+args = parser.parse_args()
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
 
-args = parser.parse_args()
-s = args.save_dir
+
+
+model_dir = args.save_dir+'models/DQN/'+str(id)+'/'
 
 sim_time = 5e5
 WEEK = 24*7
@@ -247,7 +247,7 @@ while my_sim.env.now < sim_time:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 # Save the trained DQN policy network
-dqn_agent.save_model("DQN_model_60rm.h5")
+dqn_agent.save_model(model_dir+"DQN_model_"+args.sim_time+".h5")
 
 
 #Wafers of each head type
@@ -314,7 +314,7 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, stati
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(save_dir+'util'+id+'.csv')
+df.to_csv(model_dir+'util'+id+'.csv')
 # print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
 #   f.write('\n'.join(my_sim.lateness))
