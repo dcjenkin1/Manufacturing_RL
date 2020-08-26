@@ -9,8 +9,10 @@ from threading import Thread
 from queue import Queue
 
 num_seeds=10
+num_workers = 33
 
-DQN_dir_list = ("data/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
+DQN_dir_list = ("DQN_model_5e5.h5",\
+                "data/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
                 "data/models/srs_2/2020-08-14-15-05-06/DQN_complete_srs_2.h5",\
                 "data/models/srs_3/2020-08-14-22-43-16/DQN_complete_srs_3.h5",\
                 "data/models/srs_4/2020-08-14-15-05-21/DQN_complete_srs_4.h5",\
@@ -40,10 +42,10 @@ DQN_dir_list = ("data/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
                 "data/models/srs_256/2020-08-21-10-33-37/DQN_complete_srs_256.h5",) 
                 
 
-PDN_dir_list = ("PDQN_500000_full_16.h5",\
-                "PDQN_500000_full_32.h5",\
-                "PDQN_500000_full_128.h5",\
-                "PDQN_500000_full_256.h5",)
+PDN_dir_list = ("data/PDN/models/srs_16/PDQN_500000_full_16.h5",\
+                "data/PDN/models/srs_32/PDQN_500000_full_32.h5",\
+                "data/PDN/models/srs_128/PDQN_500000_full_128.h5",\
+                "data/PDN/models/srs_256/PDQN_500000_full_256.h5",)
 
 def worker():
     while True:
@@ -55,7 +57,7 @@ def worker():
         q.task_done()
 
 q = Queue()
-for i in DQN_dir_list+PDN_dir_list:
+for i in range(num_workers):
     t = Thread(target=worker)
     t.setDaemon(True)
     t.start()
