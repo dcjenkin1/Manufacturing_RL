@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='./b40_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
 args = parser.parse_args()
 
@@ -29,19 +29,19 @@ sim_time = args.sim_time
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 
-with open('break_repair_wip.json', 'r') as fp:
+with open(args.factory_file_dir+'break_repair_wip.json', 'r') as fp:
     break_repair_WIP = json.load(fp)
 
-with open('machines.json', 'r') as fp:
+with open(args.factory_file_dir+'machines.json', 'r') as fp:
     machine_dict = json.load(fp)
 
-with open('recipes.json', 'r') as fp:
+with open(args.factory_file_dir+'recipes.json', 'r') as fp:
     recipes = json.load(fp)
 
-with open('due_date_lead.json', 'r') as fp:
+with open(args.factory_file_dir+'due_date_lead.json', 'r') as fp:
     lead_dict = json.load(fp)
 
-with open('part_mix.json', 'r') as fp:
+with open(args.factory_file_dir+'part_mix.json', 'r') as fp:
     part_mix = json.load(fp)
 
 ####################################################
@@ -173,10 +173,10 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 
 print(np.mean(my_sim.lateness[-1000:]))
 
-cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
-df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
-df = df.transpose()
+# cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
+# df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+#                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
+# df = df.transpose()
 # df.to_csv(args.save_dir+'util'+id+'.csv')
 
 # print(df)
