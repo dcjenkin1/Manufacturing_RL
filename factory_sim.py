@@ -48,11 +48,13 @@ class Machine(object):
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
-        return random.expovariate(1/self.break_mean)
+        x = random.expovariate(1/self.break_mean)
+        return x
 
     def time_to_repair(self):
         """Return time until repair for a machine."""
-        return random.expovariate(1/self.repair_mean)
+        x = random.expovariate(1/self.repair_mean)
+        return x
 
     def break_machine(self):
         """Break the machine after break_time"""
@@ -211,7 +213,7 @@ class FactorySim(object):
         self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean) for mach in self.machine_dict.items()]
 
         # create a list of all the station names
-        self.stations = list(set(list(self.machine_dict.values())))
+        self.stations = sorted(list(set(list(self.machine_dict.values()))))
 
         self.arrival_times = {station: [] for station in self.stations}
 
@@ -304,7 +306,6 @@ class FactorySim(object):
                 week_number = int(total_processing_time / (7*24*60))
                 self.due_wafers[ht][week_number] += self.num_wafers
                 self.wafer_index += 1
-
         for station in self.stations:
             if len(self.queue_lists[station])>0:
                 for machine in self.station_machines[station]:
