@@ -42,10 +42,10 @@ DQN_dir_list = ("DQN_model_5e5.h5",\
                 "data/models/srs_256/2020-08-21-10-33-37/DQN_complete_srs_256.h5",) 
                 
 
-PDN_dir_list = ("PDQN_500000_full_16.h5",\
-                "PDQN_500000_full_32.h5",\
-                "PDQN_500000_full_128.h5",\
-                "PDQN_500000_full_256.h5",)
+PDN_dir_list = ("data/PDN/models/srs_16/PDQN_500000_full_16.h5",\
+                "data/PDN/models/srs_32/PDQN_500000_full_32.h5",\
+                "data/PDN/models/srs_128/PDQN_500000_full_128.h5",\
+                "data/PDN/models/srs_256/PDQN_500000_full_256.h5",)
 
 def worker():
     while True:
