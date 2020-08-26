@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 seed = args.seed
 
-id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
+id_ = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
 sim_time = args.sim_time
 recipes = pd.read_csv(args.factory_file_dir + 'recipes.csv')
@@ -344,7 +344,7 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 path,file=os.path.split(args.model_dir)
 if path == '':
     path = './'
-data_dir = os.path.join(path,'data/seed_'+str(seed)+'/'+str(id)+'/')
+data_dir = os.path.join(path,'data/seed_'+str(seed)+'/'+str(id_)+'/')
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
