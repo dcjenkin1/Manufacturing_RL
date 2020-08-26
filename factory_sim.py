@@ -10,11 +10,11 @@ import json
 ########## CREATING THE WAFER CLASS  ###############
 ####################################################
 class wafer_box(object):
-    def __init__(self, sim_inst, number_wafers, HT, wafer_index, lead_dict, seq=0):
+    def __init__(self, sim_inst, HT, wafer_index, lead_dict, seq=0):
         self.env = sim_inst.env
         self.name = f"w{wafer_index}"
         self.start_time = sim_inst.env.now
-        self.number_wafers = number_wafers
+        # self.number_wafers = number_wafers
         self.HT = HT
         self.seq = seq
         self.due_time = self.start_time + lead_dict[self.HT]
@@ -117,23 +117,23 @@ class Machine(object):
                     week_index = next((i for i, x in enumerate(sim_inst.due_wafers[wafer.HT]) if x), None)
 
                     # Subtract wafer,number_wafers wafers from the corresponding list element
-                    sim_inst.due_wafers[wafer.HT][week_index] -= wafer.number_wafers
+                    sim_inst.due_wafers[wafer.HT][week_index] -= 1
 
-                    if all((sum(sim_inst.due_wafers[ht]) <= (sim_inst.n_part_mix-1)*sim_inst.part_mix[ht]*
-                            sim_inst.num_wafers) for ht in sim_inst.recipes.keys()):
+                    if all((sum(sim_inst.due_wafers[ht]) <= (sim_inst.n_part_mix-1)*sim_inst.part_mix[ht])
+                           for ht in sim_inst.recipes.keys()):
                         sim_inst.order_completed = True
                         sim_inst.t_between_completions.append(sim_inst.env.now-sim_inst.order_complete_time)
                         sim_inst.order_complete_time = sim_inst.env.now
                         for ht in sim_inst.recipes.keys():
                             for i in range(sim_inst.part_mix[ht]):
-                                new_wafer = wafer_box(sim_inst, sim_inst.num_wafers, ht, sim_inst.wafer_index,
+                                new_wafer = wafer_box(sim_inst, ht, sim_inst.wafer_index,
                                                       sim_inst.lead_dict)
                                 sim_inst.queue_lists[sim_inst.recipes[ht][0][0]].append(new_wafer)
                                 sim_inst.n_HT_seq[ht][0] += 1
                                 lead_time = sim_inst.lead_dict[ht]
                                 total_processing_time = new_wafer.start_time + lead_time
                                 week_number = int(total_processing_time / (7 * 24 * 60))
-                                sim_inst.due_wafers[ht][week_number] += sim_inst.num_wafers
+                                sim_inst.due_wafers[ht][week_number] += 1
                                 sim_inst.wafer_index += 1
 
                 if self.break_mean is not None:
@@ -168,7 +168,7 @@ class Machine(object):
 ####################################################
 class FactorySim(object):
     #Initialize simpy environment and set the amount of time the simulation will run for
-    def __init__(self, sim_time, m_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, path_to_wait_times=None, break_mean=None,
+    def __init__(self, sim_time, m_dict, recipes, lead_dict, part_mix, n_part_mix, path_to_wait_times=None, break_mean=None,
                  repair_mean=None, seed=None):
         self.break_mean = break_mean
         self.repair_mean = repair_mean
@@ -179,7 +179,7 @@ class FactorySim(object):
         self.next_machine = None
         # self.dgr = dgr_dict
         self.lead_dict = lead_dict
-        self.num_wafers = wafers_per_box
+        # self.num_wafers = wafers_per_box
         self.part_mix = part_mix
         self.n_part_mix = n_part_mix
         # self.machine_failure = False
@@ -261,20 +261,20 @@ class FactorySim(object):
 
     def get_proc_time(self, ht, seq, num_waf):
         proc_step = self.recipes[ht][seq]
-        A = proc_step[1]
-        B = proc_step[2]
-        LS = proc_step[3]
-        include_load = proc_step[4]
-        load = proc_step[5]
-        include_unload = proc_step[6]
-        unload = proc_step[7]
-        proc_t = A * num_waf + B * math.ceil(num_waf/LS)
-
-        if include_load == -1:
-            proc_t += load
-        if include_unload == -1:
-            proc_t += unload
-        return proc_t
+        # A = proc_step[1]
+        # B = proc_step[2]
+        # LS = proc_step[3]
+        # include_load = proc_step[4]
+        # load = proc_step[5]
+        # include_unload = proc_step[6]
+        # unload = proc_step[7]
+        # proc_t = A * num_waf + B * math.ceil(num_waf/LS)
+        #
+        # if include_load == -1:
+        #     proc_t += load
+        # if include_unload == -1:
+        #     proc_t += unload
+        return proc_step[1]
 
     def get_rem_shop_time(self, ht, seq, num_waf):
         steps = self.recipes[ht]
@@ -296,13 +296,13 @@ class FactorySim(object):
     def start(self):
         for ht in self.part_mix.keys():
             for i in range(self.n_part_mix*self.part_mix[ht]):
-                new_wafer = wafer_box(self, self.num_wafers, ht, self.wafer_index, self.lead_dict)
+                new_wafer = wafer_box(self, ht, self.wafer_index, self.lead_dict)
                 self.queue_lists[self.recipes[ht][0][0]].append(new_wafer)
                 self.n_HT_seq[ht][0] += 1
                 lead_time = self.lead_dict[ht]
                 total_processing_time = new_wafer.start_time + lead_time
                 week_number = int(total_processing_time / (7*24*60))
-                self.due_wafers[ht][week_number] += self.num_wafers
+                self.due_wafers[ht][week_number] += 1
                 self.wafer_index += 1
 
         for station in self.stations:
