@@ -62,7 +62,6 @@ for model_dir in DQN_dir_list:#+PDN_dir_list
     
     
     for csv_file_path in all_csv_files:
-        print(csv_file_path)
         seed = re.findall(r'^\D*(\d+)', csv_file_path.partition('seed_')[-1])[0]
         with open(csv_file_path) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
