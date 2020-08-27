@@ -53,7 +53,7 @@ PDN_dir_list = ("data/PDN/models/srs_16/PDQN_500000_full_16.h5",\
 EXT = "*wafer_lateness.csv"
 
 
-for model_dir in DQN_dir_list:#+PDN_dir_list
+for model_dir in DQN_dir_list+PDN_dir_list:
     PATH,model_name=os.path.split(model_dir)
 
     all_csv_files = [file
