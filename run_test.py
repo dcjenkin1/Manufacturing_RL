@@ -11,7 +11,7 @@ from queue import Queue
 num_seeds=10
 num_workers = 33
 
-DQN_dir_list = ("DQN_model_5e5.h5",\
+DQN_dir_list = ("data/models/dqn/DQN_model_5e5.h5",\
                 "data/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
                 "data/models/srs_2/2020-08-14-15-05-06/DQN_complete_srs_2.h5",\
                 "data/models/srs_3/2020-08-14-22-43-16/DQN_complete_srs_3.h5",\
