@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Aug 25 12:03:15 2020
+Created on Tue Aug 27 08:51:12 2020
 
 @author: RTS
 """
-import os, time, random
-from threading import Thread
-from queue import Queue
+import os, re
+import csv
+from glob import glob
+import numpy as np
 
-num_seeds=10
-num_workers = 33
+
 
 DQN_dir_list = ("data/models/dqn/DQN_model_5e5.h5",\
                 "data/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
@@ -47,29 +47,26 @@ PDN_dir_list = ("data/PDN/models/srs_16/PDQN_500000_full_16.h5",\
                 "data/PDN/models/srs_128/PDQN_500000_full_128.h5",\
                 "data/PDN/models/srs_256/PDQN_500000_full_256.h5",)
 
-def worker():
-    while True:
-        item = q.get()
-        try:
-            os.system(item)
-        except:
-            print("An exception occurred in "+ item)
-        q.task_done()
+# DQN_dir_list = ("data/models/testdir/mymodel.h5",)
+    
 
-q = Queue()
-for i in range(num_workers):
-    t = Thread(target=worker)
-    t.setDaemon(True)
-    t.start()
+EXT = "*wafer_lateness.csv"
 
-for seed in range(num_seeds):
-    for item in DQN_dir_list:
-        item = "python rollout_DQN.py --model_dir="+item+" --seed="+str(seed)
-        print(item)
-        q.put(item)
-    for item_ in PDN_dir_list:
-        item = "python rollout_PDQN.py --model_dir="+item_+" --seed="+str(seed)
-        print(item)
-        q.put(item)
-        
-q.join()
+
+for model_dir in DQN_dir_list+PDN_dir_list:
+    PATH,model_name=os.path.split(model_dir)
+
+    all_csv_files = [file
+                 for path, subdir, files in os.walk(PATH)
+                 for file in glob(os.path.join(path, EXT))]
+    
+    
+    for csv_file_path in all_csv_files:
+        seed = re.findall(r'^\D*(\d+)', csv_file_path.partition('seed_')[-1])[0]
+        with open(csv_file_path) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            lateness = [float(row[0]) for row in csv_reader]
+            mean_lateness = np.mean(lateness)
+            var_lateness = np.var(lateness)
+            print(model_name, seed, mean_lateness, var_lateness)
