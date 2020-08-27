@@ -135,7 +135,6 @@ dqn_agent.save_model("DQN_model_60rm.h5")
 
 #Wafers of each head type
 print("### Wafers of each head type ###")
-print("### Wafers of each head type ###")
 
 # print(my_sim.lateness)
 
@@ -143,7 +142,6 @@ print("### Wafers of each head type ###")
 
 # Total wafers produced
 print("Total wafers produced:", len(my_sim.cycle_time))
-
 
 # utilization
 operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}

@@ -7,7 +7,6 @@ import random
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
-# import DeepQNet
 import argparse
 import datetime
 import json
@@ -16,11 +15,8 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='./b40_setup/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
-args = parser.parse_args()
-
-
 args = parser.parse_args()
 s = args.save_dir
 
@@ -127,7 +123,7 @@ while my_sim.env.now < sim_time:
 #Wafers of each head type
 print("### Wafers of each head type ###")
 
-print(my_sim.lateness)
+# print(my_sim.lateness)
 
 # print(my_sim.complete_wafer_dict)
 

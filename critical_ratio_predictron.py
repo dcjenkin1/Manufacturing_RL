@@ -7,8 +7,21 @@ import math
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
+import argparse
+import datetime
 import json
 import queue
+
+parser = argparse.ArgumentParser(description='A tutorial of argparse!')
+# parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
+parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
+parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
+args = parser.parse_args()
+s = args.save_dir
+
+sim_time = args.sim_time
 
 from predictron import Predictron, Replay_buffer
 
@@ -30,102 +43,23 @@ class Config_predictron():
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
         self.max_depth = 16
-
-sim_time = 1e5
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
-num_seq_steps = 20
 
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+with open(args.factory_file_dir+'break_repair_wip.json', 'r') as fp:
+    break_repair_WIP = json.load(fp)
 
-# with open('ht_seq_mean_w3.json', 'r') as fp:
-#     ht_seq_mean_w_l = json.load(fp)
-# print(len(machines))
+with open(args.factory_file_dir+'machines.json', 'r') as fp:
+    machine_dict = json.load(fp)
 
-recipes = recipes[recipes.MAXIMUMLS != 0]
+with open(args.factory_file_dir+'recipes.json', 'r') as fp:
+    recipes = json.load(fp)
 
-# Create the machine dictionary (machine:station)
-machine_d = dict()
-for index, row in machines.iterrows():
-    d = {row[0]:row[1]}
-    machine_d.update(d)
+with open(args.factory_file_dir+'due_date_lead.json', 'r') as fp:
+    lead_dict = json.load(fp)
 
-# Modifying the above list to match the stations from the two datasets 
-a = machines.TOOLSET.unique()
-b = recipes.TOOLSET.unique()
-common_stations = (set(a) & set(b))
-ls = list(common_stations)
-
-# This dictionary has the correct set of stations
-modified_machine_dict = {k:v for k,v in machine_d.items() if v in ls}
-
-# Removing uncommon rows from recipes
-for index, row in recipes.iterrows():
-    if row[2] not in ls:
-        recipes.drop(index, inplace=True)
-
-recipes = recipes.dropna()
-recipe_dict = dict()
-for ht in list(recipes.HT.unique()):
-    temp = recipes.loc[recipes['HT'] == ht]
-    if len(temp) > 1:
-        ls = []
-        for index, row in temp.iterrows():
-            ls.append([row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]])
-        d  = {ht:ls}
-        recipe_dict.update(d)
-    else:
-        ls = []
-        ls.append([row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]])
-        d = {ht:ls}
-        recipe_dict.update(d)
-
-# take only the first num_seq_steps sequence steps for each recipe to reduce the complexity of the simulation.
-for ht, step in recipe_dict.items():
-    recipe_dict[ht] = step[0:num_seq_steps]
-
-# remove machines which aren't used in the first num_seq_steps for each recipe
-used_stations = []
-for ht in recipe_dict.keys():
-    for step in recipe_dict[ht]:
-        used_stations.append(step[0])
-
-used_stations = set(used_stations)
-
-modified_machine_dict = {k:v for k,v in modified_machine_dict.items() if v in list(used_stations)}
-
-# Dictionary where the key is the name of the machine and the value is [station, proc_t]
-# machine_dict = {'m0': 's1', 'm2': 's2', 'm1': 's1', 'm3': 's2'}
-machine_dict = modified_machine_dict
-
-
-# recipes give the sequence of stations that must be processed at for the wafer of that head type to be completed
-# recipes = {"ht1": [["s1", 5, 0]], "ht2": [["s1", 5, 0], ["s2", 5, 0]]}
-recipes = recipe_dict
-
-wafers_per_box = 4
-
-break_mean = 1e5
-
-repair_mean = 20
-
-n_part_mix = 30
-
-# average lead time for each head type
-head_types = recipes.keys()
-lead_dict = {}
-
-part_mix = {}
-
-
-for ht in head_types:
-    d = {ht:16000}
-    lead_dict.update(d)
-
-    w = {ht:1}
-    part_mix.update(w)
-
+with open(args.factory_file_dir+'part_mix.json', 'r') as fp:
+    part_mix = json.load(fp)
 
 ####################################################
 ########## CREATING THE STATE SPACE  ###############
@@ -148,7 +82,7 @@ def get_state(sim):
     max_length_of_window = math.ceil(max(sim.lead_dict.values()) / (7*24*60)) # Max length of the window to roll
 
     current_time = sim.env.now # Calculating the current time
-    current_week = math.ceil(current_time / (7*24*60)) #Calculating the current week 
+    current_week = math.ceil(current_time / (7*24*60)) #Calculating the current week
 
     for key, value in sim.due_wafers.items():
         rolling_window.append(value[current_week:current_week+max_length_of_window]) #Adding only the values from current week up till the window length
@@ -192,7 +126,7 @@ def choose_action(sim):
     else:
         cr_ratio = {}
         for waf in wafer_list:
-            cr_ = (waf.due_time - sim.env.now) / (sim.get_rem_shop_time(waf.HT, waf.seq, waf.number_wafers))
+            cr_ = (waf.due_time - sim.env.now) / (sim.get_rem_shop_time(waf.HT, waf.seq))
             cr_ratio[waf] = cr_
         waf_to_choose = min(cr_ratio, key=cr_ratio.get)
         # best_action = (waf_to_choose.HT, waf_to_choose.seq)
@@ -200,8 +134,8 @@ def choose_action(sim):
 
 # wt = 'ht_seq_mean_w0.json'
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix,
-                             break_mean=break_mean, repair_mean=repair_mean)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
+                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'])
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -303,9 +237,9 @@ model.save("Predictron_CR_1e5.h5")
 #Wafers of each head type
 print("### Wafers of each head type ###")
 
-print(my_sim.lateness)
+# print(my_sim.lateness)
 
-print(my_sim.complete_wafer_dict)
+# print(my_sim.complete_wafer_dict)
 
 # ht_seq_mean_w = dict()
 # for tup, time_values in my_sim.ht_seq_wait.items():
@@ -322,6 +256,21 @@ operational_times = {mach: mach.total_operational_time for mach in my_sim.machin
 mach_util = {mach: operational_times[mach]/sim_time for mach in my_sim.machines_list}
 mean_util = {station: round(np.mean([mach_util[mach] for mach in my_sim.machines_list if mach.station == station]), 3)
              for station in my_sim.stations}
+# mean_mach_takt_times = {mach: np.mean(mach.takt_times) for mach in my_sim.machines_list}
+# std_mach_takt_times = {mach: round(np.std(mach.takt_times), 3) for mach in my_sim.machines_list}
+#
+# mean_station_takt_times = {station: round(np.mean([mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station and not np.isnan(mean_mach_takt_times[mach])]), 3) for
+#                            station in my_sim.stations}
+# mean_station_takt_times = {station: round(1/sum([1/mean_mach_takt_times[mach] for mach in my_sim.machines_list if
+#                                          mach.station == station]), 3) for station in my_sim.stations}
+
+parts_per_station = {station: sum([mach.parts_made for mach in my_sim.machines_list if mach.station == station]) for
+                     station in my_sim.stations}
+
+station_wait_times = {station: np.mean(sum([my_sim.ht_seq_wait[(ht, seq)] for ht, seq in my_sim.station_HT_seq[station]], [])) for
+                      station in my_sim.stations}
+
 # stdev_util = {station: np.std(mach_util)
 
 inter_arrival_times = {station: [t_i_plus_1 - t_i for t_i, t_i_plus_1 in zip(my_sim.arrival_times[station],
@@ -330,21 +279,14 @@ mean_inter = {station: round(np.mean(inter_ar_ts), 3) for station, inter_ar_ts i
 std_inter = {station: round(np.std(inter_ar_ts), 3) for station, inter_ar_ts in inter_arrival_times.items()}
 coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for station in my_sim.stations}
 
-# print(operational_times)
-# print(mean_util)
-# # print(stdev_util)
-# print(inter_arrival_times)
-# print(mean_inter)
-# print(std_inter)
-# print(coeff_var)
-#
 print(np.mean(my_sim.lateness[-1000:]))
 
-cols = [mean_util, mean_inter, std_inter, coeff_var]
-df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-                  'coefficient_of_var_interarrival'])
-df = df.transpose()
-df.to_csv('util_inter_arr.csv')
+# cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
+# df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+#                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
+# df = df.transpose()
+# df.to_csv(args.save_dir+'util'+id+'.csv')
+
 # print(df)
 
 # # Plot the time taken to complete each wafer
@@ -353,5 +295,12 @@ plt.plot(my_sim.lateness)
 plt.xlabel("Wafers")
 plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
+plt.show()
+#
+# Plot the time taken to complete each wafer
+plt.plot(my_sim.cumulative_reward_list)
+plt.xlabel("step")
+plt.ylabel("Cumulative Reward")
+plt.title("The sum of all rewards up until each time step")
 plt.show()
 
