@@ -18,6 +18,7 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
+parser.add_argument("--seed", default=0, help="random seed")
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
@@ -79,7 +80,7 @@ def get_state(sim):
 
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
-                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'])
+                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -96,9 +97,28 @@ state_size = len(state)
 # Creating the DQN agent
 dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
 
+# if args.seed is not None:# Reinitialize factory with seed
+#     random.seed(args.seed)
+#     # Create the factory simulation object
+#     my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
+#                                  break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'])
+#     # start the simulation
+#     my_sim.start()
+#     # Retrieve machine object for first action choice
+#     mach = my_sim.next_machine
+#     # Save the state and allowed actions at the start for later use in training examples
+#     state = get_state(my_sim)
+#     allowed_actions = my_sim.allowed_actions
+#     # The action space is a list of tuples of the form [('ht1',0), ('ht1',1), ..., ('ht2', 0), ...] indicating the head
+#     # types and sequence steps for all allowed actions.
+#     action_space = list(chain.from_iterable(my_sim.station_HT_seq.values()))
+#     action_size = len(action_space)
+#     state_size = len(state)
+
 order_count = 0
 step_counter = 0
 while my_sim.env.now < sim_time:
+    print(random.randint(0,100))
     action = dqn_agent.choose_action(state, allowed_actions)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
