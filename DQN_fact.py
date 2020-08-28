@@ -22,7 +22,7 @@ parser.add_argument("--seed", default=0, help="random seed")
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
-
+# random.seed(args.seed)
 args = parser.parse_args()
 s = args.save_dir
 
@@ -95,7 +95,7 @@ action_size = len(action_space)
 state_size = len(state)
 
 # Creating the DQN agent
-dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99)
+dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99, seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)
@@ -118,7 +118,6 @@ dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space
 order_count = 0
 step_counter = 0
 while my_sim.env.now < sim_time:
-    print(random.randint(0,100))
     action = dqn_agent.choose_action(state, allowed_actions)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==

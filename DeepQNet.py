@@ -11,7 +11,7 @@ import random
 ########################################################################################################################################
 
 class DQN:
-    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max = 1):
+    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max = 1, seed=None):
         self.state_space_dim = state_space_dim
         self.action_space = action_space
         self.gamma = gamma
@@ -24,6 +24,11 @@ class DQN:
         self.model = self.create_model()
         self.target_model = self.create_model()
         self.batch_size = 32
+        self.random_epsilon = random.Random()
+        self.random_sample = random.Random()
+        if seed is not None:
+            self.random_epsilon.seed(seed)
+            self.random_sample.seed(seed)
 
     # Create the neural network model to train the q function
     def create_model(self):
@@ -39,10 +44,10 @@ class DQN:
     def choose_action(self, state, allowed_actions):
         self.epsilon *= self.epsilon_decay
         self.epsilon = max(self.epsilon_min, self.epsilon)
-        r = np.random.random()
+        r = self.random_epsilon.random()
         if r < self.epsilon:
             # print("******* CHOOSING A RANDOM ACTION *******")
-            return random.choice(allowed_actions)
+            return self.random_epsilon.choice(allowed_actions)
         # print(state)
         # print(len(state))
         state = np.array(state).reshape(1, self.state_space_dim)
@@ -79,7 +84,7 @@ class DQN:
         else: 
             target_model = self.target_model
             
-        samples = random.sample(self.memory, self.batch_size)
+        samples = self.random_sample.sample(self.memory, self.batch_size)
         states, actions, rewards, new_states, new_allowed_actions = zip(*samples)
         states = np.array(states).reshape(self.batch_size, self.state_space_dim)
         preds = self.model.predict(states)

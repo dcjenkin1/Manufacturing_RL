@@ -25,7 +25,7 @@ class wafer_box(object):
 ########## CREATING THE MACHINE CLASS ##############
 ####################################################
 class Machine(object):
-    def __init__(self, sim_inst, name, station, break_mean=None, repair_mean=None):
+    def __init__(self, sim_inst, name, station, break_mean=None, repair_mean=None, random_generator=random.Random()):
         self.env = sim_inst.env
         self.name = name
         self.station = station
@@ -34,6 +34,7 @@ class Machine(object):
         self.wafer_being_proc = None
         self.parts_made = 0
         self.break_mean = break_mean
+        self.random_generator = random_generator
         
 
 
@@ -48,11 +49,13 @@ class Machine(object):
 
     def time_to_failure(self):
         """Return time until next failure for a machine."""
-        return random.expovariate(1/self.break_mean)
+        x = self.random_generator.expovariate(1/self.break_mean)
+        print(x)
+        return x#self.random_generator.expovariate(1/self.break_mean)
 
     def time_to_repair(self):
         """Return time until repair for a machine."""
-        return random.expovariate(1/self.repair_mean)
+        return self.random_generator.expovariate(1/self.repair_mean)
 
     def break_machine(self):
         """Break the machine after break_time"""
@@ -187,9 +190,9 @@ class FactorySim(object):
         self.t_between_completions = []
         self.cumulative_reward = 0.
         self.cumulative_reward_list = []
-        
+        self.random_generator = random.Random()
         if seed is not None:
-            random.seed(seed)
+            self.random_generator.seed(seed)
 
         if path_to_wait_times is not None:
             with open(path_to_wait_times, 'r') as fp:
@@ -208,7 +211,7 @@ class FactorySim(object):
         # Dictionary where the key is the name of the machine and the value is the station
         self.machine_dict = m_dict
 
-        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean) for mach in self.machine_dict.items()]
+        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean, random_generator=self.random_generator) for mach in self.machine_dict.items()]
 
         # create a list of all the station names
         self.stations = sorted(list(set(list(self.machine_dict.values()))))
