@@ -1,3 +1,4 @@
+tensorflow-gpu
 simpy
 numpy
 pandas
