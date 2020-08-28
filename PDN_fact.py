@@ -150,7 +150,7 @@ for i in range(config.episode_length):
     state_queue.append(np.zeros(config.state_size))
 action_queue = list(np.zeros(config.episode_length))
 reward_queue = list(np.zeros(config.episode_length))
-replay_buffer = Replay_buffer(memory_size = config.replay_memory_size)
+replay_buffer = Replay_buffer(memory_size = config.replay_memory_size, seed=config.seed)
 
 pdn = PDN(config)
 model = pdn.model

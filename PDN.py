@@ -42,10 +42,8 @@ class PDN:
         self.state_rep_size = config.state_rep_size
         
         self.random_epsilon = random.Random()
-        self.random_sample = random.Random()
         if config.seed is not None:
             self.random_epsilon.seed(config.seed)
-            self.random_sample.seed(config.seed)
       
         # Tensor rewards with shape [batch_size, max_depth + 1]
         self.rewards = None
@@ -249,10 +247,13 @@ class PDN:
         # self.total_loss = keras.losses.get_total_loss(name='total_loss')
         
 class Replay_buffer:
-    def __init__(self, memory_size = 10000):
+    def __init__(self, memory_size = 10000, seed=None):
         assert(memory_size > 0)
         self.memory = list([])
         self.memory_size = memory_size
+        self.random_sample = random.Random()
+        if seed is not None:
+            self.random_sample.seed(seed)
     
     def put(self, data):
         if len(self.memory) < self.memory_size:
