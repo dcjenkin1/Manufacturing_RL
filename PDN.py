@@ -249,6 +249,7 @@ class Replay_buffer:
         assert(memory_size > 0)
         self.memory = list([])
         self.memory_size = memory_size
+        self.random_sample = random.Random()
         if seed is not None:
             self.random_sample.seed(seed)
     
