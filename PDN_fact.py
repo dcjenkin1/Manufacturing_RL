@@ -13,7 +13,7 @@ import argparse
 import datetime
 import os
 
-from PDQN import PDQN, Replay_buffer
+from PDN import PDN, Replay_buffer
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
