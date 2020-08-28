@@ -41,9 +41,9 @@ class PDN:
         
         self.random_epsilon = random.Random()
         self.random_sample = random.Random()
-        if config.sees is not None:
-            self.random_epsilon.seed(config.sees)
-            self.random_sample.seed(config.sees)
+        if config.seed is not None:
+            self.random_epsilon.seed(config.seed)
+            self.random_sample.seed(config.seed)
       
         # Tensor rewards with shape [batch_size, max_depth + 1]
         self.rewards = None
