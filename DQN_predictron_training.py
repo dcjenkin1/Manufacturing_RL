@@ -27,6 +27,7 @@ parser.add_argument("--predictron_type", default='complete', help="Path to the D
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save models and log files in")
+parser.add_argument("--seed", default=0, help="random seed")
 args = parser.parse_args()
 
 sim_time = args.sim_time
@@ -86,6 +87,8 @@ class Config_predictron():
         self.Predictron_train_steps_initial = 5e4
         
         self.state_rep_size = args.state_rep_size
+
+        self.seed = args.seed
 
 ####################################################
 ########## CREATING THE STATE SPACE  ###############

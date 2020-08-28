@@ -164,6 +164,7 @@ reward_episode_arr = []
 
 step_counter = 0
 while my_sim.env.now < sim_time:
+    print(my_sim.env.now)
     pdn_result = model.predict([state])
     pred_k = pdn_result[0]
     pred_lambda = pdn_result[1]
