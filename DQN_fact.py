@@ -24,7 +24,7 @@ args = parser.parse_args()
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
 # random.seed(args.seed)
 args = parser.parse_args()
-s = args.save_dir
+model_dir = args.save_dir+'models/DQN/'+str(id)+'/'
 
 sim_time = args.sim_time
 
@@ -149,7 +149,7 @@ while my_sim.env.now < sim_time:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 # Save the trained DQN policy network
-dqn_agent.save_model("DQN_model_60rm.h5")
+dqn_agent.save_model(model_dir+"DQN_model_"+args.sim_time+".h5")
 
 
 #Wafers of each head type
