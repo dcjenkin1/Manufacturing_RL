@@ -2,6 +2,7 @@ import pandas as pd
 import argparse
 import json
 import math
+import os
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--load_file_dir", default='~/Documents/workspace/WDsim/data/', help="Path to load factory setup csv files")
