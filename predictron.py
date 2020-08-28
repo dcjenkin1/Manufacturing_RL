@@ -30,6 +30,10 @@ class Predictron:
         self.dropout_rate = config.dropout_rate
         self.model = None
         self.state_rep_size = config.state_rep_size
+        
+        self.random_sample = random.Random()
+        if config.seed is not None:
+            self.random_sample.seed(config.seed)
       
         # Tensor rewards with shape [batch_size, max_depth + 1]
         self.rewards = None
@@ -214,7 +218,7 @@ class Replay_buffer:
     
     def get(self, batch_size=1):
         if len(self.memory) >= batch_size:
-            data = random.sample(self.memory, batch_size)
+            data = self.random_sample.sample(self.memory, batch_size)
         else: 
             data = []
             print("Replay_buffer empty")

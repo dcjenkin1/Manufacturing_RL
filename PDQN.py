@@ -38,6 +38,12 @@ class PDQN:
         self.dropout_rate = config.dropout_rate
         self.model = None
         self.state_rep_size = config.state_rep_size
+        
+        self.random_epsilon = random.Random()
+        self.random_sample = random.Random()
+        if config.sees is not None:
+            self.random_epsilon.seed(config.sees)
+            self.random_sample.seed(config.sees)
       
         # Tensor rewards with shape [batch_size, max_depth + 1]
         self.rewards = None
@@ -61,10 +67,10 @@ class PDQN:
     def choose_action(self, pred, allowed_actions):
         self.epsilon *= self.epsilon_decay
         self.epsilon = max(self.epsilon_min, self.epsilon)
-        r = np.random.random()
+        r = self.random_epsilon.random()
         if r < self.epsilon:
             # print("******* CHOOSING A RANDOM ACTION *******")
-            return self.action_space.index(random.choice(allowed_actions))
+            return self.action_space.index(self.random_epsilon.choice(allowed_actions))
         
         pred = sum(pred.tolist(), [])
         temp = []
@@ -256,7 +262,7 @@ class Replay_buffer:
     
     def get(self, batch_size=1):
         if len(self.memory) >= batch_size:
-            data = random.sample(self.memory, batch_size)
+            data = self.random_sample.sample(self.memory, batch_size)
         else: 
             data = []
             print("Replay_buffer empty")
