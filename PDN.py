@@ -17,7 +17,7 @@ from keras.regularizers import l2
 #################################################################### CREATING Predictron Deep Q-learning Class ####################################
 ########################################################################################################################################
 
-class PDQN:
+class PDN:
     def __init__(self, config):
         # self.inputs = tf.placeholder(tf.float32, shape=[None, config.state_size])
         # self.targets = tf.placeholder(tf.float32, shape=[None, 20])
