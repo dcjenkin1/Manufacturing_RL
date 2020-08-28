@@ -21,6 +21,7 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
+parser.add_argument("--seed", default=0, help="random seed")
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
@@ -83,7 +84,8 @@ class Config_predictron():
         self.action_size = None # set this before running the predictron
         
         self.state_rep_size = args.state_rep_size
-
+        
+        self.seed = args.seed
 # with open('ht_seq_mean_w3.json', 'r') as fp:
 #     ht_seq_mean_w_l = json.load(fp)
 # print(len(machines))
