@@ -304,8 +304,8 @@ action_queue = list(np.zeros(config.episode_length))
 reward_queue = list(np.zeros(config.episode_length))
 replay_buffer = Replay_buffer(memory_size = config.replay_memory_size)
 
-pdqn = PDQN(config)
-model = pdqn.model
+pdn = PDN(config)
+model = pdn.model
 preturn_loss_arr = []
 max_preturn_loss = 0
 lambda_preturn_loss_arr = []
@@ -316,12 +316,12 @@ reward_episode_arr = []
 
 step_counter = 0
 while my_sim.env.now < sim_time:
-    pdqn_result = model.predict([state])
-    pred_k = pdqn_result[0]
-    pred_lambda = pdqn_result[1]
-    action_id = pdqn.choose_action(pred_lambda, allowed_actions)
+    pdn_result = model.predict([state])
+    pred_k = pdn_result[0]
+    pred_lambda = pdn_result[1]
+    action_id = pdn.choose_action(pred_lambda, allowed_actions)
     
-    action = allowed_actions[allowed_actions.index(pdqn.action_space[action_id])]
+    action = allowed_actions[allowed_actions.index(pdn.action_space[action_id])]
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq == action[1])
     
@@ -376,11 +376,11 @@ while my_sim.env.now < sim_time:
         if step_counter > config.episode_length+config.batch_size:
             print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
             print("running mean % of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
-            pdqn_result = model.predict([state])
-            predictron_lambda_arr.append(np.max(pdqn_result[1],axis=-1))
+            pdn_result = model.predict([state])
+            predictron_lambda_arr.append(np.max(pdn_result[1],axis=-1))
             reward_episode_arr.append(reward_episode)
             
-            print(np.max(pdqn_result[0],axis=-1),predictron_lambda_arr[-1], reward_episode)
+            print(np.max(pdn_result[0],axis=-1),predictron_lambda_arr[-1], reward_episode)
         
     # print(f"state dimension: {len(state)}")
     # print(f"next state dimension: {len(next_state)}")
