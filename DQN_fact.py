@@ -150,7 +150,7 @@ while my_sim.env.now < sim_time:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 # Save the trained DQN policy network
-dqn_agent.save_model(model_dir+"DQN_model_"+str(args.sim_time)+".h5")
+dqn_agent.save_model(model_dir+"DQN_model_"+str(int(args.sim_time))+".h5")
 
 
 #Wafers of each head type
