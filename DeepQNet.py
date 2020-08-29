@@ -1,6 +1,8 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import Adam
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.optimizers import Adam
 from collections import deque
 import numpy as np
 import random
@@ -33,10 +35,10 @@ class DQN:
     # Create the neural network model to train the q function
     def create_model(self):
         model = Sequential()
-        model.add(Dense(400, input_dim= self.state_space_dim, activation='relu'))
-        model.add(Dense(250, activation='relu'))
-        model.add(Dense(125, activation='relu'))
-        model.add(Dense(len(self.action_space)))
+        model.add(layers.Dense(400, input_dim= self.state_space_dim, activation='relu'))
+        model.add(layers.Dense(250, activation='relu'))
+        model.add(layers.Dense(125, activation='relu'))
+        model.add(layers.Dense(len(self.action_space)))
         model.compile(loss='mean_squared_error', optimizer=Adam(lr=self.learning_rate))
         return model
 
