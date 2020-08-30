@@ -11,6 +11,7 @@ import DeepQNet
 import argparse
 import datetime
 import json
+import os
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
@@ -25,6 +26,9 @@ id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np
 # random.seed(args.seed)
 args = parser.parse_args()
 model_dir = args.save_dir+'models/DQN/'+str(id)+'/'
+
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
 
 sim_time = args.sim_time
 
@@ -150,7 +154,7 @@ while my_sim.env.now < sim_time:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
 
 # Save the trained DQN policy network
-dqn_agent.save_model(model_dir+"DQN_model_"+str(int(args.sim_time))+".h5")
+dqn_agent.save_model(model_dir+"DQN_model_"+str(int(args.sim_time))+'seed'+args.seed+".h5")
 
 
 #Wafers of each head type
@@ -193,31 +197,33 @@ coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for stati
 machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
                         my_sim.stations}
 
-print(np.mean(my_sim.lateness[-1000:]))
+# print(np.mean(my_sim.lateness[-1000:]))
 
 cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(args.save_dir+'util'+id+'.csv')
+df.to_csv(args.save_dir+'util'+id+'seed'+args.seed+'.csv')
+
+np.savetxt(args.save_dir+'wafer_lateness'+id+'seed'+args.seed+'.csv', np.array(my_sim.lateness), delimiter=',')
 
 # print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
 #   f.write('\n'.join(my_sim.lateness))
 
+# # # Plot the time taken to complete each wafer
+# plt.plot(my_sim.lateness)
+# plt.xlabel("Wafers")
+# plt.ylabel("Lateness")
+# plt.title("The amount of time each wafer was late")
+# plt.show()
+# #
 # # Plot the time taken to complete each wafer
-plt.plot(my_sim.lateness)
-plt.xlabel("Wafers")
-plt.ylabel("Lateness")
-plt.title("The amount of time each wafer was late")
-plt.show()
-#
-# Plot the time taken to complete each wafer
-plt.plot(my_sim.cumulative_reward_list)
-plt.xlabel("step")
-plt.ylabel("Cumulative Reward")
-plt.title("The sum of all rewards up until each time step")
-plt.show()
+# plt.plot(my_sim.cumulative_reward_list)
+# plt.xlabel("step")
+# plt.ylabel("Cumulative Reward")
+# plt.title("The sum of all rewards up until each time step")
+# plt.show()
 
 
 
