@@ -345,9 +345,9 @@ cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv(args.save_dir+'PDN_util'+id+'seed'+args.seed+'.csv')
+df.to_csv(args.save_dir+'PDN_util_'+str(id)+'_seed_'+str(args.seed)+'.csv')
 
-np.savetxt(args.save_dir+'PDN_wafer_lateness'+id+'seed'+args.seed+'.csv', np.array(my_sim.lateness), delimiter=',')
+np.savetxt(args.save_dir+'PDN_wafer_lateness_'+str(id)+'_seed_'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
 # print(df)
 
 # # Plot the time taken to complete each wafer
