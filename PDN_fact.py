@@ -17,7 +17,7 @@ from PDN import PDN, Replay_buffer
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
-parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
@@ -72,7 +72,7 @@ class Config_predictron():
         self.epsilon_decay = 0.999
         
         self.l2_weight=0.01
-        self.dropout_rate=0.2
+        self.dropout_rate=0
         
         self.batch_size = 128
         self.episode_length = 500
@@ -239,7 +239,7 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save(model_dir+'PDN_' + str(args.state_rep_size) + '_' + str(int(sim_time)) + '.h5')
+model.save(args.save_dir+'PDN_' + id + 'seed' + args.seed + '.h5')
 
 
 plt.figure()
@@ -342,7 +342,9 @@ cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv(args.save_dir+'util'+id+'.csv')
+df.to_csv(args.save_dir+'PDN_util'+id+'seed'+args.seed+'.csv')
+
+np.savetxt(args.save_dir+'PDN_wafer_lateness'+id+'seed'+args.seed+'.csv', np.array(my_sim.lateness), delimiter=',')
 # print(df)
 
 # # Plot the time taken to complete each wafer
