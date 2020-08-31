@@ -21,8 +21,8 @@ from predictron import Predictron, Replay_buffer
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path to the DQN model")
-parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+parser.add_argument("--dqn_model_dir", default='./data/DQN_model_2020-08-30-04-29-36seed14.h5', help="Path to the DQN model")
+parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
@@ -71,7 +71,7 @@ class Config_predictron():
         self.epsilon = 1e-8
         
         self.l2_weight=0.01
-        self.dropout_rate=0.2
+        self.dropout_rate=0
         
         self.epochs = 5000
         self.batch_size = 128
@@ -170,7 +170,6 @@ dqn_loss_arr = []
 pred_loss_arr = []
 Predictron_train_steps = config.Predictron_train_steps_initial
 while my_sim.env.now < sim_time:
-    
     action = dqn_agent.choose_action(state, allowed_actions)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
@@ -254,8 +253,9 @@ while my_sim.env.now < sim_time:
         TRAIN_DQN = True
         step_counter = 0
 
-dqn_agent.save_model(dqn_model_dir)
-predictron.model.save(predictron_model_dir)
+# Save the trained DQN policy network
+dqn_agent.save_model(args.save_dir+"PDQN_model_"+id+'seed'+args.seed+".h5")
+predictron.model.save(args.save_dir+"P_model_"+id+'seed'+args.seed+".h5")
 
 predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
@@ -327,12 +327,14 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 #
 print("Mean lateness of last 10000 minutes", np.mean(my_sim.lateness[-10000:]))
 
-# cols = [mean_util, mean_inter, std_inter, coeff_var]
-# df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-#                   'coefficient_of_var_interarrival'])
-# df = df.transpose()
-# df.to_csv(args.save_dir+'util'+id+'_srs_'+str(args.state_rep_size)+'.csv')
+cols = [mean_util, mean_inter, std_inter, coeff_var]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival'])
+df = df.transpose()
+df.to_csv(args.save_dir+'PDQN_util'+id+'seed'+args.seed+'.csv')
 # print(df)
+
+np.savetxt(args.save_dir+'PDQN_wafer_lateness'+id+'seed'+args.seed+'.csv', np.array(my_sim.lateness), delimiter=',')
 
 figure_dir = model_dir+"figures/"
 if not os.path.exists(figure_dir):

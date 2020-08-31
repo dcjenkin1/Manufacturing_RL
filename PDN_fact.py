@@ -52,6 +52,9 @@ model_dir = args.save_dir+'models/PDN/srs_'+str(args.state_rep_size)+'/'+str(id)
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
+if not os.path.exists(args.save_dir):
+    os.makedirs(args.save_dir)
+
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 # num_seq_steps = 40
@@ -164,7 +167,7 @@ reward_episode_arr = []
 
 step_counter = 0
 while my_sim.env.now < sim_time:
-    print(my_sim.env.now)
+    # print(my_sim.env.now)
     pdn_result = model.predict([state])
     pred_k = pdn_result[0]
     pred_lambda = pdn_result[1]

@@ -10,7 +10,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from keras.regularizers import l2
+from tensorflow.keras.regularizers import l2
 
 # tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 
@@ -218,7 +218,7 @@ class Replay_buffer:
     
     def get(self, batch_size=1):
         if len(self.memory) >= batch_size:
-            data = self.random_sample.sample(self.memory, batch_size)
+            data = random.sample(self.memory, batch_size)
         else: 
             data = []
             print("Replay_buffer empty")
