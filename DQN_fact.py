@@ -13,6 +13,7 @@ import datetime
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--save_dir", default='./', help="Path save log files in")
+parser.add_argument("--seed", default=0, help="seed initialization")
 args = parser.parse_args()
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
 
@@ -27,8 +28,8 @@ num_seq_steps = 20
 
 # recipes = pd.read_csv('./ncloud/recipes.csv')
 # machines = pd.read_csv('./ncloud/machines.csv')
-recipes = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/recipes.csv')
-machines = pd.read_csv('C:/Users/rts/Documents/workspace/WDsim/machines.csv')
+recipes = pd.read_csv('~/mypath/recipes.csv')
+machines = pd.read_csv('~/mypath/machines.csv')
 
 recipes = recipes[recipes.MAXIMUMLS != 0]
 
@@ -188,7 +189,7 @@ def get_state(sim):
 
 
 # Create the factory simulation object
-my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean=break_mean, repair_mean=repair_mean)
+my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, wafers_per_box, part_mix, n_part_mix, break_mean=break_mean, repair_mean=repair_mean, seed=args.seed)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
