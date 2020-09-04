@@ -169,7 +169,8 @@ print(my_sim.complete_wafer_dict)
 
 print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
-print(np.mean(my_sim.lateness[-10000:]))
+print("Mean",np.mean(my_sim.lateness[-10000:]))
+print("Max",np.max(my_sim.lateness[-10000:]))
 
 # utilization
 operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
