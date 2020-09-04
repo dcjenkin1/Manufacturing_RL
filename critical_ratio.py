@@ -17,6 +17,11 @@ parser.add_argument("--state_rep_size", default='32', help="Size of the state re
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
+parser.add_argument("--seed", default=0, help="random seed")
+args = parser.parse_args()
+
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
+# random.seed(args.seed)
 args = parser.parse_args()
 s = args.save_dir
 
@@ -77,7 +82,7 @@ def choose_action(sim):
 
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
-                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'])
+                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -102,21 +107,6 @@ while my_sim.env.now < sim_time:
     # Update the machines and allowed actions for the next step
     mach, allowed_actions = next_mach, next_allowed_actions
     # print("State:", state)
-
-
-# Total wafers produced
-# print("Total wafers produced:", len(my_sim.cycle_time))
-# # # i = 0
-# for ht in my_sim.recipes.keys():
-#     # for sequ in range(len(my_sim.recipes[ht])-1):
-#     # i += 1
-#     # print(len(my_sim.recipes[ht]))
-#     # waf = fact_sim.wafer_box(my_sim, 4, ht, my_sim.wafer_index, lead_dict, sequ)
-#     # my_sim.wafer_index += 1
-#     sequ = len(my_sim.recipes[ht])-1
-#     print(ht)
-#     print(sequ)
-#     print(my_sim.get_rem_shop_time(ht, sequ, 4))
 
 # print(my_sim.get_proc_time('ASGA', 99, 4))
 # print(i)
@@ -167,17 +157,15 @@ coeff_var = {station: round(std_inter[station]/mean_inter[station], 3) for stati
 machines_per_station = {station: len([mach for mach in my_sim.machines_list if mach.station == station]) for station in
                         my_sim.stations}
 
-print(np.mean(my_sim.lateness[-1000:]))
+# print(np.mean(my_sim.lateness[-1000:]))
 
-# cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
-# df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
-#                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
-# df = df.transpose()
-# df.to_csv(args.save_dir+'util'+id+'.csv')
+cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, station_wait_times]
+df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
+                  'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
+df = df.transpose()
+df.to_csv(args.save_dir+'util'+id+'seed'+str(args.seed)+'.csv')
 
-# print(df)
-# with open(s+'lateness'+id+'.txt','w') as f:
-#   f.write('\n'.join(my_sim.lateness))
+np.savetxt(args.save_dir+'wafer_lateness'+id+'seed'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
 
 # # Plot the time taken to complete each wafer
 plt.plot(my_sim.lateness)
@@ -192,12 +180,3 @@ plt.xlabel("step")
 plt.ylabel("Cumulative Reward")
 plt.title("The sum of all rewards up until each time step")
 plt.show()
-
-
-
-
-
-
-
-
-

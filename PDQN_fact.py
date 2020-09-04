@@ -21,7 +21,7 @@ from predictron import Predictron, Replay_buffer
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--dqn_model_dir", default='./data/DQN_model_2020-08-30-04-29-36seed14.h5', help="Path to the DQN model")
+parser.add_argument("--dqn_model_dir", default='./DQN_model_2020-08-30-04-29-36seed14.h5', help="Path to the DQN model")
 parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
@@ -257,25 +257,25 @@ while my_sim.env.now < sim_time:
 dqn_agent.save_model(args.save_dir+"PDQN_model_"+id+'seed'+args.seed+".h5")
 predictron.model.save(args.save_dir+"P_model_"+id+'seed'+args.seed+".h5")
 
-predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
-predictron_error_avg = [predictron_error[0]]
-alpha = 0.1
-for i in range(len(predictron_error)-1):
-    predictron_error_avg.append(predictron_error_avg[i]*(1-alpha) + predictron_error[i+1]*alpha)
-
-DQN_error = np.abs(np.array(DQN_arr)-np.array(reward_episode_arr))
-DQN_error_avg = [DQN_error[0]]
-for i in range(len(predictron_error)-1):
-    DQN_error_avg.append(DQN_error_avg[i]*(1-alpha) + DQN_error[i+1]*alpha)
-
-predictron_dqn_error_avg=[DQN_error[0] - predictron_error[0]]
-for i in range(len(predictron_error)-1):
-    predictron_dqn_error_avg.append(predictron_dqn_error_avg[i]*(1-alpha) + (DQN_error[i+1]-predictron_error[i+1])*alpha)
-
-predictron_ratio_error = np.asarray(predictron_lambda_arr)[:,0] / (np.asarray(reward_episode_arr)+1e-18)
-predictron_ratio_error_avg = [predictron_ratio_error[0]]
-for i in range(len(predictron_error)-1):
-    predictron_ratio_error_avg.append(predictron_ratio_error_avg[i]*(1-alpha) + predictron_ratio_error[i+1]*alpha)
+# predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
+# predictron_error_avg = [predictron_error[0]]
+# alpha = 0.1
+# for i in range(len(predictron_error)-1):
+#     predictron_error_avg.append(predictron_error_avg[i]*(1-alpha) + predictron_error[i+1]*alpha)
+#
+# DQN_error = np.abs(np.array(DQN_arr)-np.array(reward_episode_arr))
+# DQN_error_avg = [DQN_error[0]]
+# for i in range(len(predictron_error)-1):
+#     DQN_error_avg.append(DQN_error_avg[i]*(1-alpha) + DQN_error[i+1]*alpha)
+#
+# predictron_dqn_error_avg=[DQN_error[0] - predictron_error[0]]
+# for i in range(len(predictron_error)-1):
+#     predictron_dqn_error_avg.append(predictron_dqn_error_avg[i]*(1-alpha) + (DQN_error[i+1]-predictron_error[i+1])*alpha)
+#
+# predictron_ratio_error = np.asarray(predictron_lambda_arr)[:,0] / (np.asarray(reward_episode_arr)+1e-18)
+# predictron_ratio_error_avg = [predictron_ratio_error[0]]
+# for i in range(len(predictron_error)-1):
+#     predictron_ratio_error_avg.append(predictron_ratio_error_avg[i]*(1-alpha) + predictron_ratio_error[i+1]*alpha)
 
 
 #Wafers of each head type
@@ -331,104 +331,104 @@ cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv(args.save_dir+'PDQN_util'+id+'seed'+args.seed+'.csv')
+df.to_csv(args.save_dir+'PDQN_util'+id+'seed'+str(args.seed)+'.csv')
 # print(df)
 
-np.savetxt(args.save_dir+'PDQN_wafer_lateness'+id+'seed'+args.seed+'.csv', np.array(my_sim.lateness), delimiter=',')
+np.savetxt(args.save_dir+'PDQN_wafer_lateness'+id+'seed'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
 
-figure_dir = model_dir+"figures/"
-if not os.path.exists(figure_dir):
-    os.makedirs(figure_dir)
-
-plt.figure()
-plt.plot(preturn_loss_arr)
-plt.savefig(figure_dir+"preturn_loss.png",dpi=600)
-
-plt.figure()
-plt.plot(lambda_preturn_loss_arr)
-plt.savefig(figure_dir+"lambda_preturn_loss.png",dpi=600)
-
-plt.figure()
-plt.plot(dqn_loss_arr)
-plt.savefig(figure_dir+"dqn_loss.png",dpi=600)
-
-plt.figure()
-plt.plot(reward_episode_arr, '.', label='Target')
-plt.plot(predictron_lambda_arr, '.', label='Predictron')
-plt.plot(DQN_arr, '.', label='DQN')
-plt.title("Value estimate")
-plt.xlabel("Thousands of steps")
-plt.legend(loc='lower center')
-plt.savefig(figure_dir+"value_estimate.png",dpi=600)
-
-plt.figure()
-plt.plot(predictron_error, '.', label='Predictron')
-plt.plot(predictron_error_avg, label='Running average Predictron')
-plt.plot(DQN_error, '.', label='DQN')
-plt.plot(DQN_error_avg, label='Running average DQN')
-plt.title("Absolute value estimate error")
-plt.legend()
-plt.savefig(figure_dir+"absolute_error.png",dpi=600)
-
+# figure_dir = model_dir+"figures/"
+# if not os.path.exists(figure_dir):
+#     os.makedirs(figure_dir)
+#
 # plt.figure()
-# plt.plot(DQN_error[0:100] - predictron_error[0:100], '.', label='DQN - Predictron')
-# plt.plot(predictron_dqn_error_avg[0:100], label='Running average')
-# plt.title("DQN_error - predictron_error (first 100.000 steps)")
+# plt.plot(preturn_loss_arr)
+# plt.savefig(figure_dir+"preturn_loss.png",dpi=600)
+#
+# plt.figure()
+# plt.plot(lambda_preturn_loss_arr)
+# plt.savefig(figure_dir+"lambda_preturn_loss.png",dpi=600)
+#
+# plt.figure()
+# plt.plot(dqn_loss_arr)
+# plt.savefig(figure_dir+"dqn_loss.png",dpi=600)
+#
+# plt.figure()
+# plt.plot(reward_episode_arr, '.', label='Target')
+# plt.plot(predictron_lambda_arr, '.', label='Predictron')
+# plt.plot(DQN_arr, '.', label='DQN')
+# plt.title("Value estimate")
+# plt.xlabel("Thousands of steps")
+# plt.legend(loc='lower center')
+# plt.savefig(figure_dir+"value_estimate.png",dpi=600)
+#
+# plt.figure()
+# plt.plot(predictron_error, '.', label='Predictron')
+# plt.plot(predictron_error_avg, label='Running average Predictron')
+# plt.plot(DQN_error, '.', label='DQN')
+# plt.plot(DQN_error_avg, label='Running average DQN')
+# plt.title("Absolute value estimate error")
+# plt.legend()
+# plt.savefig(figure_dir+"absolute_error.png",dpi=600)
+#
+# # plt.figure()
+# # plt.plot(DQN_error[0:100] - predictron_error[0:100], '.', label='DQN - Predictron')
+# # plt.plot(predictron_dqn_error_avg[0:100], label='Running average')
+# # plt.title("DQN_error - predictron_error (first 100.000 steps)")
+# # plt.xlabel("Thousands of steps")
+# # plt.legend()
+# # plt.axhline(linewidth=1, color='grey')
+#
+# plt.figure()
+# plt.plot(DQN_error - predictron_error, '.', label='DQN - Predictron')
+# plt.plot(predictron_dqn_error_avg, label='Running average')
+# plt.title("DQN_error - predictron_error")
 # plt.xlabel("Thousands of steps")
 # plt.legend()
 # plt.axhline(linewidth=1, color='grey')
-
-plt.figure()
-plt.plot(DQN_error - predictron_error, '.', label='DQN - Predictron')
-plt.plot(predictron_dqn_error_avg, label='Running average')
-plt.title("DQN_error - predictron_error")
-plt.xlabel("Thousands of steps")
-plt.legend()
-plt.axhline(linewidth=1, color='grey')
-plt.savefig(figure_dir+"DQN_predictron_error_dif.png",dpi=600)
-
-plt.figure()
-plt.plot(predictron_error, label='Predictron')
-plt.plot(predictron_error_avg, label='Running average')
-plt.title("Predictron_error")
-plt.xlabel("Thousands of steps")
-plt.legend()
-plt.axhline(linewidth=1, color='grey')
-plt.savefig(figure_dir+"predictron_error.png",dpi=600)
-
+# plt.savefig(figure_dir+"DQN_predictron_error_dif.png",dpi=600)
+#
 # plt.figure()
-# plt.plot(predictron_ratio_error, '.', label='Predictron')
-# # plt.plot(predictron_ratio_error_avg, label='Running average')
-# plt.title("Predictron error ratio")
+# plt.plot(predictron_error, label='Predictron')
+# plt.plot(predictron_error_avg, label='Running average')
+# plt.title("Predictron_error")
 # plt.xlabel("Thousands of steps")
 # plt.legend()
 # plt.axhline(linewidth=1, color='grey')
-# plt.ylim((-1,2.5))
-# plt.savefig(model_dir+"results/preturn_loss.png",dpi=600)
-
-# Total wafers produced
-# print("Total wafers produced:", len(my_sim.cycle_time))
-# # # i = 0
-# for ht in my_sim.recipes.keys():
-#     # for sequ in range(len(my_sim.recipes[ht])-1):
-#     # i += 1
-#     # print(len(my_sim.recipes[ht]))
-#     # waf = fact_sim.wafer_box(my_sim, 4, ht, my_sim.wafer_index, lead_dict, sequ)
-#     # my_sim.wafer_index += 1
-#     sequ = len(my_sim.recipes[ht])-1
-#     print(ht)
-#     print(sequ)
-#     print(my_sim.get_rem_shop_time(ht, sequ, 4))
-
-# print(my_sim.get_proc_time('ASGA', 99, 4))
-# print(i)
-
-
-# # Plot the time taken to complete each wafer
-plt.figure()
-plt.plot(my_sim.lateness)
-plt.xlabel("Wafers")
-plt.ylabel("Lateness")
-plt.title("The amount of time each wafer was late")
-plt.savefig(figure_dir+"wafer_lateness.png",dpi=600)
+# plt.savefig(figure_dir+"predictron_error.png",dpi=600)
+#
+# # plt.figure()
+# # plt.plot(predictron_ratio_error, '.', label='Predictron')
+# # # plt.plot(predictron_ratio_error_avg, label='Running average')
+# # plt.title("Predictron error ratio")
+# # plt.xlabel("Thousands of steps")
+# # plt.legend()
+# # plt.axhline(linewidth=1, color='grey')
+# # plt.ylim((-1,2.5))
+# # plt.savefig(model_dir+"results/preturn_loss.png",dpi=600)
+#
+# # Total wafers produced
+# # print("Total wafers produced:", len(my_sim.cycle_time))
+# # # # i = 0
+# # for ht in my_sim.recipes.keys():
+# #     # for sequ in range(len(my_sim.recipes[ht])-1):
+# #     # i += 1
+# #     # print(len(my_sim.recipes[ht]))
+# #     # waf = fact_sim.wafer_box(my_sim, 4, ht, my_sim.wafer_index, lead_dict, sequ)
+# #     # my_sim.wafer_index += 1
+# #     sequ = len(my_sim.recipes[ht])-1
+# #     print(ht)
+# #     print(sequ)
+# #     print(my_sim.get_rem_shop_time(ht, sequ, 4))
+#
+# # print(my_sim.get_proc_time('ASGA', 99, 4))
+# # print(i)
+#
+#
+# # # Plot the time taken to complete each wafer
+# plt.figure()
+# plt.plot(my_sim.lateness)
+# plt.xlabel("Wafers")
+# plt.ylabel("Lateness")
+# plt.title("The amount of time each wafer was late")
+# plt.savefig(figure_dir+"wafer_lateness.png",dpi=600)
 

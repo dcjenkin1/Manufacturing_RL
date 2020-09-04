@@ -203,9 +203,9 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, stati
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(args.save_dir+'DQN_util'+id+'seed'+args.seed+'.csv')
+df.to_csv(args.save_dir+'DQN_util'+id+'seed'+str(args.seed)+'.csv')
 
-np.savetxt(args.save_dir+'DQN_wafer_lateness'+id+'seed'+args.seed+'.csv', np.array(my_sim.lateness), delimiter=',')
+np.savetxt(args.save_dir+'DQN_wafer_lateness'+id+'seed'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
 
 # print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
