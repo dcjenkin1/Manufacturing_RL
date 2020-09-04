@@ -18,7 +18,7 @@ import json
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
 parser.add_argument("--model_dir", default='PDQN_100000.0_full_32.h5', help="Path to DQN model")
 parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
 args = parser.parse_args()
@@ -35,19 +35,19 @@ model_dir = args.model_dir
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 
-with open('break_repair_wip.json', 'r') as fp:
+with open(args.factory_file_dir+'break_repair_wip.json', 'r') as fp:
     break_repair_WIP = json.load(fp)
 
-with open('machines.json', 'r') as fp:
+with open(args.factory_file_dir+'machines.json', 'r') as fp:
     machine_dict = json.load(fp)
 
-with open('recipes.json', 'r') as fp:
+with open(args.factory_file_dir+'recipes.json', 'r') as fp:
     recipes = json.load(fp)
 
-with open('due_date_lead.json', 'r') as fp:
+with open(args.factory_file_dir+'due_date_lead.json', 'r') as fp:
     lead_dict = json.load(fp)
 
-with open('part_mix.json', 'r') as fp:
+with open(args.factory_file_dir+'part_mix.json', 'r') as fp:
     part_mix = json.load(fp)
 
 ####################################################
@@ -202,7 +202,7 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
                         my_sim.stations}
 
 path,file=os.path.split(args.model_dir)
-data_dir = './'+path+'/data/seed_'+seed+'/'+str(id)+'/'
+data_dir = './'+path+'/data/seed_'+str(seed)+'/'+str(id)+'/'
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 

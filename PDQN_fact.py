@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--dqn_model_dir", default='./data/DQN_model_2020-08-30-04-29-36seed14.h5', help="Path to the DQN model")
 parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
-parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=2e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./data/', help="Path save models and log files in")
 parser.add_argument("--seed", default=0, help="random seed")
@@ -65,24 +65,25 @@ class Config_predictron():
         # self.num_gpus = 1
         
         # adam optimizer:
-        self.learning_rate = 1e-3
+        self.learning_rate = 1e-2
         self.beta_1 = 0.9
         self.beta_2 = 0.999
         self.epsilon = 1e-8
         
         self.l2_weight=0.01
-        self.dropout_rate=0
+        self.dropout_rate=0.
         
         self.epochs = 5000
         self.batch_size = 128
         self.episode_length = 500
-        self.burnin = 3e4
+        self.burnin = 1e4
         self.gamma = 0.99
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
         self.max_depth = 16
         
         self.DQN_train_steps = 5e3
+        self.DQN_train_steps_initial = 5e4
         self.Predictron_train_steps = 5e3
         self.Predictron_train_steps_initial = 5e4
         
@@ -168,6 +169,7 @@ step_counter = 0
 
 dqn_loss_arr = []
 pred_loss_arr = []
+DQN_train_steps = config.DQN_train_steps_initial
 Predictron_train_steps = config.Predictron_train_steps_initial
 while my_sim.env.now < sim_time:
     action = dqn_agent.choose_action(state, allowed_actions)
@@ -245,7 +247,8 @@ while my_sim.env.now < sim_time:
     if my_sim.env.now > config.burnin:
         step_counter += 1
             
-    if TRAIN_DQN and step_counter >= config.DQN_train_steps:
+    if TRAIN_DQN and step_counter >= DQN_train_steps:
+        DQN_train_steps = config.DQN_train_steps
         TRAIN_DQN = False
         step_counter = 0
     elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
@@ -254,8 +257,8 @@ while my_sim.env.now < sim_time:
         step_counter = 0
 
 # Save the trained DQN policy network
-dqn_agent.save_model(args.save_dir+"PDQN_model_"+id+'seed'+args.seed+".h5")
-predictron.model.save(args.save_dir+"P_model_"+id+'seed'+args.seed+".h5")
+dqn_agent.save_model(args.save_dir+"PDQN_model_"+id+'_seed_'+str(args.seed)+".h5")
+predictron.model.save(args.save_dir+"P_model_"+id+'_seed_'+str(args.seed)+".h5")
 
 predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
@@ -355,7 +358,7 @@ plt.savefig(figure_dir+"dqn_loss.png",dpi=600)
 plt.figure()
 plt.plot(reward_episode_arr, '.', label='Target')
 plt.plot(predictron_lambda_arr, '.', label='Predictron')
-plt.plot(DQN_arr, '.', label='DQN')
+plt.plot(DQN_arr, '.', label='PDQN')
 plt.title("Value estimate")
 plt.xlabel("Thousands of steps")
 plt.legend(loc='lower center')
@@ -364,7 +367,7 @@ plt.savefig(figure_dir+"value_estimate.png",dpi=600)
 plt.figure()
 plt.plot(predictron_error, '.', label='Predictron')
 plt.plot(predictron_error_avg, label='Running average Predictron')
-plt.plot(DQN_error, '.', label='DQN')
+plt.plot(DQN_error, '.', label='PDQN')
 plt.plot(DQN_error_avg, label='Running average DQN')
 plt.title("Absolute value estimate error")
 plt.legend()
