@@ -262,19 +262,6 @@ class FactorySim(object):
 
     def get_proc_time(self, ht, seq):
         proc_step = self.recipes[ht][seq]
-        # A = proc_step[1]
-        # B = proc_step[2]
-        # LS = proc_step[3]
-        # include_load = proc_step[4]
-        # load = proc_step[5]
-        # include_unload = proc_step[6]
-        # unload = proc_step[7]
-        # proc_t = A * num_waf + B * math.ceil(num_waf/LS)
-        #
-        # if include_load == -1:
-        #     proc_t += load
-        # if include_unload == -1:
-        #     proc_t += unload
         return proc_step[1]
 
     def get_rem_shop_time(self, ht, seq):
