@@ -1,3 +1,5 @@
+# import tensorflow as tf
+# tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -8,18 +10,18 @@ import os
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 import argparse
 import datetime
-
+import json
 
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='~/mypath/', help="Path to factory setup files")
-parser.add_argument("--model_dir", default='DQN_model_5e5.h5', help="Path to DQN model")
-parser.add_argument("--seed", default=0, type=int, help="seed for random functions")
+parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
+parser.add_argument("--model_dir", default='./data/b20/dqn/DQN_model_5e5.h5', help="Path to DQN model")
+parser.add_argument("--seed", default=9, type=int, help="seed for random functions")
 args = parser.parse_args()
 
 
@@ -34,19 +36,19 @@ model_dir = args.model_dir
 WEEK = 24*7
 NO_OF_WEEKS = math.ceil(sim_time/WEEK)
 
-with open('break_repair_wip.json', 'r') as fp:
+with open(args.factory_file_dir+'break_repair_wip.json', 'r') as fp:
     break_repair_WIP = json.load(fp)
 
-with open('machines.json', 'r') as fp:
+with open(args.factory_file_dir+'machines.json', 'r') as fp:
     machine_dict = json.load(fp)
 
-with open('recipes.json', 'r') as fp:
+with open(args.factory_file_dir+'recipes.json', 'r') as fp:
     recipes = json.load(fp)
 
-with open('due_date_lead.json', 'r') as fp:
+with open(args.factory_file_dir+'due_date_lead.json', 'r') as fp:
     lead_dict = json.load(fp)
 
-with open('part_mix.json', 'r') as fp:
+with open(args.factory_file_dir+'part_mix.json', 'r') as fp:
     part_mix = json.load(fp)
     
 ####################################################
@@ -137,7 +139,7 @@ while my_sim.env.now < sim_time:
     # print(f"next state dimension: {len(next_state)}")
     # print("action space dimension:", action_size)
     # record the information for use again in the next training example
-    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    # mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     # print("State:", state)
     
 
@@ -167,7 +169,8 @@ print(my_sim.complete_wafer_dict)
 
 print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
-print(np.mean(my_sim.lateness[-10000:]))
+print("Mean",np.mean(my_sim.lateness[-10000:]))
+print("Max",np.max(my_sim.lateness[-10000:]))
 
 # utilization
 operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
@@ -201,7 +204,7 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 
 
 path,file=os.path.split(args.model_dir)
-data_dir = './'+path+'/data/seed_'+seed+'/'+str(id)+'/'
+data_dir = './'+path+'/pdqn/seed_'+str(seed)+'/'+str(id)+'/'
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 

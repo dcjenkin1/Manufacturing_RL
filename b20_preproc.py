@@ -5,7 +5,7 @@ import math
 import os
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--load_file_dir", default='~/Documents/workspace/WDsim/data/', help="Path to load factory setup csv files")
+parser.add_argument("--load_file_dir", default='~/Documents/workspace/WDsim/pdqn/', help="Path to load factory setup csv files")
 parser.add_argument("--save_file_dir", default='./b20_setup/', help="Path to save factory setup json files")
 args = parser.parse_args()
 

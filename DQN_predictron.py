@@ -23,7 +23,7 @@ parser.add_argument("--dqn_model_dir", default='./DQN_model_5e5.h5', help="Path 
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
-parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
+parser.add_argument("--save_dir", default='./pdqn/', help="Path save log files in")
 args = parser.parse_args()
 
 sim_time = args.sim_time

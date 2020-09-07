@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
-parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
+parser.add_argument("--save_dir", default='./pdqn/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 args = parser.parse_args()
 
@@ -242,29 +242,29 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save(args.save_dir+'PDN_' + id + 'seed' + str(args.seed) + '.h5')
+model.save(args.save_dir+'PDN_' + id + 'seed' + args.seed + '.h5')
 
 
-# plt.figure()
-# plt.plot(preturn_loss_arr)
-# plt.figure()
-# plt.plot(lambda_preturn_loss_arr)
-# plt.figure()
-# plt.plot(predictron_lambda_arr, label='Predictron')
-# plt.plot(reward_episode_arr, label='GT')
-# plt.title("Value estimate")
-# plt.legend()
-#
-# predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
-# predictron_error_avg = [predictron_error[0]]
-# alpha = 0.05
-# for i in range(len(predictron_error)-1):
-#     predictron_error_avg.append(predictron_error_avg[i]*(1-alpha) + predictron_error[i+1]*alpha)
-# plt.figure()
-# plt.plot(predictron_error, label='Predictron')
-# plt.plot(predictron_error_avg, label='Running average')
-# plt.title("Absolute value estimate error")
-# plt.legend()
+plt.figure()
+plt.plot(preturn_loss_arr)
+plt.figure()
+plt.plot(lambda_preturn_loss_arr)
+plt.figure()
+plt.plot(predictron_lambda_arr, label='Predictron')
+plt.plot(reward_episode_arr, label='GT')
+plt.title("Value estimate")
+plt.legend()
+
+predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
+predictron_error_avg = [predictron_error[0]]
+alpha = 0.05
+for i in range(len(predictron_error)-1):
+    predictron_error_avg.append(predictron_error_avg[i]*(1-alpha) + predictron_error[i+1]*alpha)
+plt.figure()
+plt.plot(predictron_error, label='Predictron')
+plt.plot(predictron_error_avg, label='Running average')
+plt.title("Absolute value estimate error")
+plt.legend()
 
 
 
@@ -286,11 +286,11 @@ model.save(args.save_dir+'PDN_' + id + 'seed' + str(args.seed) + '.h5')
 # print(my_sim.get_proc_time('ASGA', 99, 4))
 # print(i)
 #Wafers of each head type
-# print("### Wafers of each head type ###")
-#
-# print(my_sim.lateness)
-#
-# print(my_sim.complete_wafer_dict)
+print("### Wafers of each head type ###")
+
+print(my_sim.lateness)
+
+print(my_sim.complete_wafer_dict)
 
 # ht_seq_mean_w = dict()
 # for tup, time_values in my_sim.ht_seq_wait.items():
@@ -300,7 +300,7 @@ model.save(args.save_dir+'PDN_' + id + 'seed' + str(args.seed) + '.h5')
 #     json.dump({str(k): v for k,v in ht_seq_mean_w.items()}, fp)
 
 # Total wafers produced
-# print("Total wafers produced:", len(my_sim.cycle_time))
+print("Total wafers produced:", len(my_sim.cycle_time))
 
 # utilization
 operational_times = {mach: mach.total_operational_time for mach in my_sim.machines_list}
@@ -339,22 +339,22 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 # print(std_inter)
 # print(coeff_var)
 #
-# print(np.mean(my_sim.lateness[-10000:]))
+print(np.mean(my_sim.lateness[-10000:]))
 
 cols = [mean_util, mean_inter, std_inter, coeff_var]
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival'])
 df = df.transpose()
-df.to_csv(args.save_dir+'PDN_util'+id+'seed'+str(args.seed)+'.csv')
+df.to_csv(args.save_dir+'PDN_util_'+str(id)+'_seed_'+str(args.seed)+'.csv')
 
-np.savetxt(args.save_dir+'PDN_wafer_lateness'+id+'seed'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
+np.savetxt(args.save_dir+'PDN_wafer_lateness_'+str(id)+'_seed_'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
 # print(df)
 
 # # Plot the time taken to complete each wafer
-# plt.figure()
-# plt.plot(my_sim.lateness)
-# plt.xlabel("Wafers")
-# plt.ylabel("Lateness")
-# plt.title("The amount of time each wafer was late")
-# plt.show()
+plt.figure()
+plt.plot(my_sim.lateness)
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.show()
 

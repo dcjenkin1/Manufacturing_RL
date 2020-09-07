@@ -16,9 +16,9 @@ import os
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
-parser.add_argument("--save_dir", default='./data/', help="Path save log files in")
+parser.add_argument("--save_dir", default='./data/b20/dqn/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 args = parser.parse_args()
 
@@ -152,9 +152,10 @@ while my_sim.env.now < sim_time:
     step_counter += 1
     if step_counter % 1000 == 0 and step_counter > 1:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+        print("Mean lateness: ", np.mean(my_sim.lateness))
 
 # Save the trained DQN policy network
-dqn_agent.save_model(args.save_dir+"DQN_model_"+id+'seed'+args.seed+'.h5')
+dqn_agent.save_model(args.save_dir+"DQN_model_"+id+'_seed_'+str(args.seed)+'.h5')
 
 
 #Wafers of each head type
@@ -203,9 +204,9 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, stati
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(args.save_dir+'DQN_util'+id+'seed'+str(args.seed)+'.csv')
+df.to_csv(args.save_dir+'DQN_util_'+str(id)+'_seed_'+str(args.seed)+'.csv')
 
-np.savetxt(args.save_dir+'DQN_wafer_lateness'+id+'seed'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
+np.savetxt(args.save_dir+'DQN_wafer_lateness_'+str(id)+'_seed_'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
 
 # print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
