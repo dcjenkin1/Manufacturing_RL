@@ -101,9 +101,9 @@ class DQN:
         else:
             next_preds = target_model.predict(new_states)
         # next_preds = next_preds.tolist()
-        t = []
         # print("new_allowed_actions:", new_allowed_actions)
         for b in range(self.batch_size):
+            t = []
             if extern_target_model:
                 next_target = next_preds[b]
             else:
