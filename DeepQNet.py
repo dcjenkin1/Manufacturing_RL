@@ -13,12 +13,12 @@ import random
 ########################################################################################################################################
 
 class DQN:
-    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max = 1, seed=None):
+    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max = 1., epsilon_min = 0., seed=None):
         self.state_space_dim = state_space_dim
         self.action_space = action_space
         self.gamma = gamma
         self.epsilon = epsilon_max
-        self.epsilon_min = 0.0
+        self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.tau = tau
         self.learning_rate = learning_rate
