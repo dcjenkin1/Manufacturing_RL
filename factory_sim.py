@@ -35,8 +35,6 @@ class Machine(object):
         self.parts_made = 0
         self.break_mean = break_mean
         self.random_generator = random_generator
-        
-
 
         if break_mean is not None:
             self.time_to_fail = self.time_to_failure()
