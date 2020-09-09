@@ -203,10 +203,13 @@ class Predictron:
         # self.total_loss = keras.losses.get_total_loss(name='total_loss')
         
 class Replay_buffer:
-    def __init__(self, memory_size = 10000):
+    def __init__(self, memory_size = 10000, seed=None):
         assert(memory_size > 0)
         self.memory = list([])
         self.memory_size = memory_size
+        self.random_generator = random.Random()
+        if seed is not None:
+            self.random_generator.seed(seed)
     
     def put(self, data):
         if len(self.memory) < self.memory_size:
@@ -223,3 +226,15 @@ class Replay_buffer:
             data = []
             print("Replay_buffer empty")
         return data
+    
+    def get_pop(self, batch_size=1):
+        data = []
+        if len(self.memory):
+            for _ in range(min(len(self.memory),batch_size)):
+                data.append(self.memory.pop(self.random_generator.randint(0,len(self.memory)-1)))
+        else: 
+            print("Replay_buffer empty")
+        return data
+    
+    def clear(self):
+        self.memory = list([])

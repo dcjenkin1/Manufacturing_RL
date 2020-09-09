@@ -25,7 +25,7 @@ class wafer_box(object):
 ########## CREATING THE MACHINE CLASS ##############
 ####################################################
 class Machine(object):
-    def __init__(self, sim_inst, name, station, break_mean=None, repair_mean=None, random_generator=random.Random()):
+    def __init__(self, sim_inst, name, station, break_mean=None, repair_mean=None, seed=None):
         self.env = sim_inst.env
         self.name = name
         self.station = station
@@ -34,7 +34,9 @@ class Machine(object):
         self.wafer_being_proc = None
         self.parts_made = 0
         self.break_mean = break_mean
-        self.random_generator = random_generator
+        self.random_generator = random.Random()
+        if seed is not None:
+            self.random_generator.seed(seed)
 
         if break_mean is not None:
             self.time_to_fail = self.time_to_failure()
@@ -207,7 +209,7 @@ class FactorySim(object):
         # Dictionary where the key is the name of the machine and the value is the station
         self.machine_dict = m_dict
 
-        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean, random_generator=self.random_generator) for mach in self.machine_dict.items()]
+        self.machines_list = [Machine(self, mach[0], mach[1], self.break_mean, self.repair_mean, seed=self.random_generator.randint(0,int(1e9))) for mach in self.machine_dict.items()]
 
         # create a list of all the station names
         self.stations = sorted(list(set(list(self.machine_dict.values()))))

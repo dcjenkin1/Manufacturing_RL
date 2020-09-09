@@ -21,7 +21,7 @@ from predictron import Predictron, Replay_buffer
 id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--dqn_model_dir", default='./pdqn/DQN_model_2020-08-30-04-29-36seed14.h5', help="Path to the DQN model")
+parser.add_argument("--dqn_model_dir", default='./data/DQN_model_2020-09-07-10-12-34_seed_0.h5', help="Path to the DQN model")
 parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
 parser.add_argument("--sim_time", default=2e5, type=int, help="Simulation minutes")
@@ -73,12 +73,12 @@ class Config_predictron():
         self.learning_rate = 1e-2
         self.beta_1 = 0.9
         self.beta_2 = 0.999
-        self.epsilon = 1e-8
+        self.epsilon = 1e-7
         
         self.l2_weight=0.01
         self.dropout_rate=0.
         
-        self.epochs = 5000
+        # self.epochs = 5000
         self.batch_size = 128
         self.episode_length = 500
         self.burnin = 1e4
@@ -151,7 +151,7 @@ state_queue = list([])
 for i in range(config.episode_length):
     state_queue.append(np.zeros(config.state_size))
 reward_queue = list(np.zeros(config.episode_length))
-replay_buffer = Replay_buffer(memory_size = config.replay_memory_size)
+replay_buffer = Replay_buffer(memory_size = config.replay_memory_size, seed=args.seed)
 
 predictron = Predictron(config)
 model = predictron.model
@@ -165,7 +165,7 @@ predictron_lambda_arr = []
 reward_episode_arr = []
 
 # Creating the DQN agent
-dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_max=0., gamma=0.99)
+dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_max=0.1, epsilon_min=0.1, gamma=0.99)
 dqn_agent.load_model(pretrained_dqn_model_dir)
 order_count = 0
 
@@ -201,12 +201,12 @@ while my_sim.env.now < sim_time:
         loss = dqn_agent.replay(extern_target_model = predictron.model)
         if loss is not None:
             dqn_loss_arr.append(np.mean(loss))
-        order_count += 1
-        if order_count >= 1:
-            # After every 20 processes update the target network and reset the order count
-            dqn_agent.train_target()
-            order_count = 0
-            # Record the information for use again in the next training example
+        # order_count += 1
+        # if order_count >= 1:
+        #     # After every 20 processes update the target network and reset the order count
+        #     dqn_agent.train_target()
+        #     order_count = 0
+        #     # Record the information for use again in the next training example
                 
         mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
@@ -260,8 +260,8 @@ while my_sim.env.now < sim_time:
         TRAIN_DQN = False
         step_counter = 0
     elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
-        for i in range(int(Predictron_train_steps)):
-            data = np.array(replay_buffer.get(config.batch_size))
+        data = np.array(replay_buffer.get_pop(config.batch_size))
+        while data != []:
             states = np.array([np.array(x) for x in data[:,0]])
             states = np.expand_dims(states,-1)
             rewards = np.array([np.array(x) for x in data[:,1]])
@@ -273,17 +273,17 @@ while my_sim.env.now < sim_time:
             preturn_loss_arr.append(preturn_loss)
             lambda_preturn_loss_arr.append(lambda_preturn_loss)
             
-            if i % 1000 == 0:
-                print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
-                print("running mean % of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
-                predictron_result = model.predict([state])
-                DQN_arr.append(dqn_agent.calculate_value_of_action(state, allowed_actions))
-                predictron_lambda_arr.append(predictron_result[1])
-                reward_episode_arr.append(reward_episode)
-                
-                print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
+            print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
+            print("running mean % of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
+            predictron_result = model.predict([state])
+            DQN_arr.append(dqn_agent.calculate_value_of_action(state, allowed_actions))
+            predictron_lambda_arr.append(predictron_result[1])
+            reward_episode_arr.append(reward_episode)
             
-        replay_buffer = Replay_buffer(memory_size = config.replay_memory_size)
+            print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
+            
+        
+        replay_buffer.clear()
         Predictron_train_steps = config.Predictron_train_steps
         TRAIN_DQN = True
         step_counter = 0
