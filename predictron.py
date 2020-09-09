@@ -224,7 +224,7 @@ class Replay_buffer:
             data = random.sample(self.memory, batch_size)
         else: 
             data = []
-            print("Replay_buffer empty")
+            print("Data buffer empty")
         return data
     
     def get_pop(self, batch_size=1):
@@ -233,7 +233,7 @@ class Replay_buffer:
             for _ in range(min(len(self.memory),batch_size)):
                 data.append(self.memory.pop(self.random_generator.randint(0,len(self.memory)-1)))
         else: 
-            print("Replay_buffer empty")
+            print("Data buffer empty")
         return data
     
     def clear(self):

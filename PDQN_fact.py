@@ -211,7 +211,7 @@ while my_sim.env.now < sim_time:
         mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
     else:  #Predictron
-                
+        
         state_episode = state_queue.pop(0)
         state_queue.append(state)
                 
@@ -259,6 +259,7 @@ while my_sim.env.now < sim_time:
         DQN_train_steps = config.DQN_train_steps
         TRAIN_DQN = False
         step_counter = 0
+        print("Training predictron")
     elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
         data = np.array(replay_buffer.get_pop(config.batch_size))
         while data != []:
@@ -288,6 +289,7 @@ while my_sim.env.now < sim_time:
         Predictron_train_steps = config.Predictron_train_steps
         TRAIN_DQN = True
         step_counter = 0
+        print("Training PDQN")
 
 # Save the trained DQN policy network
 dqn_agent.save_model(res_path+'pdqn_model.h5')
