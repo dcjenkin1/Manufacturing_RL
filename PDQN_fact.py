@@ -274,6 +274,7 @@ while my_sim.env.now < sim_time:
             reward_episode_arr.append(reward_episode)
             
             print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
+            data = np.array(replay_buffer.get_pop(config.batch_size))
             
         
         replay_buffer.clear()
