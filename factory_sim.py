@@ -37,8 +37,6 @@ class Machine(object):
         self.random_generator = random.Random()
         if seed is not None:
             self.random_generator.seed(seed)
-        
-
 
         if break_mean is not None:
             self.time_to_fail = self.time_to_failure()

@@ -15,20 +15,27 @@ import os
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
-parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+# parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
-parser.add_argument("--save_dir", default='./data/b20/dqn/', help="Path save log files in")
+parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
+parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
+parser.add_argument('--batch_size', default=32, help='batch size for training')
 args = parser.parse_args()
 
-id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
+id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
+
+
 # random.seed(args.seed)
 args = parser.parse_args()
-model_dir = args.save_dir+'models/DQN/'+str(id)+'/'
+# model_dir = args.save_dir+str(id)+'/models/dqn_'+str(args.seed)
+res_dir = args.save_dir+args.factory_file_dir+'dqn/'+'/'+str(id)+'/'
+res_path = res_dir+'dqn_sim_time'+str(args.sim_time)+'batch_size'+str(args.batch_size)+'seed'+str(args.seed)
+# if not os.path.exists(model_dir):
+#     os.makedirs(model_dir)
 
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
+if not os.path.exists(res_dir):
+    os.makedirs(res_dir)
 
 sim_time = args.sim_time
 
@@ -100,7 +107,7 @@ action_size = len(action_space)
 state_size = len(state)
 
 # Creating the DQN agent
-dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99, seed=args.seed)
+dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99, batch_size=32, seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)
@@ -155,7 +162,7 @@ while my_sim.env.now < sim_time:
         print("Mean lateness: ", np.mean(my_sim.lateness))
 
 # Save the trained DQN policy network
-dqn_agent.save_model(args.save_dir+"DQN_model_"+id+'_seed_'+str(args.seed)+'.h5')
+dqn_agent.save_model(res_path+'model.h5')
 
 
 #Wafers of each head type
@@ -204,9 +211,9 @@ cols = [mean_util, mean_inter, std_inter, coeff_var, machines_per_station, stati
 df = pd.DataFrame(cols, index=['mean_utilization', 'mean_interarrival_time', 'standard_dev_interarrival',
                   'coefficient_of_var_interarrival', 'machines_per_station', 'mean_wait_time'])
 df = df.transpose()
-df.to_csv(args.save_dir+'DQN_util_'+str(id)+'_seed_'+str(args.seed)+'.csv')
+df.to_csv(res_path+'util.csv')
 
-np.savetxt(args.save_dir+'DQN_wafer_lateness_'+str(id)+'_seed_'+str(args.seed)+'.csv', np.array(my_sim.lateness), delimiter=',')
+np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 
 # print(df)
 # with open(s+'lateness'+id+'.txt','w') as f:
