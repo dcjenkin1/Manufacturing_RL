@@ -1,5 +1,5 @@
-# import tensorflow as tf
-# tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
+import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -17,10 +17,10 @@ import json
 
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
+# parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
-parser.add_argument("--model_dir", default='./data/b20/dqn/DQN_model_5e5.h5', help="Path to DQN model")
+parser.add_argument("--model_dir", default='./data/b20_setup/pdqn/2020-09-11-16/pdqn_sim_time200000.0srs128seed0pdqn_model_itt_1.h5', help="Path to DQN model")
 parser.add_argument("--seed", default=9, type=int, help="seed for random functions")
 args = parser.parse_args()
 
@@ -167,7 +167,7 @@ print(my_sim.complete_wafer_dict)
 # plt.title("The amount of time each wafer was late (DQN)")
 # plt.show()
 
-print(my_sim.lateness)
+# print(my_sim.lateness)
 print(np.mean(my_sim.lateness))
 print("Mean",np.mean(my_sim.lateness[-10000:]))
 print("Max",np.max(my_sim.lateness[-10000:]))
@@ -216,7 +216,13 @@ df = df.transpose()
 df.to_csv(data_dir+'util.csv')
 
 # Plot the time taken to complete each wafer
+# N=10000
+# lateness_avg = np.convolve(my_sim.lateness, np.ones((N,))/N, mode='valid')
+range_list = list(range(len(my_sim.lateness)))
+lateness_cum_avg = np.cumsum(my_sim.lateness)/np.array(range_list)
 plt.plot(my_sim.lateness, '.')
+# plt.plot(np.append(np.zeros(N)*np.NaN,lateness_avg))
+plt.plot(lateness_cum_avg)
 plt.xlabel("Wafers")
 plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
@@ -230,4 +236,11 @@ plt.title("The sum of all rewards up until each time step")
 plt.show()
 
 
-
+data = my_sim.lateness[-10000:]
+binwidth = 10
+plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))
+plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+plt.yscale('log')
+plt.xlim(-20,1000)
+min_ylim, max_ylim = plt.ylim()
+plt.text(np.mean(data)*1.1, max_ylim*0.5, 'Mean: {:.2f}'.format(np.mean(data)))
