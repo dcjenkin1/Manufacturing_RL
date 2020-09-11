@@ -1,5 +1,5 @@
-# import tensorflow as tf
-# tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
+import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -87,10 +87,11 @@ class Config_predictron():
         self.predictron_update_steps = 50
         self.max_depth = 16
         
-        self.DQN_train_steps = 5e3
+        self.DQN_train_steps = 5e4
         self.DQN_train_steps_initial = 5e4
-        self.Predictron_train_steps = 5e3
+        self.Predictron_train_steps = 5e4
         self.Predictron_train_steps_initial = 5e4
+        self.train_itterations = 5
         
         self.state_rep_size = args.state_rep_size
 
@@ -171,6 +172,7 @@ order_count = 0
 
 TRAIN_DQN = False
 step_counter = 0
+itteration = 0
 
 dqn_loss_arr = []
 pred_loss_arr = []
@@ -259,6 +261,9 @@ while my_sim.env.now < sim_time:
         DQN_train_steps = config.DQN_train_steps
         TRAIN_DQN = False
         step_counter = 0
+        itteration += 1
+        dqn_agent.save_model(res_path+'pdqn_model_itt_'+str(itteration)+'.h5')
+        np.savetxt(res_path+'lateness_itt_'+str(itteration)+'.csv', np.array(my_sim.lateness), delimiter=',')
         print("Training predictron")
     elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
         data = np.array(replay_buffer.get_pop(config.batch_size))
@@ -290,7 +295,10 @@ while my_sim.env.now < sim_time:
         TRAIN_DQN = True
         step_counter = 0
         print("Training PDQN")
-
+    
+    
+    if (DQN_train_steps == 0 and Predictron_train_steps == 0) or itteration >= config.train_itterations :
+        break
 # Save the trained DQN policy network
 dqn_agent.save_model(res_path+'pdqn_model.h5')
 predictron.model.save(res_path+'p_model.h5')
@@ -377,7 +385,7 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # figure_dir = model_dir+"figures/"
 # if not os.path.exists(figure_dir):
 #     os.makedirs(figure_dir)
-#
+# 
 # plt.figure()
 # plt.plot(preturn_loss_arr)
 # plt.savefig(figure_dir+"preturn_loss.png",dpi=600)
@@ -386,8 +394,12 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # plt.plot(lambda_preturn_loss_arr)
 # plt.savefig(figure_dir+"lambda_preturn_loss.png",dpi=600)
 #
+# N=5000
+# dqn_loss_arr_avg = np.convolve(dqn_loss_arr, np.ones((N,))/N, mode='valid')
 # plt.figure()
 # plt.plot(dqn_loss_arr)
+# plt.plot(dqn_loss_arr_avg)
+# plt.ylim((0,5000))
 # plt.savefig(figure_dir+"dqn_loss.png",dpi=600)
 #
 # plt.figure()
@@ -403,18 +415,18 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # plt.plot(predictron_error, '.', label='Predictron')
 # plt.plot(predictron_error_avg, label='Running average Predictron')
 # plt.plot(DQN_error, '.', label='PDQN')
-# plt.plot(DQN_error_avg, label='Running average DQN')
+# plt.plot(DQN_error_avg, label='Running average PDQN')
 # plt.title("Absolute value estimate error")
 # plt.legend()
 # plt.savefig(figure_dir+"absolute_error.png",dpi=600)
 #
-# # plt.figure()
-# # plt.plot(DQN_error[0:100] - predictron_error[0:100], '.', label='DQN - Predictron')
-# # plt.plot(predictron_dqn_error_avg[0:100], label='Running average')
-# # plt.title("DQN_error - predictron_error (first 100.000 steps)")
-# # plt.xlabel("Thousands of steps")
-# # plt.legend()
-# # plt.axhline(linewidth=1, color='grey')
+# plt.figure()
+# plt.plot(DQN_error[0:100] - predictron_error[0:100], '.', label='DQN - Predictron')
+# plt.plot(predictron_dqn_error_avg[0:100], label='Running average')
+# plt.title("DQN_error - predictron_error (first 100.000 steps)")
+# plt.xlabel("Thousands of steps")
+# plt.legend()
+# plt.axhline(linewidth=1, color='grey')
 #
 # plt.figure()
 # plt.plot(DQN_error - predictron_error, '.', label='DQN - Predictron')
@@ -434,14 +446,14 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # plt.axhline(linewidth=1, color='grey')
 # plt.savefig(figure_dir+"predictron_error.png",dpi=600)
 #
-# # plt.figure()
-# # plt.plot(predictron_ratio_error, '.', label='Predictron')
-# # # plt.plot(predictron_ratio_error_avg, label='Running average')
-# # plt.title("Predictron error ratio")
-# # plt.xlabel("Thousands of steps")
-# # plt.legend()
-# # plt.axhline(linewidth=1, color='grey')
-# # plt.ylim((-1,2.5))
+# plt.figure()
+# plt.plot(predictron_ratio_error, '.', label='Predictron')
+# # plt.plot(predictron_ratio_error_avg, label='Running average')
+# plt.title("Predictron error ratio")
+# plt.xlabel("Thousands of steps")
+# plt.legend()
+# plt.axhline(linewidth=1, color='grey')
+# plt.ylim((-1,2.5))
 # # plt.savefig(model_dir+"results/preturn_loss.png",dpi=600)
 #
 # # Total wafers produced
@@ -464,9 +476,10 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 #
 # # # Plot the time taken to complete each wafer
 # plt.figure()
-# plt.plot(my_sim.lateness)
+# plt.plot(my_sim.lateness, '.')
 # plt.xlabel("Wafers")
 # plt.ylabel("Lateness")
 # plt.title("The amount of time each wafer was late")
+# plt.xlim((25000,30000))
 # plt.savefig(figure_dir+"wafer_lateness.png",dpi=600)
 
