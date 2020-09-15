@@ -87,11 +87,11 @@ class Config_predictron():
         self.predictron_update_steps = 50
         self.max_depth = 16
         
-        self.DQN_train_steps = 5e4
+        self.DQN_train_steps = 25e3
         self.DQN_train_steps_initial = 5e4
-        self.Predictron_train_steps = 5e4
+        self.Predictron_train_steps = 25e3
         self.Predictron_train_steps_initial = 5e4
-        self.train_itterations = 5
+        self.train_itterations = 10
         
         self.state_rep_size = args.state_rep_size
 
@@ -178,7 +178,8 @@ dqn_loss_arr = []
 pred_loss_arr = []
 DQN_train_steps = config.DQN_train_steps_initial
 Predictron_train_steps = config.Predictron_train_steps_initial
-while my_sim.env.now < sim_time:
+
+while (itteration is None and my_sim.env.now < sim_time) or (itteration is not None and itteration < config.train_itterations):
     action = dqn_agent.choose_action(state, allowed_actions)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
@@ -297,7 +298,7 @@ while my_sim.env.now < sim_time:
         print("Training PDQN")
     
     
-    if (DQN_train_steps == 0 and Predictron_train_steps == 0) or itteration >= config.train_itterations :
+    if (DQN_train_steps == 0 and Predictron_train_steps == 0):
         break
 # Save the trained DQN policy network
 dqn_agent.save_model(res_path+'pdqn_model.h5')
