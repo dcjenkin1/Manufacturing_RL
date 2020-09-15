@@ -1,3 +1,5 @@
+import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -242,7 +244,7 @@ while my_sim.env.now < sim_time:
     # print("State:", state)
     
 # Save the trained Predictron network
-model.save(args.save_dir+'PDN_' + id + 'seed' + args.seed + '.h5')
+model.save(args.save_dir+'PDN_' + id + 'seed' + str(args.seed) + '.h5')
 
 
 plt.figure()
