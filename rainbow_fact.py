@@ -4,7 +4,8 @@ Created on Wed Sep 16 10:38:03 2020
 
 @author: RTS
 """
-
+import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -28,9 +29,11 @@ parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to fa
 parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 parser.add_argument('--batch_size', default=32, help='batch size for training')
+parser.add_argument('--nstep', default=5, help='batch size for training')
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
+nstep = args.nstep
 
 
 # random.seed(args.seed)
@@ -114,10 +117,17 @@ action_size = len(action_space)
 state_size = len(state)
 
 # Creating the rainbow agent
-rainbow_agent = rainbow.Rainbow(state_space_dim= state_size, action_space= action_space, prioritized_replay_beta_iters=int(sim_time), epsilon_decay=0.999, gamma=0.99, batch_size=32, seed=args.seed)
+gamma = 0.99
+rainbow_agent = rainbow.Rainbow(state_space_dim= state_size, action_space= action_space, prioritized_replay_beta_iters=int(sim_time), epsilon_decay=0.999, gamma=gamma, batch_size=32, nstep = nstep, seed=args.seed)
 
 order_count = 0
 step_counter = 0
+
+state_list = []
+action_list = []
+reward_list = []
+next_allowed_actions_list = []
+
 while my_sim.env.now < sim_time:
     action = rainbow_agent.choose_action(state, allowed_actions)
     
@@ -130,9 +140,23 @@ while my_sim.env.now < sim_time:
     next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
-
-    # Save the example for later training
-    rainbow_agent.remember(state, action, reward, next_state, next_allowed_actions)
+    
+    state_list.append(state)
+    action_list.append(action)
+    reward_list.append(reward)
+    next_allowed_actions_list.append(next_allowed_actions)
+    
+    if len(reward_list) >= nstep:
+        reward_sum = 0
+        for i in range(nstep):
+            reward_sum += (gamma ** i) * reward_list[i]
+        
+        # Save the example for later training
+        rainbow_agent.remember(state_list[0], action_list[0], reward_sum, next_state, next_allowed_actions_list[0])
+        
+        del state_list[0]
+        del action_list[0]
+        del reward_list[0]
 
     if my_sim.order_completed:
         # After each wafer completed, train the policy network 

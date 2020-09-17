@@ -20,7 +20,7 @@ from baselines.common.schedules import LinearSchedule
 # Double DQN - YES
 # Dueling DQN - YES
 # PER - YES
-# Multi-step - NO
+# Multi-step - YES (in rainbow_fact)
 # Distributional - NO (Might be discarded due to bad performance)
 # Noisy Nets - NO (Consider using Boltzman exploration instead)
 
@@ -30,7 +30,7 @@ from baselines.common.schedules import LinearSchedule
 ########################################################################################################################################
 
 class Rainbow:
-    def __init__(self, state_space_dim, action_space, prioritized_replay_beta_iters=None, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max=1, batch_size=32, epsilon_min = 0., seed=None):
+    def __init__(self, state_space_dim, action_space, prioritized_replay_beta_iters=None, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max=1, batch_size=32, epsilon_min = 0., nstep = 1, seed=None):
         self.state_space_dim = state_space_dim
         self.action_space = action_space
         self.gamma = gamma
@@ -46,6 +46,8 @@ class Rainbow:
         self.random_epsilon = random.Random()
         if seed is not None:
             self.random_epsilon.seed(seed)
+            
+        self.nstep = nstep
         self.prioritized_replay_alpha=0.6
         self.prioritized_replay_beta0=0.4
         self.prioritized_replay_beta_iters=prioritized_replay_beta_iters
@@ -152,7 +154,7 @@ class Rainbow:
                     t.append(next_preds[b][self.action_space.index(it)])
                 next_target = t[np.argmax(t_act)]
             
-            target_preds[b][action_ids[b]] = rewards[b] + self.gamma * next_target
+            target_preds[b][action_ids[b]] = rewards[b] + (self.gamma**self.nstep) * next_target
             td_errors.append(preds[b][action_ids[b]] - target_preds[b][action_ids[b]])
         loss = self.model.train_on_batch(states, target_preds)
         new_priorities = np.abs(td_errors) + self.prioritized_replay_eps
