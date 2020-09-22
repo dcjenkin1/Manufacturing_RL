@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
-parser.add_argument("--model_dir", default='./data/b20_setup/pdqn/2020-09-11-16/pdqn_sim_time200000.0srs128seed0pdqn_model_itt_1.h5', help="Path to DQN model")
+parser.add_argument("--model_dir", default='./data/b20_setup/rainbow/2020-09-17-20/rainbow_sim_time100000.0batch_size32seed0model.h5', help="Path to DQN model")
 parser.add_argument("--seed", default=9, type=int, help="seed for random functions")
 args = parser.parse_args()
 
@@ -85,7 +85,7 @@ def get_state(sim):
 #####################################################################
 ######################### LOADING THE TRAINED POLICY ################
 #####################################################################
-model = load_model(model_dir)
+model = load_model(model_dir, custom_objects={'tf': tf})
 
 
 # Action function to choose the best action given the q-function if not exploring based on epsilon
@@ -241,6 +241,6 @@ binwidth = 10
 plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))
 plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
 plt.yscale('log')
-plt.xlim(-20,1000)
+plt.xlim(-20,1500)
 min_ylim, max_ylim = plt.ylim()
 plt.text(np.mean(data)*1.1, max_ylim*0.5, 'Mean: {:.2f}'.format(np.mean(data)))
