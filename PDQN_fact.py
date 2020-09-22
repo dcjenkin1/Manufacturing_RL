@@ -18,13 +18,13 @@ import datetime
 
 from predictron import Predictron, Replay_buffer
 
-id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--dqn_model_dir", default='./data/DQN_model_2020-09-07-10-12-34_seed_0.h5', help="Path to the DQN model")
 parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
-parser.add_argument("--sim_time", default=2e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=2e7, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save models and log files in")
 parser.add_argument("--seed", default=0, help="random seed")
@@ -81,17 +81,19 @@ class Config_predictron():
         # self.epochs = 5000
         self.batch_size = 128
         self.episode_length = 500
+        self.predictron_update_rate = 500
         self.burnin = 1e4
         self.gamma = 0.99
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
         self.max_depth = 16
         
-        self.DQN_train_steps = 25e3
+        self.DQN_train_steps = 5e4
         self.DQN_train_steps_initial = 5e4
-        self.Predictron_train_steps = 25e3
+        self.Predictron_train_steps = 5e4
         self.Predictron_train_steps_initial = 5e4
         self.train_itterations = 10
+        
         
         self.state_rep_size = args.state_rep_size
 
@@ -128,6 +130,10 @@ def get_state(sim):
     state_rep.extend(c) # Appending the rolling window to state space
     return state_rep
 
+config = Config_predictron()
+if config.train_itterations is not None:
+    sim_time=1e16
+    print("simulation time set to 1e16 as itterations is set.")
 
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'], break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed)
@@ -171,13 +177,18 @@ dqn_agent.load_model(pretrained_dqn_model_dir)
 order_count = 0
 
 TRAIN_DQN = False
-step_counter = 0
+step_counter = 0 # to count steps between itterations
 itteration = 0
+num_steps = 0 # to count all steps taken
 
 dqn_loss_arr = []
 pred_loss_arr = []
 DQN_train_steps = config.DQN_train_steps_initial
 Predictron_train_steps = config.Predictron_train_steps_initial
+
+num_steps_total=0
+if itterations is not None:
+    num_steps_total = config.DQN_train_steps_initial+config.Predictron_train_steps_initial+config.train_itterations*(config.DQN_train_steps+config.Predictron_train_steps)
 
 while (itteration is None and my_sim.env.now < sim_time) or (itteration is not None and itteration < config.train_itterations):
     action = dqn_agent.choose_action(state, allowed_actions)
@@ -197,7 +208,10 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         # Save the example for later training
         dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
         if step_counter % 1000 == 0 and step_counter > 1:
-            print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+            if itteration is None:
+                print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+            else:
+                print(("%.2f" % (100*num_steps/num_steps_total))+"% done")
             print("Mean lateness: ", np.mean(my_sim.lateness))
         # if my_sim.order_completed:
         # After each wafer completed, train the policy network 
@@ -221,7 +235,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         reward_queue = [config.gamma*x + reward for x in reward_queue]
         reward_episode = reward_queue.pop(0)
         reward_queue.append(0.)
-        if step_counter > config.episode_length:
+        if step_counter > config.episode_length and step_counter % config.predictron_update_rate == 0:
             replay_buffer.put((state_episode, reward_episode))
             # if step_counter > config.episode_length+config.batch_size and my_sim.order_completed: # and (step_counter % config.predictron_update_steps) == 0:
                 
@@ -238,7 +252,10 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
                 # lambda_preturn_loss_arr.append(lambda_preturn_loss)
                 
         if step_counter % 1000 == 0 and step_counter > 1:
-            print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+            if itteration is None:
+                print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+            else:
+                print(("%.2f" % (100*num_steps/num_steps_total))+"% done")
             print("Mean lateness: ", np.mean(my_sim.lateness))
             
             # if step_counter > config.episode_length+config.batch_size:
@@ -255,6 +272,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         # record the information for use again in the next training example
         mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
+    num_steps += 1
     if my_sim.env.now > config.burnin:
         step_counter += 1
             
