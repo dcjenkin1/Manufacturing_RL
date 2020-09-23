@@ -187,7 +187,7 @@ DQN_train_steps = config.DQN_train_steps_initial
 Predictron_train_steps = config.Predictron_train_steps_initial
 
 num_steps_total=0
-if itterations is not None:
+if config.train_itterations is not None:
     num_steps_total = config.DQN_train_steps_initial+config.Predictron_train_steps_initial+config.train_itterations*(config.DQN_train_steps+config.Predictron_train_steps)
 
 while (itteration is None and my_sim.env.now < sim_time) or (itteration is not None and itteration < config.train_itterations):
