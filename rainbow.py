@@ -10,6 +10,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.optimizers import Adam
 from collections import deque
+from noisyNetLayers import NoisyDense
 import numpy as np
 import random
 
@@ -62,11 +63,11 @@ class Rainbow:
     # Create the neural network model to train the q function
     def create_model(self):
         model_input = keras.Input(shape=(self.state_space_dim))
-        x = layers.Dense(400, activation='relu')(model_input)
-        x = layers.Dense(250, activation='relu')(x)
-        val = layers.Dense(125, activation='relu')(x)
+        x = NoisyDense(400, activation='relu', kernel_initializer='lecun_uniform', bias_initializer='lecun_uniform')(model_input)
+        x = NoisyDense(250, activation='relu', kernel_initializer='lecun_uniform', bias_initializer='lecun_uniform')(x)
+        val = NoisyDense(125, activation='relu', kernel_initializer='lecun_uniform', bias_initializer='lecun_uniform')(x)
         val = layers.Dense(1)(val)
-        adv = layers.Dense(125, activation='relu')(x)
+        adv = NoisyDense(125, activation='relu', kernel_initializer='lecun_uniform', bias_initializer='lecun_uniform')(x)
         adv = layers.Dense(len(self.action_space))(adv)
         
         reduce_mean = layers.Lambda(lambda w: tf.reduce_mean(w, axis=1, keepdims=True))
