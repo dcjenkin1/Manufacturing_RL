@@ -14,7 +14,7 @@ num_workers = 40
 # time.sleep(120)
 
 DQN_dir_list = glob.glob("data/b20_setup/pdqn/2020-09-21-11-18-*/*itt*.h5")
-print(DQN_dir_list)
+# print(DQN_dir_list)
 
 # DQN_dir_list = ("pdqn/models/dqn/DQN_model_5e5.h5",\
 #                 "pdqn/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
