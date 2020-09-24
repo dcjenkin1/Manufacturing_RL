@@ -1,3 +1,5 @@
+# from https://github.com/chucnorrisful/dqn/blob/master/noisyNetLayers.py
+
 from keras import backend as K
 from keras.layers import Dense, multiply
 from keras.layers.convolutional import Conv2D
