@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 
 
-DQN_dir_list = ("D:/Manufacturing_RL_modular/data/b20_setup/pdqn/2020-09-11-16/pdqn/seed_9",)
+DQN_dir_list = ("data/b20_setup/pdqn/2020-09-21-11-18-12/pdqn/seed_0",)
                 
 
 # DQN_dir_list = ("pdqn/models/testdir/mymodel.h5",)
@@ -51,9 +51,9 @@ for model_dir in DQN_dir_list:
         
             binwidth = 10
             plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
-            # plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+            plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
             plt.yscale('log')
-            # plt.xlim(-10,1500)
+            plt.xlim(-10,1500)
             min_ylim, max_ylim = plt.ylim()
-            # plt.text(np.mean(data)*1.1, max_ylim*0.5, 'Mean: {:.2f}'.format(np.mean(data)))
+            plt.text(np.mean(data)*1.1, max_ylim*0.5, 'Mean: {:.2f}'.format(np.mean(data)))
             plt.title("Itteration "+str(itteration))
