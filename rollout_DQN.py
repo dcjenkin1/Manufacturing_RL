@@ -204,13 +204,13 @@ machines_per_station = {station: len([mach for mach in my_sim.machines_list if m
 
 
 path,file=os.path.split(args.model_dir)
+filename, file_extension = os.path.splitext(file)
 if "pdqn" in args.model_dir:
-    data_dir = './'+path+'/pdqn/seed_'+str(seed)+'/'+str(id)+'/'
+    data_dir = './'+path+'/pdqn/seed_'+str(seed)+'/'+filename+str(id)+'/'
 elif "rainbow" in args.model_dir:
-    data_dir = './'+path+'/rainbow/seed_'+str(seed)+'/'+str(id)+'/'
+    data_dir = './'+path+'/rainbow/seed_'+str(seed)+'/'+filename+str(id)+'/'
 else:
-else:
-    data_dir = './'+path+'/dqn/seed_'+str(seed)+'/'+str(id)+'/'
+    data_dir = './'+path+'/dqn/seed_'+str(seed)+'/'+filename+str(id)+'/'
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
