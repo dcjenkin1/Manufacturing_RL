@@ -35,9 +35,9 @@ class Rainbow:
         self.state_space_dim = state_space_dim
         self.action_space = action_space
         self.gamma = gamma
-        self.epsilon = epsilon_max
-        self.epsilon_min = epsilon_min
-        self.epsilon_decay = epsilon_decay
+        # self.epsilon = epsilon_max
+        # self.epsilon_min = epsilon_min
+        # self.epsilon_decay = epsilon_decay
         
         self.tau = tau
         self.learning_rate = learning_rate
@@ -80,12 +80,12 @@ class Rainbow:
 
     # Action function to choose the best action given the q-function if not exploring based on epsilon
     def choose_action(self, state, allowed_actions):
-        self.epsilon *= self.epsilon_decay
-        self.epsilon = max(self.epsilon_min, self.epsilon)
-        r = self.random_epsilon.random()
-        if r < self.epsilon:
+        # self.epsilon *= self.epsilon_decay
+        # self.epsilon = max(self.epsilon_min, self.epsilon)
+        # r = self.random_epsilon.random()
+        # if r < self.epsilon:
             # print("******* CHOOSING A RANDOM ACTION *******")
-            return self.random_epsilon.choice(allowed_actions)
+            # return self.random_epsilon.choice(allowed_actions)
         # print(state)
         # print(len(state))
         state = np.array(state).reshape(1, self.state_space_dim)
