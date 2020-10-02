@@ -14,13 +14,13 @@ from tensorflow.keras.models import load_model
 import argparse
 import datetime
 import json
-
+from noisyNetLayers import NoisyDense
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
 parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
-parser.add_argument("--model_dir", default='./data/b20_setup/rainbow/2020-09-17-20/rainbow_sim_time100000.0batch_size32seed0model.h5', help="Path to DQN model")
+parser.add_argument("--model_dir", default='./data/b20_setup/rainbow/2020-09-30-21/rainbow_sim_time100000batch_size32seed0model.h5', help="Path to DQN model")
 parser.add_argument("--seed", default=9, type=int, help="seed for random functions")
 args = parser.parse_args()
 
@@ -85,7 +85,7 @@ def get_state(sim):
 #####################################################################
 ######################### LOADING THE TRAINED POLICY ################
 #####################################################################
-model = load_model(model_dir, custom_objects={'tf': tf})
+model = load_model(model_dir, custom_objects={'tf': tf, 'NoisyDense': NoisyDense})
 
 
 # Action function to choose the best action given the q-function if not exploring based on epsilon
