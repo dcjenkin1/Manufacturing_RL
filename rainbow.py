@@ -23,7 +23,7 @@ from baselines.common.schedules import LinearSchedule
 # PER - YES
 # Multi-step - YES (in rainbow_fact)
 # Distributional - NO (Might be discarded due to bad performance)
-# Noisy Nets - NO (Consider using Boltzman exploration instead)
+# Noisy Nets - YES (Consider using Boltzman exploration instead)
 
 
 ########################################################################################################################################
