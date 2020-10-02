@@ -132,7 +132,7 @@ def get_state(sim):
 
 config = Config_predictron()
 if config.train_itterations is not None:
-    sim_time=1e16
+    sim_time=1e10
     print("simulation time set to 1e16 as itterations is set.")
 
 # Create the factory simulation object
