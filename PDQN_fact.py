@@ -28,7 +28,7 @@ parser.add_argument("--sim_time", default=2e7, type=int, help="Simulation minute
 parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save models and log files in")
 parser.add_argument("--seed", default=0, help="random seed")
-parser.add_argument("--sample_rate", default=None, help="sample rate for the predictron")
+parser.add_argument("--sample_rate", default=None, type=int, help="sample rate for the predictron")
 args = parser.parse_args()
 
 sim_time = args.sim_time
@@ -97,9 +97,10 @@ class Config_predictron():
         
         if args.sample_rate:
             self.predictron_update_rate = args.sample_rate
-            self.Predictron_train_steps = int(args.sample_rate * self.batch_size * 128 + self.episode_length)
-            self.Predictron_train_steps_initial = int(args.sample_rate * self.batch_size * 128 + self.episode_length)
+            self.Predictron_train_steps = args.sample_rate * self.batch_size * 128 + self.episode_length
+            self.Predictron_train_steps_initial = args.sample_rate * self.batch_size * 128 + self.episode_length
         
+        print(self.Predictron_train_steps,self.Predictron_train_steps_initial)
         
         self.state_rep_size = args.state_rep_size
 
