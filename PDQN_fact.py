@@ -99,8 +99,7 @@ class Config_predictron():
             self.predictron_update_rate = args.sample_rate
             self.Predictron_train_steps = args.sample_rate * self.batch_size * 128 + self.episode_length
             self.Predictron_train_steps_initial = args.sample_rate * self.batch_size * 128 + self.episode_length
-        
-        print(self.Predictron_train_steps,self.Predictron_train_steps_initial)
+
         
         self.state_rep_size = args.state_rep_size
 
