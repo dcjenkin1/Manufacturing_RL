@@ -28,6 +28,7 @@ parser.add_argument("--sim_time", default=2e7, type=int, help="Simulation minute
 parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save models and log files in")
 parser.add_argument("--seed", default=0, help="random seed")
+parser.add_argument("--sample_rate", default=None, help="sample rate for the predictron")
 args = parser.parse_args()
 
 sim_time = args.sim_time
@@ -79,7 +80,7 @@ class Config_predictron():
         self.dropout_rate=0.
         
         # self.epochs = 5000
-        self.batch_size = 128
+        self.batch_size = 32
         self.episode_length = 500
         self.predictron_update_rate = 500
         self.burnin = 1e4
@@ -93,6 +94,11 @@ class Config_predictron():
         self.Predictron_train_steps = 5e4
         self.Predictron_train_steps_initial = 5e4
         self.train_itterations = 10
+        
+        if args.sample_rate:
+            self.predictron_update_rate = args.sample_rate
+            self.Predictron_train_steps = int(args.sample_rate * self.batch_size * 128 + self.episode_length)
+            self.Predictron_train_steps_initial = int(args.sample_rate * self.batch_size * 128 + self.episode_length)
         
         
         self.state_rep_size = args.state_rep_size
@@ -281,8 +287,12 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         TRAIN_DQN = False
         step_counter = 0
         itteration += 1
-        dqn_agent.save_model(res_path+'pdqn_model_itt_'+str(itteration)+'.h5')
-        np.savetxt(res_path+'lateness_itt_'+str(itteration)+'.csv', np.array(my_sim.lateness), delimiter=',')
+        if args.sample_rate:
+            dqn_agent.save_model(res_path+'pdqn_model_itt_'+str(itteration)+'_sr_'+str(config.predictron_update_rate)+'.h5')
+            np.savetxt(res_path+'lateness_itt_'+str(itteration)+'_sr_'+str(config.predictron_update_rate)+'.csv', np.array(my_sim.lateness), delimiter=',')
+        else:
+            dqn_agent.save_model(res_path+'pdqn_model_itt_'+str(itteration)+'.h5')
+            np.savetxt(res_path+'lateness_itt_'+str(itteration)+'.csv', np.array(my_sim.lateness), delimiter=',')
         print("Training predictron")
     elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
         data = np.array(replay_buffer.get_pop(config.batch_size))
