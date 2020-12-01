@@ -6,6 +6,8 @@ import ray
 import torch
 
 import models
+import inspect
+
 
 
 @ray.remote
@@ -35,7 +37,7 @@ class SelfPlay:
             shared_storage.get_info.remote("terminate")
         ):
             self.model.set_weights(ray.get(shared_storage.get_info.remote("weights")))
-
+            # print(shared_storage.get_info.remote("training_step"))
             if not test_mode:
                 game_history = self.play_game(
                     self.config.visit_softmax_temperature_fn(
@@ -48,7 +50,6 @@ class SelfPlay:
                     "self",
                     0,
                 )
-
                 replay_buffer.save_game.remote(game_history, shared_storage)
 
             else:
@@ -60,7 +61,6 @@ class SelfPlay:
                     "self" if len(self.config.players) == 1 else self.config.opponent,
                     self.config.muzero_player,
                 )
-
                 # Save to the shared storage
                 shared_storage.set_info.remote(
                     {
@@ -124,7 +124,9 @@ class SelfPlay:
 
         if render:
             self.game.render()
-
+        
+        # MCTS_time = 0.
+        # action_time = 0.
         with torch.no_grad():
             while (
                 not done and len(game_history.action_history) <= self.config.max_moves
@@ -142,6 +144,7 @@ class SelfPlay:
 
                 # Choose the action
                 if opponent == "self" or muzero_player == self.game.to_play():
+                    # tic = time.perf_counter()
                     root, mcts_info = MCTS(self.config).run(
                         self.model,
                         stacked_observations,
@@ -149,6 +152,10 @@ class SelfPlay:
                         self.game.to_play(),
                         True,
                     )
+                    # toc = time.perf_counter()
+                    # MCTS_time += toc-tic
+                    # print(f"Time for MCTS {(toc-tic)*1000:0.4f} ms")
+                    # tic = time.perf_counter()
                     action = self.select_action(
                         root,
                         temperature
@@ -156,6 +163,13 @@ class SelfPlay:
                         or len(game_history.action_history) < temperature_threshold
                         else 0,
                     )
+                    # toc = time.perf_counter()
+                    # action_time += toc-tic
+                    
+                    # print(f"Time to select actions {(toc-tic)*1000:0.4f} ms")
+                    # if len(game_history.action_history)%50 == 0:
+                    #     print(f"Time for MCTS {MCTS_time/len(game_history.action_history):0.4f} seconds")
+                    #     print(f"Time to select actions {action_time/len(game_history.action_history):0.4f} seconds")
 
                     if render:
                         print(f'Tree depth: {mcts_info["max_tree_depth"]}')
@@ -184,7 +198,10 @@ class SelfPlay:
         return game_history
 
     def close_game(self):
-        self.game.close()
+        if 'results_path' in inspect.getfullargspec(self.game.close).args:
+            self.game.close(results_path = self.config.results_path)
+        else:
+            self.game.close()
 
     def select_opponent_action(self, opponent, stacked_observations):
         """
@@ -273,6 +290,7 @@ class MCTS:
         We then run a Monte Carlo Tree Search using only action sequences and the model
         learned by the network.
         """
+        # tic = time.perf_counter()
         if override_root_with:
             root = override_root_with
             root_predicted_value = None
@@ -307,22 +325,27 @@ class MCTS:
                 policy_logits,
                 hidden_state,
             )
+        # toc = time.perf_counter()
+        # print(f"Time for initial phase {(toc-tic)*1000:0.4f} ms")
 
         if add_exploration_noise:
             root.add_exploration_noise(
                 dirichlet_alpha=self.config.root_dirichlet_alpha,
                 exploration_fraction=self.config.root_exploration_fraction,
             )
-
+        # tic = time.perf_counter()
         min_max_stats = MinMaxStats()
-
+        # toc = time.perf_counter()
+        # print(f"Time for MinMaxStats {(toc-tic)*1000:0.4f} ms")
+        
         max_tree_depth = 0
+        # tic = time.perf_counter()
         for _ in range(self.config.num_simulations):
             virtual_to_play = to_play
             node = root
             search_path = [node]
             current_tree_depth = 0
-
+            # tic = time.perf_counter()
             while node.expanded():
                 current_tree_depth += 1
                 action, node = self.select_child(node, min_max_stats)
@@ -333,16 +356,21 @@ class MCTS:
                     virtual_to_play = self.config.players[virtual_to_play + 1]
                 else:
                     virtual_to_play = self.config.players[0]
-
+            # toc = time.perf_counter()
+            # print(f"Time for node_expansion {(toc-tic)*1000:0.4f} ms")
             # Inside the search tree we use the dynamics function to obtain the next hidden
             # state given an action and the previous hidden state
             parent = search_path[-2]
+            # tic = time.perf_counter()
             value, reward, policy_logits, hidden_state = model.recurrent_inference(
                 parent.hidden_state,
                 torch.tensor([[action]]).to(parent.hidden_state.device),
             )
+            # toc = time.perf_counter()
+            # print(f"Time for networks {(toc-tic)*1000:0.4f} ms")
             value = models.support_to_scalar(value, self.config.support_size).item()
             reward = models.support_to_scalar(reward, self.config.support_size).item()
+            # tic = time.perf_counter()
             node.expand(
                 self.config.action_space,
                 virtual_to_play,
@@ -350,11 +378,15 @@ class MCTS:
                 policy_logits,
                 hidden_state,
             )
-
+            # toc = time.perf_counter()
+            # print(f"Time for node.expand {(toc-tic)*1000:0.4f} ms")
+            # tic = time.perf_counter()
             self.backpropagate(search_path, value, virtual_to_play, min_max_stats)
-
+            # toc = time.perf_counter()
+            # print(f"Time for backprop {(toc-tic)*1000:0.4f} ms")
             max_tree_depth = max(max_tree_depth, current_tree_depth)
-
+        # toc = time.perf_counter()
+        # print(f"Time for simulations {(toc-tic)*1000:0.4f} ms")
         extra_info = {
             "max_tree_depth": max_tree_depth,
             "root_predicted_value": root_predicted_value,

@@ -5,6 +5,7 @@ import os
 import pickle
 import sys
 import time
+import datetime
 
 import nevergrad
 import numpy
@@ -18,7 +19,6 @@ import replay_buffer
 import self_play
 import shared_storage
 import trainer
-
 
 class MuZero:
     """
@@ -342,8 +342,11 @@ class MuZero:
             self.checkpoint = ray.get(
                 self.shared_storage_worker.get_checkpoint.remote()
             )
-        if self.replay_buffer_worker:
-            self.replay_buffer = ray.get(self.replay_buffer_worker.get_buffer.remote())
+        try:
+            if self.replay_buffer_worker:
+                self.replay_buffer = ray.get(self.replay_buffer_worker.get_buffer.remote())
+        except:
+            pass
 
         print("\nShutting down workers...")
 

@@ -4,6 +4,7 @@ from gym.utils import seeding
 
 import json
 import numpy as np
+
 import math
 from itertools import chain
 from .factory_sim import FactorySim
@@ -88,7 +89,7 @@ class FactoryEnv(gym.Env):
     
     def seed(self,seed):
         self.seed_=seed
-        print("Seed set to: ", self.seed_)
+        # print("Seed set to: ", seed)
         
         state = self.reset() # Resetting env with new seed. Returning state
         return state
@@ -126,5 +127,5 @@ class FactoryEnv(gym.Env):
         allowed_actions = [self.all_actions.index(allowed_action) for allowed_action in self.my_sim.allowed_actions]
         return allowed_actions
     
-    def close(self):
-        pass
+    def close(self):        
+        self = None
