@@ -43,13 +43,14 @@ class DQN:
         return model
 
     # Action function to choose the best action given the q-function if not exploring based on epsilon
-    def choose_action(self, state, allowed_actions):
-        self.epsilon *= self.epsilon_decay
-        self.epsilon = max(self.epsilon_min, self.epsilon)
-        r = self.random_epsilon.random()
-        if r < self.epsilon:
-            # print("******* CHOOSING A RANDOM ACTION *******")
-            return self.random_epsilon.choice(allowed_actions)
+    def choose_action(self, state, allowed_actions, use_epsilon=True):
+        if use_epsilon:
+            self.epsilon *= self.epsilon_decay
+            self.epsilon = max(self.epsilon_min, self.epsilon)
+            r = self.random_epsilon.random()
+            if r < self.epsilon:
+                # print("******* CHOOSING A RANDOM ACTION *******")
+                return self.random_epsilon.choice(allowed_actions)
         # print(state)
         # print(len(state))
         state = np.array(state).reshape(1, self.state_space_dim)

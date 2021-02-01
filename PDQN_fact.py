@@ -82,17 +82,17 @@ class Config_predictron():
         # self.epochs = 5000
         self.batch_size = 32
         self.episode_length = 500
-        self.predictron_update_rate = 500
+        self.predictron_update_rate = 1
         self.burnin = 1e4
         self.gamma = 0.99
         self.replay_memory_size = 100000
         self.predictron_update_steps = 50
         self.max_depth = 16
         
-        self.DQN_train_steps = 5e4
         self.DQN_train_steps_initial = 5e4
-        self.Predictron_train_steps = 5e4
+        self.DQN_train_steps = 5e4
         self.Predictron_train_steps_initial = 5e4
+        self.Predictron_train_steps = 5e4
         self.train_itterations = 10
         
         if args.sample_rate:
@@ -197,7 +197,7 @@ if config.train_itterations is not None:
     num_steps_total = config.DQN_train_steps_initial+config.Predictron_train_steps_initial+config.train_itterations*(config.DQN_train_steps+config.Predictron_train_steps)
 
 while (itteration is None and my_sim.env.now < sim_time) or (itteration is not None and itteration < config.train_itterations):
-    action = dqn_agent.choose_action(state, allowed_actions)
+    action = dqn_agent.choose_action(state, allowed_actions, use_epsilon=TRAIN_DQN)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
                         action[1])
@@ -262,7 +262,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
                 print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
             else:
                 print(("%.2f" % (100*num_steps/num_steps_total))+"% done")
-            print("Mean lateness: ", np.mean(my_sim.lateness))
+            print("Mean lateness: ", np.mean(my_sim.lateness[-(min(len(my_sim.lateness),10000)):]))
             
             # if step_counter > config.episode_length+config.batch_size:
             #     print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
@@ -296,7 +296,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         print("Training predictron")
     elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
         data = np.array(replay_buffer.get_pop(config.batch_size))
-        while data != []:
+        while len(data):
             states = np.array([np.array(x) for x in data[:,0]])
             states = np.expand_dims(states,-1)
             rewards = np.array([np.array(x) for x in data[:,1]])
@@ -314,16 +314,18 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             DQN_arr.append(dqn_agent.calculate_value_of_action(state, allowed_actions))
             predictron_lambda_arr.append(predictron_result[1])
             reward_episode_arr.append(reward_episode)
+            if len(lambda_preturn_loss_arr)%10 ==0:
+                print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
             
-            print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
             data = np.array(replay_buffer.get_pop(config.batch_size))
+            
             
         
         replay_buffer.clear()
         Predictron_train_steps = config.Predictron_train_steps
         TRAIN_DQN = True
         step_counter = 0
-        print("Training PDQN")
+        print("Training policy")
     
     
     if (DQN_train_steps == 0 and Predictron_train_steps == 0):
