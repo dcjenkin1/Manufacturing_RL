@@ -14,6 +14,8 @@ from tensorflow.keras.regularizers import l2
 
 # tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 
+
+
 class Predictron:
     def __init__(self, config):
         # self.inputs = tf.placeholder(tf.float32, shape=[None, config.state_size])
@@ -118,7 +120,7 @@ class Predictron:
     
         self.build_preturns()
         self.build_lambda_preturns()
-        
+        # print(self.g_preturns.shape,self.g_lambda_preturns.shape)
         self.model = keras.models.Model(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
         # self.model.summary()
         # keras.utils.plot_model(self.model, "my_first_model.png", show_shapes=True)
@@ -185,22 +187,25 @@ class Predictron:
             g_k = (1 - self.lambdas[:, k]) * self.values[:, k] + \
                 self.lambdas[:, k] * (self.rewards[:, k + 1] + self.gammas[:, k + 1] * g_k)
         self.g_lambda_preturns = g_k
+        
+    def preturn_loss(self, y_true, y_pred):
+        ''' Loss Eqn (5) '''
+        # [B, 1] <- MSE([B, 17], [B, 1]): As the k_preturns all should minimize the difference to the true return
+        loss_preturns = keras.losses.MeanSquaredError()(y_pred, y_true)
+        return loss_preturns
+    
+    def lambda_preturn_loss(self, y_true, y_pred):
+        ''' Loss Eqn (7) '''
+        # [B, 1] <- MSE([B, 1], [B, 1])
+        loss_lambda_preturns = keras.losses.MeanSquaredError()(y_pred, y_true)
+        return loss_lambda_preturns
 
     def build_loss(self):
         self.model.compile(
             optimizer = keras.optimizers.Adam(learning_rate=self.learning_rate, beta_1 = self.beta_1, beta_2=self.beta_2, epsilon=self.epsilon),
-            loss = [keras.losses.MeanSquaredError(), keras.losses.MeanSquaredError()]
+            loss = [self.preturn_loss, self.lambda_preturn_loss]
             )
-        # Loss Eqn (5)
-        # self.loss_preturns = keras.losses.mean_squared_error(self.g_preturns, self.targets, scope='preturns')
-        # keras.losses.add_loss(self.loss_preturns)
-        # tf.summary.scalar('loss_preturns', self.loss_preturns)
-        # # Loss Eqn (7)
-        # self.loss_lambda_preturns = keras.losses.mean_squared_error(
-        #   self.g_lambda_preturns, self.targets, scope='lambda_preturns')
-        # keras.losses.add_loss(self.loss_lambda_preturns)
-        # tf.summary.scalar('loss_lambda_preturns', self.loss_lambda_preturns)
-        # self.total_loss = keras.losses.get_total_loss(name='total_loss')
+
         
 class Replay_buffer:
     def __init__(self, memory_size = 10000, seed=None):
