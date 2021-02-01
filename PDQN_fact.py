@@ -85,7 +85,7 @@ class Config_predictron():
         self.predictron_update_rate = 1
         self.burnin = 1e4
         self.gamma = 0.99
-        self.replay_memory_size = 5e4
+        self.replay_memory_size = 10000
         self.predictron_update_steps = 50
         self.max_depth = 16
         
@@ -294,7 +294,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             dqn_agent.save_model(res_path+'pdqn_model_itt_'+str(itteration)+'.h5')
             np.savetxt(res_path+'lateness_itt_'+str(itteration)+'.csv', np.array(my_sim.lateness), delimiter=',')
         print("Training predictron")
-    elif not TRAIN_DQN and step_counter >= Predictron_train_steps:
+    elif not TRAIN_DQN and ((step_counter > 1 and step_counter % config.replay_memory_size == 0) or step_counter >= Predictron_train_steps):
         data = np.array(replay_buffer.get_pop(config.batch_size))
         while len(data):
             states = np.array([np.array(x) for x in data[:,0]])
@@ -320,12 +320,12 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             data = np.array(replay_buffer.get_pop(config.batch_size))
             
             
-        
-        replay_buffer.clear()
-        Predictron_train_steps = config.Predictron_train_steps
-        TRAIN_DQN = True
-        step_counter = 0
-        print("Training policy")
+        if step_counter >= Predictron_train_steps:
+            replay_buffer.clear()
+            Predictron_train_steps = config.Predictron_train_steps
+            TRAIN_DQN = True
+            step_counter = 0
+            print("Training policy")
     
     
     if (DQN_train_steps == 0 and Predictron_train_steps == 0):
