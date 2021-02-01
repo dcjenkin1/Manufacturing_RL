@@ -85,7 +85,7 @@ class Config_predictron():
         self.predictron_update_rate = 1
         self.burnin = 1e4
         self.gamma = 0.99
-        self.replay_memory_size = 100000
+        self.replay_memory_size = 5e4
         self.predictron_update_steps = 50
         self.max_depth = 16
         
@@ -164,7 +164,7 @@ state_queue = list([])
 for i in range(config.episode_length):
     state_queue.append(np.zeros(config.state_size))
 reward_queue = list(np.zeros(config.episode_length))
-replay_buffer = Replay_buffer(memory_size = config.replay_memory_size, seed=args.seed)
+data_buffer = Replay_buffer(memory_size = max(config.Predictron_train_steps_initial, config.Predictron_train_steps, config.replay_memory_size, seed=args.seed)
 
 predictron = Predictron(config)
 model = predictron.model
@@ -242,7 +242,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         reward_episode = reward_queue.pop(0)
         reward_queue.append(0.)
         if step_counter > config.episode_length and step_counter % config.predictron_update_rate == 0:
-            replay_buffer.put((state_episode, reward_episode))
+            data_buffer.put((state_episode, reward_episode))
             # if step_counter > config.episode_length+config.batch_size and my_sim.order_completed: # and (step_counter % config.predictron_update_steps) == 0:
                 
                 # data = np.array(replay_buffer.get(config.batch_size))
