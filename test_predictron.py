@@ -33,6 +33,36 @@ class Arg_parser():
         self.max_grad_norm = 10.
         self.log_device_placement = False
         self.num_threads = 10
+        
+        # adam optimizer:
+        self.learning_rate = 1e-2
+        self.beta_1 = 0.9
+        self.beta_2 = 0.999
+        self.epsilon = 1e-7
+        
+        self.l2_weight=0.01
+        self.dropout_rate=0.
+        
+        # self.epochs = 5000
+        self.batch_size = 5
+        self.episode_length = 2
+        self.predictron_update_rate = 500
+        self.burnin = 0*1e4
+        self.gamma = 0.99
+        self.replay_memory_size = 100000
+        self.predictron_update_steps = 50
+        self.max_depth = 16
+        
+        self.DQN_train_steps = 5e4
+        self.DQN_train_steps_initial = 5e4
+        self.Predictron_train_steps = 5e4
+        self.Predictron_train_steps_initial = 5e4
+        self.train_itterations = 10
+        
+        
+        self.state_rep_size = 128#args.state_rep_size
+
+        self.seed = 0#args.seed
     
 config = Arg_parser()
 
@@ -49,6 +79,7 @@ for i in range(config.epochs):
     data = np.random.rand(config.batch_size,config.state_size)
     target = np.random.rand(config.batch_size,1)
     _, preturn, lambda_preturn = model.train_on_batch(data, target)
+    print(preturn,lambda_preturn)
     preturn_arr.append(preturn)
     lambda_preturn_arr.append(lambda_preturn)
     if i % 10 == 0:
