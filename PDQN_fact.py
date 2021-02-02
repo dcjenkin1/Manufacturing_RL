@@ -231,7 +231,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         #     order_count = 0
         #     # Record the information for use again in the next training example
                 
-        mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+        # mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
     else:  #Predictron
         
@@ -276,7 +276,8 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             
         
         # record the information for use again in the next training example
-        mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
+    
+    mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
     num_steps += 1
     if my_sim.env.now > config.burnin:
