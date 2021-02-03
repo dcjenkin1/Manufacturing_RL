@@ -299,7 +299,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             np.savetxt(res_path+'lateness_itt_'+str(itteration)+'.csv', np.array(my_sim.lateness), delimiter=',')
         print("Training predictron")
     elif not TRAIN_DQN and ((step_counter > 1 and step_counter % config.replay_memory_size == 0) or step_counter >= Predictron_train_steps):
-        data = np.array(replay_buffer.get_pop(config.batch_size))
+        data = np.array(data_buffer.get_pop(config.batch_size))
         while len(data):
             states = np.array([np.array(x) for x in data[:,0]])
             states = np.expand_dims(states,-1)
@@ -321,11 +321,11 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             if len(lambda_preturn_loss_arr)%10 ==0:
                 print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
             
-            data = np.array(replay_buffer.get_pop(config.batch_size))
+            data = np.array(data_buffer.get_pop(config.batch_size))
             
             
         if step_counter >= Predictron_train_steps:
-            replay_buffer.clear()
+            data_buffer.clear()
             Predictron_train_steps = config.Predictron_train_steps
             TRAIN_DQN = True
             step_counter = 0
