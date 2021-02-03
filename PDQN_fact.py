@@ -167,7 +167,7 @@ for i in range(config.episode_length):
     discount_array.append(config.gamma**i)
 discount_array=np.array(discount_array)
 reward_queue = list(np.zeros(config.episode_length))
-data_buffer = Replay_buffer(memory_size = max(config.Predictron_train_steps_initial, config.Predictron_train_steps, config.replay_memory_size, seed=args.seed)
+data_buffer = Replay_buffer(memory_size = max(config.Predictron_train_steps_initial, config.Predictron_train_steps, config.replay_memory_size))
 
 predictron = Predictron(config)
 model = predictron.model
@@ -243,7 +243,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
                 
         reward_episode =  np.sum(np.array(reward_queue)*discount_array)
         reward_queue.pop(0)
-        reward_queue.append(rew)
+        reward_queue.append(reward)
         if step_counter > config.episode_length and step_counter % config.predictron_update_rate == 0:
             data_buffer.put((state_episode, reward_episode))
             # if step_counter > config.episode_length+config.batch_size and my_sim.order_completed: # and (step_counter % config.predictron_update_steps) == 0:
