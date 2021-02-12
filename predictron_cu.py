@@ -160,9 +160,9 @@ class Predictron:
     
         self.build_preturns()
         self.build_lambda_preturns()
-        self.model = CustomModel(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
+
         # print(self.g_preturns.shape,self.g_lambda_preturns.shape)
-        # self.model = keras.models.Model(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
+        self.model = CustomModel(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
         # self.model.summary()
         # keras.utils.plot_model(self.model, "my_first_model.png", show_shapes=True)
             
