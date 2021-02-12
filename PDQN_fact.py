@@ -237,7 +237,6 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
         # mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     
     else:  #Predictron
-        
         state_episode = state_queue.pop(0)
         state_queue.append(state)
                 
@@ -306,6 +305,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             rewards = np.array([np.array(x) for x in data[:,1]])
             rewards = np.expand_dims(rewards,-1)
             _, preturn_loss, lambda_preturn_loss = model.train_on_batch(states, rewards)
+            model.train_on_batch(states) # consistency updates
             
             max_lambda_preturn_loss = max(max_lambda_preturn_loss, lambda_preturn_loss)
             max_preturn_loss = max(max_preturn_loss, preturn_loss)
@@ -444,6 +444,7 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # plt.title("Value estimate")
 # plt.xlabel("Thousands of steps")
 # plt.legend(loc='lower center')
+# plt.ylim((-25000,5000))
 # plt.savefig(figure_dir+"value_estimate.png",dpi=600)
 #
 # plt.figure()
@@ -453,11 +454,12 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # plt.plot(DQN_error_avg, label='Running average PDQN')
 # plt.title("Absolute value estimate error")
 # plt.legend()
+# plt.ylim((0,25000))
 # plt.savefig(figure_dir+"absolute_error.png",dpi=600)
 #
 # plt.figure()
-# plt.plot(DQN_error[0:100] - predictron_error[0:100], '.', label='DQN - Predictron')
-# plt.plot(predictron_dqn_error_avg[0:100], label='Running average')
+# plt.plot(DQN_error[0:1000] - predictron_error[0:1000], '.', label='DQN - Predictron')
+# plt.plot(predictron_dqn_error_avg[0:1000], label='Running average')
 # plt.title("DQN_error - predictron_error (first 100.000 steps)")
 # plt.xlabel("Thousands of steps")
 # plt.legend()
@@ -483,7 +485,7 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 #
 # plt.figure()
 # plt.plot(predictron_ratio_error, '.', label='Predictron')
-# # plt.plot(predictron_ratio_error_avg, label='Running average')
+# plt.plot(predictron_ratio_error_avg, label='Running average')
 # plt.title("Predictron error ratio")
 # plt.xlabel("Thousands of steps")
 # plt.legend()
@@ -515,6 +517,6 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # plt.xlabel("Wafers")
 # plt.ylabel("Lateness")
 # plt.title("The amount of time each wafer was late")
-# plt.xlim((25000,30000))
+# plt.xlim((0,None))
 # plt.savefig(figure_dir+"wafer_lateness.png",dpi=600)
 
