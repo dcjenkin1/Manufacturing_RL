@@ -14,7 +14,47 @@ from tensorflow.keras.regularizers import l2
 
 # tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 
+class CustomModel(keras.Model):
+    def train_step(self, data):
+        # Unpack the data. Its structure depends on your model and
+        # on what you pass to `fit()`.
+        if len(data) == 2:
+            x, y = data
+    
+            with tf.GradientTape() as tape:
+                y_pred = self(x, training=True)  # Forward pass
+                # Compute the loss value
+                # (the loss function is configured in `compile()`)
+                loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
+    
+            # Compute gradients
+            trainable_vars = self.trainable_variables
+            gradients = tape.gradient(loss, trainable_vars)
+            # Update weights
+            self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+            # Update metrics (includes the metric that tracks the loss)
+            self.compiled_metrics.update_state(y, y_pred)
+            # Return a dict mapping metric names to current value
+            return {m.name: m.result() for m in self.metrics}
+    
+        else:
+            x = data
 
+            with tf.GradientTape() as tape:
+                y_pred, y = self(x, training=True)  # Forward pass
+                # Compute the loss value
+                # (the loss function is configured in `compile()`)
+                loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
+            
+            # Compute gradients
+            trainable_vars = self.trainable_variables
+            gradients = tape.gradient(loss, trainable_vars)
+            # Update weights
+            self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+            # Update metrics (includes the metric that tracks the loss)
+            self.compiled_metrics.update_state(y, y_pred)
+            # Return a dict mapping metric names to current value
+            return {m.name: m.result() for m in self.metrics}
 
 class Predictron:
     def __init__(self, config):
@@ -120,8 +160,9 @@ class Predictron:
     
         self.build_preturns()
         self.build_lambda_preturns()
+        self.model = CustomModel(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
         # print(self.g_preturns.shape,self.g_lambda_preturns.shape)
-        self.model = keras.models.Model(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
+        # self.model = keras.models.Model(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
         # self.model.summary()
         # keras.utils.plot_model(self.model, "my_first_model.png", show_shapes=True)
             
