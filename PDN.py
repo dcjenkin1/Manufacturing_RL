@@ -99,12 +99,12 @@ class PDN:
         f_bn1 = layers.Dropout(self.dropout_rate)(f_bn1)
         # f_layer2 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(f_bn1) # Convolution for spatially correlated inputs
         f_layer2 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(f_bn1) # conv 3x3 stride 1 if spacial correlation in obs
-        state = layers.BatchNormalization(axis=1,name='f')(f_layer2)
+        state = layers.BatchNormalization(axis=1, name='f')(f_layer2)
         
         adv_layer1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(state) 
         adv_bn1 = layers.BatchNormalization(axis=1)(adv_layer1)
-        advantage = layers.Dense(self.action_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(adv_bn1) 
-        self.advantages = layers.Subtract()([advantage, keras.backend.mean(advantage, keepdims=True)])
+        advantage = layers.Dense(self.action_size, name='advantage')(adv_bn1) 
+        self.advantages = layers.Subtract()([advantage, keras.backend.mean(advantage, axis=-1, keepdims=True)])
         
         rewards_arr = []
         gammas_arr = []
@@ -188,22 +188,22 @@ class PDN:
         # Reward
         reward_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         reward_net_bn1 = layers.BatchNormalization(axis=1)(reward_net_fc1)
-        reward_net_out = layers.Dense(1, kernel_regularizer=l2(self.l2_weight))(reward_net_bn1)
+        reward_net_out = layers.Dense(1)(reward_net_bn1)
         
         # Gamma
         gamma_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         gamma_net_bn1 = layers.BatchNormalization(axis=1)(gamma_net_fc1)
-        gamma_net_out = layers.Dense(1, activation='sigmoid', kernel_regularizer=l2(self.l2_weight))(gamma_net_bn1)
+        gamma_net_out = layers.Dense(1, activation='sigmoid')(gamma_net_bn1)
         
         # Lambda
         lambda_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         lambda_net_bn1 = layers.BatchNormalization(axis=1)(lambda_net_fc1)
-        lambda_net_out = layers.Dense(1, activation='sigmoid', kernel_regularizer=l2(self.l2_weight))(lambda_net_bn1)
+        lambda_net_out = layers.Dense(1, activation='sigmoid')(lambda_net_bn1)
         
         # Value
         value_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(layers.Flatten()(state))
         value_net_bn1 = layers.BatchNormalization(axis=1)(value_net_fc1)
-        value_net_out = layers.Dense(1, kernel_regularizer=l2(self.l2_weight))(value_net_bn1)
+        value_net_out = layers.Dense(1)(value_net_bn1)
     
         return net_out, reward_net_out, gamma_net_out, lambda_net_out, value_net_out
     
@@ -230,10 +230,20 @@ class PDN:
                 self.lambdas[:, k] * (self.rewards[:, k + 1] + self.gammas[:, k + 1] * g_k)
         self.g_lambda_preturns = g_k
 
+    def preturn_loss(self, y_true, y_pred):
+        # Loss Eqn (5)
+        loss_preturns = keras.losses.MeanSquaredError()(y_pred, y_true)
+        return loss_preturns
+    
+    def lambda_preturn_loss(self, y_true, y_pred):
+        # # Loss Eqn (7)
+        loss_lambda_preturns = keras.losses.MeanSquaredError()(y_pred, y_true)
+        return loss_lambda_preturns
+
     def build_loss(self):
         self.model.compile(
-            optimizer = keras.optimizers.Adam(learning_rate=self.learning_rate, beta_1 = self.beta_1, beta_2=self.beta_2, epsilon=self.epsilon_adam),
-            loss = [keras.losses.MeanSquaredError(), keras.losses.MeanSquaredError()]
+            optimizer = keras.optimizers.Adam(learning_rate=self.learning_rate, beta_1 = self.beta_1, beta_2=self.beta_2, epsilon=self.epsilon),
+            loss = [self.preturn_loss, self.lambda_preturn_loss]
             )
         # Loss Eqn (5)
         # self.loss_preturns = keras.losses.mean_squared_error(self.g_preturns, self.targets, scope='preturns')
@@ -270,3 +280,4 @@ class Replay_buffer:
             data = []
             print("Replay_buffer empty")
         return data
+
