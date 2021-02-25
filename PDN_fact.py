@@ -84,7 +84,7 @@ class Config_predictron():
         self.burnin = 0*3e3
         self.gamma = 0.99
         self.replay_memory_size = 10000
-        self.predictron_update_steps = 50
+        self.predictron_update_steps = 1
         self.max_depth = 16
         self.state_size = None # set this before running the predictron
         self.action_size = None # set this before running the predictron
@@ -173,10 +173,7 @@ reward_episode_arr = []
 step_counter = 0
 while my_sim.env.now < sim_time:
     # print(my_sim.env.now)
-    pdn_result = model.predict([state])
-    pred_k = pdn_result[0]
-    pred_lambda = pdn_result[1]
-    action_id = pdn.choose_action(pred_lambda, allowed_actions)
+    action_id = pdn.choose_action(state, allowed_actions)
     
     action = allowed_actions[allowed_actions.index(pdn.action_space[action_id])]
 
@@ -223,9 +220,8 @@ while my_sim.env.now < sim_time:
             preds[0] = np.array(preturn_pred)
             preds[1][:,:,actions] = rewards
             targets = preds
-            
             _, preturn_loss, lambda_preturn_loss = model.train_on_batch(states, targets)
-            
+            model.train_on_batch(states) # consistency update
             # max_lambda_preturn_loss = max(max_lambda_preturn_loss, lambda_preturn_loss)
             # max_preturn_loss = max(max_preturn_loss, preturn_loss)
             preturn_loss_arr.append(preturn_loss)
