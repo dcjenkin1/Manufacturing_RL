@@ -77,14 +77,14 @@ class Config_predictron():
         self.epsilon_decay = 0.999
         
         self.l2_weight=0.01
-        self.dropout_rate=0
+        self.dropout_rate=0.
         
-        self.batch_size = 128
-        self.episode_length = 500
-        self.burnin = 3e4
+        self.batch_size = 32
+        self.episode_length = 50
+        self.burnin = 0*3e3
         self.gamma = 0.99
-        self.replay_memory_size = 100000
-        self.predictron_update_steps = 50
+        self.replay_memory_size = 10000
+        self.predictron_update_steps = 1
         self.max_depth = 16
         self.state_size = None # set this before running the predictron
         self.action_size = None # set this before running the predictron
@@ -151,8 +151,11 @@ config.state_size = state_size
 config.action_size = action_size
 config.action_space = action_space
 state_queue = list([])
+discount_array = []
 for i in range(config.episode_length):
     state_queue.append(np.zeros(config.state_size))
+    discount_array.append(config.gamma**i)
+discount_array=np.array(discount_array)
 action_queue = list(np.zeros(config.episode_length))
 reward_queue = list(np.zeros(config.episode_length))
 replay_buffer = Replay_buffer(memory_size = config.replay_memory_size, seed=config.seed)
@@ -170,10 +173,7 @@ reward_episode_arr = []
 step_counter = 0
 while my_sim.env.now < sim_time:
     # print(my_sim.env.now)
-    pdn_result = model.predict([state])
-    pred_k = pdn_result[0]
-    pred_lambda = pdn_result[1]
-    action_id = pdn.choose_action(pred_lambda, allowed_actions)
+    action_id = pdn.choose_action(state, allowed_actions)
     
     action = allowed_actions[allowed_actions.index(pdn.action_space[action_id])]
 
@@ -193,9 +193,9 @@ while my_sim.env.now < sim_time:
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
     
-    reward_queue = [config.gamma*x + reward for x in reward_queue]
-    reward_episode = reward_queue.pop(0)
-    reward_queue.append(0.)
+    reward_episode = np.sum(np.array(reward_queue)*discount_array)
+    reward_queue.pop(0)
+    reward_queue.append(reward)
     
     if my_sim.env.now > config.burnin:
         step_counter += 1
@@ -213,12 +213,15 @@ while my_sim.env.now < sim_time:
             
             
             preds = model.predict(states)
-            preds[0][:,:,actions] = rewards
+            preturn_pred = []
+            for idx, p in enumerate(preds[0]):
+                p[:,actions[idx]] = rewards[idx]
+                preturn_pred.append(p)
+            preds[0] = np.array(preturn_pred)
             preds[1][:,:,actions] = rewards
             targets = preds
-            
             _, preturn_loss, lambda_preturn_loss = model.train_on_batch(states, targets)
-            
+            model.train_on_batch(states) # consistency update
             # max_lambda_preturn_loss = max(max_lambda_preturn_loss, lambda_preturn_loss)
             # max_preturn_loss = max(max_preturn_loss, preturn_loss)
             preturn_loss_arr.append(preturn_loss)
@@ -233,8 +236,8 @@ while my_sim.env.now < sim_time:
             pdn_result = model.predict([state])
             predictron_lambda_arr.append(np.max(pdn_result[1],axis=-1))
             reward_episode_arr.append(reward_episode)
-            
-            print(np.max(pdn_result[0],axis=-1),predictron_lambda_arr[-1], reward_episode)
+
+            print(pdn_result[0][:,:,np.argmax(pdn_result[1][0,0],axis=-1)][0],predictron_lambda_arr[-1][0], reward_episode)
         
     # print(f"state dimension: {len(state)}")
     # print(f"next state dimension: {len(next_state)}")
@@ -252,12 +255,12 @@ plt.plot(preturn_loss_arr)
 plt.figure()
 plt.plot(lambda_preturn_loss_arr)
 plt.figure()
-plt.plot(predictron_lambda_arr, label='Predictron')
+plt.plot(np.array(predictron_lambda_arr).flatten(), label='Predictron')
 plt.plot(reward_episode_arr, label='GT')
 plt.title("Value estimate")
 plt.legend()
 
-predictron_error = np.abs(np.array(predictron_lambda_arr)[:,0]-np.array(reward_episode_arr))
+predictron_error = np.abs(np.array(predictron_lambda_arr).flatten()-np.array(reward_episode_arr))
 predictron_error_avg = [predictron_error[0]]
 alpha = 0.05
 for i in range(len(predictron_error)-1):

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug 17 11:14:00 2020
+Created on Fri Jul  3 09:18:53 2020
 
 @author: RTS
 """
-
+# import logger
 import random
 import numpy as np
 import tensorflow as tf
@@ -12,12 +12,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.regularizers import l2
 
-print(tf.__version__)
-
-
-########################################################################################################################################
-#################################################################### CREATING Predictron Deep Q-learning Class ####################################
-########################################################################################################################################
+# tf.config.set_visible_devices([], 'GPU') # Use this to run on CPU only
 
 class CustomModel(keras.Model):
     def train_step(self, data):
@@ -46,8 +41,7 @@ class CustomModel(keras.Model):
             x = data
 
             with tf.GradientTape() as tape:
-                y_pred = self(x, training=True)  # Forward pass
-                y = y_pred[1]
+                y_pred, y = self(x, training=True)  # Forward pass
                 # Compute the loss value
                 # (the loss function is configured in `compile()`)
                 loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
@@ -62,31 +56,26 @@ class CustomModel(keras.Model):
             # Return a dict mapping metric names to current value
             return {m.name: m.result() for m in self.metrics}
 
-class PDN:
+class Predictron:
     def __init__(self, config):
         # self.inputs = tf.placeholder(tf.float32, shape=[None, config.state_size])
         # self.targets = tf.placeholder(tf.float32, shape=[None, 20])
       
         self.state_size = config.state_size
-        self.action_size = config.action_size
-        self.action_space = config.action_space
         self.max_depth = config.max_depth
         
         self.learning_rate = config.learning_rate
         self.beta_1 = config.beta_1
         self.beta_2 = config.beta_2
-        self.epsilon_adam = config.epsilon_adam
         self.epsilon = config.epsilon
-        self.epsilon_min = config.epsilon_min
-        self.epsilon_decay = config.epsilon_decay
         self.l2_weight = config.l2_weight
         self.dropout_rate = config.dropout_rate
         self.model = None
         self.state_rep_size = config.state_rep_size
         
-        self.random_epsilon = random.Random()
+        self.random_sample = random.Random()
         if config.seed is not None:
-            self.random_epsilon.seed(config.seed)
+            self.random_sample.seed(config.seed)
       
         # Tensor rewards with shape [batch_size, max_depth + 1]
         self.rewards = None
@@ -100,30 +89,8 @@ class PDN:
         self.preturns = None
         # Tensor lambda_preturns with shape [batch_size]
         self.lambda_preturns = None
-        # Tensor advantage with shape [batch_size, action_size]
-        self.advantages = None
       
         self.build()
-        
-        
-    # Action function to choose the best action given the q-function if not exploring based on epsilon
-    def choose_action(self, state, allowed_actions):
-        pdn_result = self.model.predict([state])
-        pred_k = pdn_result[0]
-        pred_lambda = pdn_result[1]
-        self.epsilon *= self.epsilon_decay
-        self.epsilon = max(self.epsilon_min, self.epsilon)
-        r = self.random_epsilon.random()
-        if r < self.epsilon:
-            # print("******* CHOOSING A RANDOM ACTION *******")
-            return self.action_space.index(self.random_epsilon.choice(allowed_actions))
-        
-        pred = sum(pred_lambda.tolist(), [])
-        temp = []
-        for item in allowed_actions:
-            temp.append(pred[0][self.action_space.index(item)])
-        # print(" ********************* CHOOSING A PREDICTED ACTION **********************")
-        return self.action_space.index(allowed_actions[np.argmax(temp)])
     
     def build(self):
         #logger.INFO('Buidling Predictron.')
@@ -137,7 +104,7 @@ class PDN:
         #logger.INFO('*' * 30)
 
     def build_model(self):
-        size = self.state_size
+
         obs = keras.Input(shape=(self.state_size))
         # f_layer1 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(obs) # Convolution for spatially correlated inputs
         f_layer1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(obs) # conv 3x3 stride 1 if spacial correlation in obs
@@ -145,12 +112,7 @@ class PDN:
         f_bn1 = layers.Dropout(self.dropout_rate)(f_bn1)
         # f_layer2 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(f_bn1) # Convolution for spatially correlated inputs
         f_layer2 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(f_bn1) # conv 3x3 stride 1 if spacial correlation in obs
-        state = layers.BatchNormalization(axis=1, name='f')(f_layer2)
-        
-        adv_layer1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(state) 
-        adv_bn1 = layers.BatchNormalization(axis=1)(adv_layer1)
-        advantage = layers.Dense(self.action_size, name='advantage')(adv_bn1) 
-        self.advantages = layers.Subtract()([advantage, keras.backend.mean(advantage, axis=-1, keepdims=True)])
+        state = layers.BatchNormalization(axis=1,name='f')(f_layer2)
         
         rewards_arr = []
         gammas_arr = []
@@ -173,12 +135,16 @@ class PDN:
         print("Rewards:" + str(self.rewards.shape))
         # [batch_size, K]
         self.rewards = layers.Reshape((self.max_depth,))(self.rewards)
-   
+        # # [batch_size, K + 1]
+        # self.rewards = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.rewards)[0],1), dtype=tf.float32), self.rewards])
+    
         # [batch_size, K]
         self.gammas = keras.backend.stack(gammas_arr, axis=1)
         print("Gammas:" + str(self.gammas.shape))
         # [batch_size, K]
         self.gammas = layers.Reshape((self.max_depth,))(self.gammas)
+        # # [batch_size, K + 1]
+        # self.gammas = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.gammas)[0],1), dtype=tf.float32), self.gammas])
 
         # [batch_size, K]
         self.lambdas = keras.backend.stack(lambdas_arr, axis=1)
@@ -195,18 +161,8 @@ class PDN:
         self.build_preturns()
         self.build_lambda_preturns()
 
-        g_preturns_reshaped = layers.Reshape((self.max_depth+1,self.action_size,))( keras.backend.repeat(self.g_preturns, self.action_size))
-        advantages_k_reshaped = layers.Reshape((self.max_depth+1,self.action_size,))(keras.backend.repeat(self.advantages, self.max_depth+1))
-
-        g_preturns_lambda_reshaped = layers.Reshape((1,self.action_size,))(keras.backend.repeat(keras.backend.expand_dims(self.g_lambda_preturns, axis=-1), self.action_size))
-        advantages_lambda_reshaped = layers.Reshape((1,self.action_size,))(self.advantages)
-
-            
-        g_out = keras.layers.Add()([g_preturns_reshaped, advantages_k_reshaped])
-        g_lambda_out = layers.Add()([g_preturns_lambda_reshaped, advantages_lambda_reshaped])
-        
-        self.model = CustomModel(inputs=obs, outputs=[g_out, g_lambda_out])
-        
+        # print(self.g_preturns.shape,self.g_lambda_preturns.shape)
+        self.model = CustomModel(inputs=obs, outputs=[self.g_preturns, self.g_lambda_preturns])
         # self.model.summary()
         # keras.utils.plot_model(self.model, "my_first_model.png", show_shapes=True)
             
@@ -231,22 +187,22 @@ class PDN:
         # Reward
         reward_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         reward_net_bn1 = layers.BatchNormalization(axis=1)(reward_net_fc1)
-        reward_net_out = layers.Dense(1)(reward_net_bn1)
+        reward_net_out = layers.Dense(1, kernel_regularizer=l2(self.l2_weight))(reward_net_bn1)
         
         # Gamma
         gamma_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         gamma_net_bn1 = layers.BatchNormalization(axis=1)(gamma_net_fc1)
-        gamma_net_out = layers.Dense(1, activation='sigmoid')(gamma_net_bn1)
+        gamma_net_out = layers.Dense(1, activation='sigmoid', kernel_regularizer=l2(self.l2_weight))(gamma_net_bn1)
         
         # Lambda
         lambda_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(net_flatten)
         lambda_net_bn1 = layers.BatchNormalization(axis=1)(lambda_net_fc1)
-        lambda_net_out = layers.Dense(1, activation='sigmoid')(lambda_net_bn1)
+        lambda_net_out = layers.Dense(1, activation='sigmoid', kernel_regularizer=l2(self.l2_weight))(lambda_net_bn1)
         
         # Value
         value_net_fc1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(layers.Flatten()(state))
         value_net_bn1 = layers.BatchNormalization(axis=1)(value_net_fc1)
-        value_net_out = layers.Dense(1)(value_net_bn1)
+        value_net_out = layers.Dense(1, kernel_regularizer=l2(self.l2_weight))(value_net_bn1)
     
         return net_out, reward_net_out, gamma_net_out, lambda_net_out, value_net_out
     
@@ -273,13 +229,16 @@ class PDN:
                 self.lambdas[:, k] * (self.rewards[:, k] + self.gammas[:, k] * g_k)
         self.g_lambda_preturns = g_k
 
+        
     def preturn_loss(self, y_true, y_pred):
-        # Loss Eqn (5)
+        ''' Loss Eqn (5) '''
+        # [B, 1] <- MSE([B, 17], [B, 1]): As the k_preturns all should minimize the difference to the true return
         loss_preturns = keras.losses.MeanSquaredError()(y_pred, y_true)
         return loss_preturns
     
     def lambda_preturn_loss(self, y_true, y_pred):
-        # # Loss Eqn (7)
+        ''' Loss Eqn (7) '''
+        # [B, 1] <- MSE([B, 1], [B, 1])
         loss_lambda_preturns = keras.losses.MeanSquaredError()(y_pred, y_true)
         return loss_lambda_preturns
 
@@ -288,25 +247,16 @@ class PDN:
             optimizer = keras.optimizers.Adam(learning_rate=self.learning_rate, beta_1 = self.beta_1, beta_2=self.beta_2, epsilon=self.epsilon),
             loss = [self.preturn_loss, self.lambda_preturn_loss]
             )
-        # Loss Eqn (5)
-        # self.loss_preturns = keras.losses.mean_squared_error(self.g_preturns, self.targets, scope='preturns')
-        # keras.losses.add_loss(self.loss_preturns)
-        # tf.summary.scalar('loss_preturns', self.loss_preturns)
-        # # Loss Eqn (7)
-        # self.loss_lambda_preturns = keras.losses.mean_squared_error(
-        #   self.g_lambda_preturns, self.targets, scope='lambda_preturns')
-        # keras.losses.add_loss(self.loss_lambda_preturns)
-        # tf.summary.scalar('loss_lambda_preturns', self.loss_lambda_preturns)
-        # self.total_loss = keras.losses.get_total_loss(name='total_loss')
+
         
 class Replay_buffer:
     def __init__(self, memory_size = 10000, seed=None):
         assert(memory_size > 0)
         self.memory = list([])
         self.memory_size = memory_size
-        self.random_sample = random.Random()
+        self.random_generator = random.Random()
         if seed is not None:
-            self.random_sample.seed(seed)
+            self.random_generator.seed(seed)
     
     def put(self, data):
         if len(self.memory) < self.memory_size:
@@ -318,9 +268,20 @@ class Replay_buffer:
     
     def get(self, batch_size=1):
         if len(self.memory) >= batch_size:
-            data = self.random_sample.sample(self.memory, batch_size)
+            data = random.sample(self.memory, batch_size)
         else: 
             data = []
-            print("Replay_buffer empty")
+            print("Data buffer empty")
         return data
-
+    
+    def get_pop(self, batch_size=1):
+        data = []
+        if len(self.memory):
+            for _ in range(min(len(self.memory),batch_size)):
+                data.append(self.memory.pop(self.random_generator.randint(0,len(self.memory)-1)))
+        else: 
+            print("Data buffer empty")
+        return data
+    
+    def clear(self):
+        self.memory = list([])

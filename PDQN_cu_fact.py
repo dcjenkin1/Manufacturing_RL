@@ -16,7 +16,7 @@ import DeepQNet
 import argparse
 import datetime
 
-from predictron import Predictron, Replay_buffer
+from predictron_cu import Predictron, Replay_buffer
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
@@ -305,6 +305,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             rewards = np.array([np.array(x) for x in data[:,1]])
             rewards = np.expand_dims(rewards,-1)
             _, preturn_loss, lambda_preturn_loss = model.train_on_batch(states, rewards)
+            model.train_on_batch(states) # consistency updates
             
             max_lambda_preturn_loss = max(max_lambda_preturn_loss, lambda_preturn_loss)
             max_preturn_loss = max(max_preturn_loss, preturn_loss)
