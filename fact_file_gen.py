@@ -9,7 +9,7 @@ import datetime
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_file_dir", default='./r20_setup/', help="Path to save factory setup json files")
-parser.add_argument("--seed", default=0, help="Path to save factory setup json files")
+parser.add_argument("--seed", default=0, help="Set the random seed")
 args = parser.parse_args()
 
 np.random.seed(args.seed)
