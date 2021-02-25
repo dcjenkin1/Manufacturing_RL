@@ -1,7 +1,6 @@
 import argparse
 import json
 import numpy as np
-import random
 from collections import defaultdict
 import scipy.stats as stats
 import os
@@ -10,7 +9,10 @@ import datetime
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_file_dir", default='./r20_setup/', help="Path to save factory setup json files")
+parser.add_argument("--seed", default=0, help="Path to save factory setup json files")
 args = parser.parse_args()
+
+np.random.seed(args.seed)
 
 id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
 
@@ -79,7 +81,7 @@ recipesd = defaultdict(list)
 
 for ht in head_types:
     for i in range(n_seq_steps):
-        recipesd[ht].append([random.choice(stationsl), stats.gamma.rvs(fit_alpha, loc=fit_loc, scale=fit_beta, size=1)[0]])
+        recipesd[ht].append([np.random.choice(stationsl), stats.gamma.rvs(fit_alpha, loc=fit_loc, scale=fit_beta, size=1)[0]])
 
 rrecipes = dict(recipesd)
 
