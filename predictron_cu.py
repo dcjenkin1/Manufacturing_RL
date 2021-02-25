@@ -135,16 +135,16 @@ class Predictron:
         print("Rewards:" + str(self.rewards.shape))
         # [batch_size, K]
         self.rewards = layers.Reshape((self.max_depth,))(self.rewards)
-        # [batch_size, K + 1]
-        self.rewards = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.rewards)[0],1), dtype=tf.float32), self.rewards])
+        # # [batch_size, K + 1]
+        # self.rewards = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.rewards)[0],1), dtype=tf.float32), self.rewards])
     
         # [batch_size, K]
         self.gammas = keras.backend.stack(gammas_arr, axis=1)
         print("Gammas:" + str(self.gammas.shape))
         # [batch_size, K]
         self.gammas = layers.Reshape((self.max_depth,))(self.gammas)
-        # [batch_size, K + 1]
-        self.gammas = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.gammas)[0],1), dtype=tf.float32), self.gammas])
+        # # [batch_size, K + 1]
+        # self.gammas = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.gammas)[0],1), dtype=tf.float32), self.gammas])
 
         # [batch_size, K]
         self.lambdas = keras.backend.stack(lambdas_arr, axis=1)
@@ -213,7 +213,7 @@ class Predictron:
         # for k = 0, g_0 = v[0], still fits.
         for k in range(self.max_depth, -1, -1):
             g_k = self.values[:, k]
-            for kk in range(k, 0, -1):
+            for kk in range(k-1, -1, -1):
                 g_k = self.rewards[:, kk] + self.gammas[:, kk] * g_k
             g_preturns.append(g_k)
         # reverse to make 0...K from K...0
@@ -226,8 +226,9 @@ class Predictron:
         g_k = self.values[:, -1]
         for k in range(self.max_depth - 1, -1, -1):
             g_k = (1 - self.lambdas[:, k]) * self.values[:, k] + \
-                self.lambdas[:, k] * (self.rewards[:, k + 1] + self.gammas[:, k + 1] * g_k)
+                self.lambdas[:, k] * (self.rewards[:, k] + self.gammas[:, k] * g_k)
         self.g_lambda_preturns = g_k
+
         
     def preturn_loss(self, y_true, y_pred):
         ''' Loss Eqn (5) '''
