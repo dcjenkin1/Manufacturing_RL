@@ -19,6 +19,49 @@ print(tf.__version__)
 #################################################################### CREATING Predictron Deep Q-learning Class ####################################
 ########################################################################################################################################
 
+class CustomModel(keras.Model):
+    def train_step(self, data):
+        # Unpack the data. Its structure depends on your model and
+        # on what you pass to `fit()`.
+        if len(data) == 2:
+            x, y = data
+    
+            with tf.GradientTape() as tape:
+                y_pred = self(x, training=True)  # Forward pass
+                # Compute the loss value
+                # (the loss function is configured in `compile()`)
+                loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
+    
+            # Compute gradients
+            trainable_vars = self.trainable_variables
+            gradients = tape.gradient(loss, trainable_vars)
+            # Update weights
+            self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+            # Update metrics (includes the metric that tracks the loss)
+            self.compiled_metrics.update_state(y, y_pred)
+            # Return a dict mapping metric names to current value
+            return {m.name: m.result() for m in self.metrics}
+    
+        else:
+            x = data
+
+            with tf.GradientTape() as tape:
+                y_pred = self(x, training=True)  # Forward pass
+                y = y_pred[1]
+                # Compute the loss value
+                # (the loss function is configured in `compile()`)
+                loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
+            
+            # Compute gradients
+            trainable_vars = self.trainable_variables
+            gradients = tape.gradient(loss, trainable_vars)
+            # Update weights
+            self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+            # Update metrics (includes the metric that tracks the loss)
+            self.compiled_metrics.update_state(y, y_pred)
+            # Return a dict mapping metric names to current value
+            return {m.name: m.result() for m in self.metrics}
+
 class PDN:
     def __init__(self, config):
         # self.inputs = tf.placeholder(tf.float32, shape=[None, config.state_size])
@@ -64,7 +107,10 @@ class PDN:
         
         
     # Action function to choose the best action given the q-function if not exploring based on epsilon
-    def choose_action(self, pred, allowed_actions):
+    def choose_action(self, state, allowed_actions):
+        pdn_result = self.model.predict([state])
+        pred_k = pdn_result[0]
+        pred_lambda = pdn_result[1]
         self.epsilon *= self.epsilon_decay
         self.epsilon = max(self.epsilon_min, self.epsilon)
         r = self.random_epsilon.random()
@@ -72,7 +118,7 @@ class PDN:
             # print("******* CHOOSING A RANDOM ACTION *******")
             return self.action_space.index(self.random_epsilon.choice(allowed_actions))
         
-        pred = sum(pred.tolist(), [])
+        pred = sum(pred_lambda.tolist(), [])
         temp = []
         for item in allowed_actions:
             temp.append(pred[0][self.action_space.index(item)])
@@ -127,16 +173,12 @@ class PDN:
         print("Rewards:" + str(self.rewards.shape))
         # [batch_size, K]
         self.rewards = layers.Reshape((self.max_depth,))(self.rewards)
-        # [batch_size, K + 1]
-        self.rewards = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.rewards)[0],1), dtype=tf.float32), self.rewards])
-    
+   
         # [batch_size, K]
         self.gammas = keras.backend.stack(gammas_arr, axis=1)
         print("Gammas:" + str(self.gammas.shape))
         # [batch_size, K]
         self.gammas = layers.Reshape((self.max_depth,))(self.gammas)
-        # [batch_size, K + 1]
-        self.gammas = layers.Concatenate(axis=1)([keras.backend.zeros(shape=(tf.shape(self.gammas)[0],1), dtype=tf.float32), self.gammas])
 
         # [batch_size, K]
         self.lambdas = keras.backend.stack(lambdas_arr, axis=1)
@@ -163,7 +205,8 @@ class PDN:
         g_out = keras.layers.Add()([g_preturns_reshaped, advantages_k_reshaped])
         g_lambda_out = layers.Add()([g_preturns_lambda_reshaped, advantages_lambda_reshaped])
         
-        self.model = keras.models.Model(inputs=obs, outputs=[g_out, g_lambda_out])
+        self.model = CustomModel(inputs=obs, outputs=[g_out, g_lambda_out])
+        
         # self.model.summary()
         # keras.utils.plot_model(self.model, "my_first_model.png", show_shapes=True)
             
@@ -214,7 +257,7 @@ class PDN:
         # for k = 0, g_0 = v[0], still fits.
         for k in range(self.max_depth, -1, -1):
             g_k = self.values[:, k]
-            for kk in range(k, 0, -1):
+            for kk in range(k-1, -1, -1):
                 g_k = self.rewards[:, kk] + self.gammas[:, kk] * g_k
             g_preturns.append(g_k)
         # reverse to make 0...K from K...0
@@ -227,7 +270,7 @@ class PDN:
         g_k = self.values[:, -1]
         for k in range(self.max_depth - 1, -1, -1):
             g_k = (1 - self.lambdas[:, k]) * self.values[:, k] + \
-                self.lambdas[:, k] * (self.rewards[:, k + 1] + self.gammas[:, k + 1] * g_k)
+                self.lambdas[:, k] * (self.rewards[:, k] + self.gammas[:, k] * g_k)
         self.g_lambda_preturns = g_k
 
     def preturn_loss(self, y_true, y_pred):
