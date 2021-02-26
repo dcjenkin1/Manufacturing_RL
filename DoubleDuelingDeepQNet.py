@@ -114,7 +114,7 @@ class DQN:
             _, next_preds = target_model.predict(new_states) #using lambda predictions
         else:
             next_preds = target_model.predict(new_states)
-            next_action_preds = model.predict(new_states)
+            next_action_preds = self.model.predict(new_states)
         # next_preds = next_preds.tolist()
         # print("new_allowed_actions:", new_allowed_actions)
         for b in range(self.batch_size):
