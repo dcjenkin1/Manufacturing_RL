@@ -13,7 +13,7 @@ import random
 ########################################################################################################################################
 
 class DQN:
-    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max=1, batch_size=32, epsilon_min = 0., seed=None):
+    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max=1, batch_size=32, epsilon_min = 0.02, seed=None):
         self.state_space_dim = state_space_dim
         self.action_space = action_space
         self.gamma = gamma
@@ -22,7 +22,7 @@ class DQN:
         self.epsilon_decay = epsilon_decay
         self.tau = tau
         self.learning_rate = learning_rate
-        self.memory = deque(maxlen=2000)
+        self.memory = deque(maxlen=10000)
         self.model = self.create_model()
         self.target_model = self.create_model()
         self.batch_size = batch_size
