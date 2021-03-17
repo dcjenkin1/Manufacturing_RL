@@ -20,19 +20,21 @@ import argparse
 import datetime
 import json
 import os
+from scipy.ndimage.filters import uniform_filter1d
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 # parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
+parser.add_argument("--sim_time", default=2e6, type=int, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='r20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 parser.add_argument('--batch_size', default=32, help='batch size for training')
+parser.add_argument('--train_rate', default=10, help='The number of steps to take between training the network')
 parser.add_argument('--nstep', default=5, help='batch size for training')
 args = parser.parse_args()
 
-id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 nstep = args.nstep
 
 
@@ -127,7 +129,8 @@ state_list = []
 action_list = []
 reward_list = []
 next_allowed_actions_list = []
-
+loss=[]
+# eps = [rainbow_agent.epsilon]
 while my_sim.env.now < sim_time:
     action = rainbow_agent.choose_action(state, allowed_actions)
     
@@ -158,9 +161,10 @@ while my_sim.env.now < sim_time:
         del action_list[0]
         del reward_list[0]
 
-    if my_sim.order_completed:
+    # if my_sim.order_completed:
         # After each wafer completed, train the policy network 
-        rainbow_agent.replay(t=my_sim.env.now)
+    if step_counter % args.train_rate == 0:
+        loss.append(rainbow_agent.replay(t=my_sim.env.now))
         order_count += 1
         if order_count >= 1:
             # After every 20 processes update the target network and reset the order count
@@ -170,10 +174,35 @@ while my_sim.env.now < sim_time:
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     step_counter += 1
-    if step_counter % 1000 == 0 and step_counter > 1:
+    if step_counter % 10000 == 0 and step_counter > 1:
+        # eps.append(rainbow_agent.epsilon)
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         print("Mean lateness: ", np.mean(my_sim.lateness))
-
+        # # Plot the time taken to complete each wafer
+        # plt.plot(my_sim.lateness)
+        # plt.xlabel("Wafers")
+        # plt.ylabel("Lateness")
+        # plt.title("The amount of time each wafer was late")
+        # plt.show()
+        
+        # # # Plot the loss
+        # plt.plot(loss)
+        # plt.ylabel("Loss")
+        # plt.title("Training loss")
+        # plt.show()
+        # # # Plot epsilon
+        # # plt.plot(eps)
+        # # plt.ylabel("Epsilon")
+        # # plt.title("Training epsilon")
+        # # plt.show()
+        # #
+        # # Plot the time taken to complete each wafer
+        # plt.plot(my_sim.cumulative_reward_list)
+        # plt.xlabel("step")
+        # plt.ylabel("Cumulative Reward")
+        # plt.title("The sum of all rewards up until each time step")
+        # plt.show()
+        # plt.pause(0.05)
 # Save the trained rainbow policy network
 rainbow_agent.save_model(res_path+'model.h5')
 
@@ -232,21 +261,54 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # with open(s+'lateness'+id+'.txt','w') as f:
 #   f.write('\n'.join(my_sim.lateness))
 
-# # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.lateness)
-# plt.xlabel("Wafers")
-# plt.ylabel("Lateness")
-# plt.title("The amount of time each wafer was late")
-# plt.show()
-# #
 # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.cumulative_reward_list)
-# plt.xlabel("step")
-# plt.ylabel("Cumulative Reward")
-# plt.title("The sum of all rewards up until each time step")
-# plt.show()
+plt.plot(my_sim.lateness)
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.show()
+
+N = 10000
+x = my_sim.lateness
+y = uniform_filter1d(x, size=N)
+plt.plot(y)
+plt.xlabel("Wafers")
+plt.ylabel("Average lateness")
+plt.title("The running average of the time each wafer was late, avg of "+str(N)+" wafers")
+plt.show()
 
 
+# # Plot the loss
+plt.plot(loss)
+plt.ylabel("Loss")
+plt.title("Training loss")
+plt.show()
+#
+# Plot the time taken to complete each wafer
+plt.plot(my_sim.cumulative_reward_list)
+plt.xlabel("step")
+plt.ylabel("Cumulative Reward")
+plt.title("The sum of all rewards up until each time step")
+plt.show()
+
+
+data = my_sim.lateness
+binwidth = 2
+plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
+plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+plt.yscale('log')
+# plt.xlim(-10,1500)
+# min_ylim, max_ylim = plt.ylim()
+plt.show()
+
+data = my_sim.lateness[-10000:]
+binwidth = 2
+plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
+plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+plt.yscale('log')
+# plt.xlim(-10,1500)
+# min_ylim, max_ylim = plt.ylim()
+plt.show()
 
 
 

@@ -1,3 +1,5 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import factory_sim as fact_sim
 import numpy as np
 import pandas as pd
@@ -16,7 +18,7 @@ import os
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 # parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=2e6, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='r20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
@@ -147,7 +149,7 @@ while my_sim.env.now < sim_time:
 
     if my_sim.order_completed:
         # After each wafer completed, train the policy network 
-        dqn_agent.replay()
+        loss = dqn_agent.replay()
         order_count += 1
         if order_count >= 1:
             # After every 20 processes update the target network and reset the order count
@@ -219,19 +221,19 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # with open(s+'lateness'+id+'.txt','w') as f:
 #   f.write('\n'.join(my_sim.lateness))
 
-# # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.lateness)
-# plt.xlabel("Wafers")
-# plt.ylabel("Lateness")
-# plt.title("The amount of time each wafer was late")
-# plt.show()
-# #
 # # Plot the time taken to complete each wafer
-# plt.plot(my_sim.cumulative_reward_list)
-# plt.xlabel("step")
-# plt.ylabel("Cumulative Reward")
-# plt.title("The sum of all rewards up until each time step")
-# plt.show()
+plt.plot(my_sim.lateness)
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.show()
+#
+# Plot the time taken to complete each wafer
+plt.plot(my_sim.cumulative_reward_list)
+plt.xlabel("step")
+plt.ylabel("Cumulative Reward")
+plt.title("The sum of all rewards up until each time step")
+plt.show()
 
 
 

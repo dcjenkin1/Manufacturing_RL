@@ -10,6 +10,7 @@ from itertools import chain
 import argparse
 import datetime
 import json
+from scipy.ndimage.filters import uniform_filter1d
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--sim_time", default=2e6, type=int, help="Simulation minutes")
@@ -178,6 +179,16 @@ plt.xlabel("Wafers")
 plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
 plt.show()
+
+N = 10000
+x = my_sim.lateness
+y = uniform_filter1d(x, size=N)
+plt.plot(y)
+plt.xlabel("Wafers")
+plt.ylabel("Average lateness")
+plt.title("The running average of the time each wafer was late, avg of "+str(N)+" wafers")
+plt.show()
+
 #
 # Plot the time taken to complete each wafer
 plt.plot(my_sim.cumulative_reward_list)

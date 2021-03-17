@@ -21,11 +21,11 @@ from predictron_cu import Predictron, Replay_buffer
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
-parser.add_argument("--dqn_model_dir", default='./data/DQN_model_2020-09-07-10-12-34_seed_0.h5', help="Path to the DQN model")
+parser.add_argument("--dqn_model_dir", default='./data/dqn_sim_time2000000.0batch_size32seed0model.h5', help="Path to the DQN model")
 parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
 parser.add_argument("--sim_time", default=2e7, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='r20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save models and log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 parser.add_argument("--sample_rate", default=None, type=int, help="sample rate for the predictron")
@@ -80,20 +80,20 @@ class Config_predictron():
         self.dropout_rate=0.
         
         # self.epochs = 5000
-        self.batch_size = 32
+        self.batch_size = 512
         self.episode_length = 500
         self.predictron_update_rate = 1
         self.burnin = 1e4
         self.gamma = 0.99
         self.replay_memory_size = 10000
-        self.predictron_update_steps = 50
+        # self.predictron_update_steps = 50
         self.max_depth = 16
         
         self.DQN_train_steps_initial = 5e4
         self.DQN_train_steps = 5e4
-        self.Predictron_train_steps_initial = 5e4
+        self.Predictron_train_steps_initial = 2e5
         self.Predictron_train_steps = 5e4
-        self.train_itterations = 10
+        self.train_itterations = 20
         
         if args.sample_rate:
             self.predictron_update_rate = args.sample_rate
@@ -200,7 +200,7 @@ if config.train_itterations is not None:
     num_steps_total = config.DQN_train_steps_initial+config.Predictron_train_steps_initial+config.train_itterations*(config.DQN_train_steps+config.Predictron_train_steps)
 
 while (itteration is None and my_sim.env.now < sim_time) or (itteration is not None and itteration < config.train_itterations):
-    action = dqn_agent.choose_action(state, allowed_actions, use_epsilon=TRAIN_DQN)
+    action, value = dqn_agent.choose_action(state, allowed_actions, use_epsilon=TRAIN_DQN, return_value=True)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
                         action[1])
@@ -213,15 +213,18 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
     
+    if step_counter % 1000 == 0 and step_counter > 1:
+        if itteration is None:
+            print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+        else:
+            print(("%.2f" % (100*num_steps/num_steps_total))+"% done")
+        print("Running mean lateness (Last 10000): ", np.mean(my_sim.lateness[-(min(len(my_sim.lateness),10000)):]))
+        print("Mean lateness: ", np.mean(my_sim.lateness))
+        
     if TRAIN_DQN: #DQN
         # Save the example for later training
         dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
-        if step_counter % 1000 == 0 and step_counter > 1:
-            if itteration is None:
-                print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
-            else:
-                print(("%.2f" % (100*num_steps/num_steps_total))+"% done")
-            print("Mean lateness: ", np.mean(my_sim.lateness))
+
         # if my_sim.order_completed:
         # After each wafer completed, train the policy network 
         loss = dqn_agent.replay(extern_target_model = predictron.model)
@@ -239,8 +242,8 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
     else:  #Predictron
         state_episode = state_queue.pop(0)
         state_queue.append(state)
-                
-        reward_episode =  np.sum(np.array(reward_queue)*discount_array)
+
+        reward_episode = np.sum(np.array(reward_queue)*discount_array) + config.gamma**config.episode_length*value
         reward_queue.pop(0)
         reward_queue.append(reward)
         if step_counter > config.episode_length and step_counter % config.predictron_update_rate == 0:
@@ -259,12 +262,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
                 # preturn_loss_arr.append(preturn_loss)
                 # lambda_preturn_loss_arr.append(lambda_preturn_loss)
                 
-        if step_counter % 1000 == 0 and step_counter > 1:
-            if itteration is None:
-                print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
-            else:
-                print(("%.2f" % (100*num_steps/num_steps_total))+"% done")
-            print("Mean lateness: ", np.mean(my_sim.lateness[-(min(len(my_sim.lateness),10000)):]))
+
             
             # if step_counter > config.episode_length+config.batch_size:
             #     print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
@@ -312,13 +310,13 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             preturn_loss_arr.append(preturn_loss)
             lambda_preturn_loss_arr.append(lambda_preturn_loss)
             
-            print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
-            print("running mean % of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
             predictron_result = model.predict([state])
             DQN_arr.append(dqn_agent.calculate_value_of_action(state, allowed_actions))
             predictron_lambda_arr.append(predictron_result[1])
             reward_episode_arr.append(reward_episode)
             if len(lambda_preturn_loss_arr)%10 ==0:
+                print("running mean % of max preturn loss: ", "%.2f" % (100*np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):])/max_preturn_loss), "\t\t", np.mean(preturn_loss_arr[-min(10, len(preturn_loss_arr)):]))
+                print("running mean % of max lambda preturn loss: ", "%.2f" % (100*np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):])/max_lambda_preturn_loss), "\t\t", np.mean(lambda_preturn_loss_arr[-min(10, len(lambda_preturn_loss_arr)):]))
                 print(predictron_result[0],predictron_result[1], reward_episode, DQN_arr[-1])
             
             data = np.array(data_buffer.get_pop(config.batch_size))
@@ -420,103 +418,113 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 # figure_dir = model_dir+"figures/"
 # if not os.path.exists(figure_dir):
 #     os.makedirs(figure_dir)
-# 
-# plt.figure()
-# plt.plot(preturn_loss_arr)
+
+plt.figure()
+plt.plot(preturn_loss_arr)
 # plt.savefig(figure_dir+"preturn_loss.png",dpi=600)
-#
-# plt.figure()
-# plt.plot(lambda_preturn_loss_arr)
+
+plt.figure()
+plt.plot(lambda_preturn_loss_arr)
 # plt.savefig(figure_dir+"lambda_preturn_loss.png",dpi=600)
-#
-# N=5000
-# dqn_loss_arr_avg = np.convolve(dqn_loss_arr, np.ones((N,))/N, mode='valid')
-# plt.figure()
-# plt.plot(dqn_loss_arr)
-# plt.plot(dqn_loss_arr_avg)
+
+N=5000
+dqn_loss_arr_avg = np.convolve(dqn_loss_arr, np.ones((N,))/N, mode='valid')
+plt.figure()
+plt.plot(dqn_loss_arr)
+plt.plot(dqn_loss_arr_avg)
 # plt.ylim((0,5000))
 # plt.savefig(figure_dir+"dqn_loss.png",dpi=600)
-#
-# plt.figure()
-# plt.plot(reward_episode_arr, '.', label='Target')
-# plt.plot(predictron_lambda_arr, '.', label='Predictron')
-# plt.plot(DQN_arr, '.', label='PDQN')
-# plt.title("Value estimate")
-# plt.xlabel("Thousands of steps")
-# plt.legend(loc='lower center')
+
+plt.figure()
+plt.plot(reward_episode_arr, '.', label='Target')
+plt.plot(predictron_lambda_arr, '.', label='Predictron')
+plt.plot(DQN_arr, '.', label='PDQN')
+plt.title("Value estimate")
+plt.xlabel("Thousands of steps")
+plt.legend(loc='lower center')
 # plt.ylim((-25000,5000))
 # plt.savefig(figure_dir+"value_estimate.png",dpi=600)
-#
-# plt.figure()
-# plt.plot(predictron_error, '.', label='Predictron')
-# plt.plot(predictron_error_avg, label='Running average Predictron')
-# plt.plot(DQN_error, '.', label='PDQN')
-# plt.plot(DQN_error_avg, label='Running average PDQN')
-# plt.title("Absolute value estimate error")
-# plt.legend()
+
+plt.figure()
+plt.plot(predictron_error, '.', label='Predictron')
+plt.plot(predictron_error_avg, label='Running average Predictron')
+plt.plot(DQN_error, '.', label='PDQN')
+plt.plot(DQN_error_avg, label='Running average PDQN')
+plt.title("Absolute value estimate error")
+plt.legend()
 # plt.ylim((0,25000))
 # plt.savefig(figure_dir+"absolute_error.png",dpi=600)
-#
-# plt.figure()
-# plt.plot(DQN_error[0:1000] - predictron_error[0:1000], '.', label='DQN - Predictron')
-# plt.plot(predictron_dqn_error_avg[0:1000], label='Running average')
-# plt.title("DQN_error - predictron_error (first 100.000 steps)")
-# plt.xlabel("Thousands of steps")
-# plt.legend()
-# plt.axhline(linewidth=1, color='grey')
-#
-# plt.figure()
-# plt.plot(DQN_error - predictron_error, '.', label='DQN - Predictron')
-# plt.plot(predictron_dqn_error_avg, label='Running average')
-# plt.title("DQN_error - predictron_error")
-# plt.xlabel("Thousands of steps")
-# plt.legend()
-# plt.axhline(linewidth=1, color='grey')
-# plt.savefig(figure_dir+"DQN_predictron_error_dif.png",dpi=600)
-#
-# plt.figure()
-# plt.plot(predictron_error, label='Predictron')
-# plt.plot(predictron_error_avg, label='Running average')
-# plt.title("Predictron_error")
-# plt.xlabel("Thousands of steps")
-# plt.legend()
-# plt.axhline(linewidth=1, color='grey')
-# plt.savefig(figure_dir+"predictron_error.png",dpi=600)
-#
-# plt.figure()
-# plt.plot(predictron_ratio_error, '.', label='Predictron')
-# plt.plot(predictron_ratio_error_avg, label='Running average')
-# plt.title("Predictron error ratio")
-# plt.xlabel("Thousands of steps")
-# plt.legend()
-# plt.axhline(linewidth=1, color='grey')
-# plt.ylim((-1,2.5))
-# # plt.savefig(model_dir+"results/preturn_loss.png",dpi=600)
-#
-# # Total wafers produced
-# # print("Total wafers produced:", len(my_sim.cycle_time))
-# # # # i = 0
-# # for ht in my_sim.recipes.keys():
-# #     # for sequ in range(len(my_sim.recipes[ht])-1):
-# #     # i += 1
-# #     # print(len(my_sim.recipes[ht]))
-# #     # waf = fact_sim.wafer_box(my_sim, 4, ht, my_sim.wafer_index, lead_dict, sequ)
-# #     # my_sim.wafer_index += 1
-# #     sequ = len(my_sim.recipes[ht])-1
-# #     print(ht)
-# #     print(sequ)
-# #     print(my_sim.get_rem_shop_time(ht, sequ, 4))
-#
-# # print(my_sim.get_proc_time('ASGA', 99, 4))
-# # print(i)
-#
-#
-# # # Plot the time taken to complete each wafer
-# plt.figure()
-# plt.plot(my_sim.lateness, '.')
-# plt.xlabel("Wafers")
-# plt.ylabel("Lateness")
-# plt.title("The amount of time each wafer was late")
-# plt.xlim((0,None))
-# plt.savefig(figure_dir+"wafer_lateness.png",dpi=600)
 
+plt.figure()
+plt.plot(DQN_error[0:1000] - predictron_error[0:1000], '.', label='DQN - Predictron')
+plt.plot(predictron_dqn_error_avg[0:1000], label='Running average')
+plt.title("DQN_error - predictron_error (first 100.000 steps)")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+
+plt.figure()
+plt.plot(DQN_error - predictron_error, '.', label='DQN - Predictron')
+plt.plot(predictron_dqn_error_avg, label='Running average')
+plt.title("DQN_error - predictron_error")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+# plt.savefig(figure_dir+"DQN_predictron_error_dif.png",dpi=600)
+
+plt.figure()
+plt.plot(predictron_error, label='Predictron')
+plt.plot(predictron_error_avg, label='Running average')
+plt.title("Predictron_error")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+# plt.ylim((0,5000))
+# plt.savefig(figure_dir+"predictron_error.png",dpi=600)
+
+plt.figure()
+plt.plot(predictron_ratio_error, '.', label='Predictron')
+plt.plot(predictron_ratio_error_avg, label='Running average')
+plt.title("Predictron error ratio")
+plt.xlabel("Thousands of steps")
+plt.legend()
+plt.axhline(linewidth=1, color='grey')
+plt.ylim((-1,2.5))
+# plt.savefig(model_dir+"results/preturn_loss.png",dpi=600)
+
+# Total wafers produced
+# print("Total wafers produced:", len(my_sim.cycle_time))
+# # # i = 0
+# for ht in my_sim.recipes.keys():
+#     # for sequ in range(len(my_sim.recipes[ht])-1):
+#     # i += 1
+#     # print(len(my_sim.recipes[ht]))
+#     # waf = fact_sim.wafer_box(my_sim, 4, ht, my_sim.wafer_index, lead_dict, sequ)
+#     # my_sim.wafer_index += 1
+#     sequ = len(my_sim.recipes[ht])-1
+#     print(ht)
+#     print(sequ)
+#     print(my_sim.get_rem_shop_time(ht, sequ, 4))
+
+# print(my_sim.get_proc_time('ASGA', 99, 4))
+# print(i)
+
+
+# # Plot the time taken to complete each wafer
+plt.figure()
+plt.plot(my_sim.lateness, '.')
+plt.xlabel("Wafers")
+plt.ylabel("Lateness")
+plt.title("The amount of time each wafer was late")
+plt.xlim((0,None))
+# plt.savefig(figure_dir+"wafer_lateness.png",dpi=600)
+plt.show()
+
+data = my_sim.lateness[-10000:]
+binwidth = 2
+plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
+plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+plt.yscale('log')
+# plt.xlim(-10,1500)
+# min_ylim, max_ylim = plt.ylim()
+plt.show()

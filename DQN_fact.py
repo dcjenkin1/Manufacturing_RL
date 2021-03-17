@@ -15,6 +15,7 @@ import argparse
 import datetime
 import json
 import os
+from scipy.ndimage.filters import uniform_filter1d
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
@@ -28,7 +29,7 @@ parser.add_argument('--train_rate', default=10, help='The number of steps to tak
 parser.add_argument('--DDDQN', default=False, help='Use Double Dueling DQN')
 args = parser.parse_args()
 
-id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
+id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
 
 
 # random.seed(args.seed)
@@ -113,9 +114,9 @@ state_size = len(state)
 
 # Creating the DQN agent
 if args.DDDQN:
-    dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99, batch_size=32, seed=args.seed)
+    dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=0.99, batch_size=32, seed=args.seed)
 else:
-    dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.9999, gamma=0.99, batch_size=32, seed=args.seed)
+    dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=0.99, batch_size=32, seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)
@@ -168,7 +169,7 @@ while my_sim.env.now < sim_time:
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
     step_counter += 1
-    if step_counter % 1000 == 0 and step_counter > 1:
+    if step_counter % 10000 == 0 and step_counter > 1:
         eps.append(dqn_agent.epsilon)
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         print("Mean lateness: ", np.mean(my_sim.lateness))
@@ -257,11 +258,21 @@ np.savetxt(res_path+'lateness.csv', np.array(my_sim.lateness), delimiter=',')
 #   f.write('\n'.join(my_sim.lateness))
 
 # # Plot the time taken to complete each wafer
-plt.plot(my_sim.lateness,'.')
+plt.plot(my_sim.lateness)
 plt.xlabel("Wafers")
 plt.ylabel("Lateness")
 plt.title("The amount of time each wafer was late")
 plt.show()
+
+N = 10000
+x = my_sim.lateness
+y = uniform_filter1d(x, size=N)
+plt.plot(y)
+plt.xlabel("Wafers")
+plt.ylabel("Average lateness")
+plt.title("The running average of the time each wafer was late, avg of "+str(N)+" wafers")
+plt.show()
+
 
 # # Plot the loss
 plt.plot(loss)
@@ -277,6 +288,15 @@ plt.title("The sum of all rewards up until each time step")
 plt.show()
 
 
+data = my_sim.lateness
+binwidth = 2
+plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
+plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+plt.yscale('log')
+# plt.xlim(-10,1500)
+# min_ylim, max_ylim = plt.ylim()
+plt.show()
+
 data = my_sim.lateness[-10000:]
 binwidth = 2
 plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
@@ -284,7 +304,7 @@ plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
 plt.yscale('log')
 # plt.xlim(-10,1500)
 # min_ylim, max_ylim = plt.ylim()
-
+plt.show()
 
 
 
