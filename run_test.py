@@ -13,7 +13,7 @@ num_workers = 40
 
 # time.sleep(120)
 
-DQN_dir_list = glob.glob("data/b20_setup/pdqn/2020-09-21-11-18-*/*itt*.h5")
+DQN_dir_list = glob.glob("data/r20_setup/pdqn/2021-03-15-09-17-33/*itt*.h5")
 # print(DQN_dir_list)
 
 # DQN_dir_list = ("pdqn/models/dqn/DQN_model_5e5.h5",\
