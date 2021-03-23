@@ -16,6 +16,9 @@ num_workers = 40
 DQN_dir_list = glob.glob("data/r20_setup/pdqn/2021-03-15-09-17-33/*itt*.h5")
 # print(DQN_dir_list)
 
+DQN_dir_list = glob.glob("data/r20_mf10_setup/dqn/*/*.h5")
+print(DQN_dir_list)
+
 # DQN_dir_list = ("pdqn/models/dqn/DQN_model_5e5.h5",\
 #                 "pdqn/models/srs_1/2020-08-16-14-58-18/DQN_complete_srs_1.h5",\
 #                 "pdqn/models/srs_2/2020-08-14-15-05-06/DQN_complete_srs_2.h5",\
@@ -69,7 +72,7 @@ for i in range(num_workers):
 
 for seed in range(num_seeds):
     for item in DQN_dir_list:
-        item = "python rollout_DQN.py --model_dir="+item+" --seed="+str(seed)
+        item = "python rollout_DQN.py --model_dir="+item+" --seed="+str(seed) +" --factory_file_dir=./r20_mf10_setup/"
         print(item)
         q.put(item)
         time.sleep(2)
