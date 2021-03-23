@@ -24,11 +24,11 @@ parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--dqn_model_dir", default='./data/dqn_sim_time2000000.0batch_size32seed0model.h5', help="Path to the DQN model")
 parser.add_argument("--state_rep_size", default='128', help="Size of the state representation")
 parser.add_argument("--predictron_type", default='complete', help="Path to the DQN model")
-parser.add_argument("--sim_time", default=2e7, type=int, help="Simulation minutes")
+parser.add_argument("--sim_time", default=2e6, type=int, help="Simulation minutes")
 parser.add_argument("--factory_file_dir", default='r20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save models and log files in")
 parser.add_argument("--seed", default=0, help="random seed")
-parser.add_argument("--sample_rate", default=None, type=int, help="sample rate for the predictron")
+parser.add_argument("--sample_rate", default=1, type=int, help="sample rate for the predictron")
 args = parser.parse_args()
 
 sim_time = args.sim_time
@@ -93,12 +93,13 @@ class Config_predictron():
         self.DQN_train_steps = 5e4
         self.Predictron_train_steps_initial = 2e5
         self.Predictron_train_steps = 5e4
-        self.train_itterations = 20
+        self.train_itterations = 5
         
         if args.sample_rate:
+            trains_per_itteration = 32
             self.predictron_update_rate = args.sample_rate
-            self.Predictron_train_steps = args.sample_rate * self.batch_size * 128 + self.episode_length
-            self.Predictron_train_steps_initial = args.sample_rate * self.batch_size * 128 + self.episode_length
+            self.Predictron_train_steps = args.sample_rate * self.batch_size * trains_per_itteration + self.episode_length
+            self.Predictron_train_steps_initial = args.sample_rate * self.batch_size * trains_per_itteration + self.episode_length
 
         
         self.state_rep_size = args.state_rep_size
@@ -199,8 +200,10 @@ num_steps_total=0
 if config.train_itterations is not None:
     num_steps_total = config.DQN_train_steps_initial+config.Predictron_train_steps_initial+config.train_itterations*(config.DQN_train_steps+config.Predictron_train_steps)
 
+value = None
 while (itteration is None and my_sim.env.now < sim_time) or (itteration is not None and itteration < config.train_itterations):
-    action, value = dqn_agent.choose_action(state, allowed_actions, use_epsilon=TRAIN_DQN, return_value=True)
+    if value == None:
+        action = dqn_agent.choose_action(state, allowed_actions, use_epsilon=TRAIN_DQN)
 
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
                         action[1])
@@ -242,7 +245,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
     else:  #Predictron
         state_episode = state_queue.pop(0)
         state_queue.append(state)
-
+        action, value = dqn_agent.choose_action(next_state, next_allowed_actions, use_epsilon=TRAIN_DQN, return_value=True)
         reward_episode = np.sum(np.array(reward_queue)*discount_array) + config.gamma**config.episode_length*value
         reward_queue.pop(0)
         reward_queue.append(reward)
@@ -328,6 +331,7 @@ while (itteration is None and my_sim.env.now < sim_time) or (itteration is not N
             TRAIN_DQN = True
             step_counter = 0
             print("Training policy")
+            value = None
     
     
     if (DQN_train_steps == 0 and Predictron_train_steps == 0):
