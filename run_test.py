@@ -9,14 +9,14 @@ from threading import Thread
 from queue import Queue
 
 num_seeds=1
-num_workers = 40
+num_workers = 10
 
 # time.sleep(120)
 
 DQN_dir_list = glob.glob("data/r20_setup/pdqn/2021-03-15-09-17-33/*itt*.h5")
 # print(DQN_dir_list)
 
-DQN_dir_list = glob.glob("data/r20_mf10_setup/dqn/*/*.h5")
+DQN_dir_list = glob.glob("data/r20_mf100_setup/dqn/*/*.h5")
 print(DQN_dir_list)
 
 # DQN_dir_list = ("pdqn/models/dqn/DQN_model_5e5.h5",\
@@ -72,7 +72,7 @@ for i in range(num_workers):
 
 for seed in range(num_seeds):
     for item in DQN_dir_list:
-        item = "python rollout_DQN.py --model_dir="+item+" --seed="+str(seed) +" --factory_file_dir=./r20_mf10_setup/"
+        item = "python rollout_DQN.py --model_dir="+item+" --seed="+str(seed) +" --factory_file_dir=./r20_mf100_setup/"
         print(item)
         q.put(item)
         time.sleep(2)
