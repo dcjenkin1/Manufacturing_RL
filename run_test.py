@@ -8,7 +8,7 @@ import glob, os, time, random
 from threading import Thread
 from queue import Queue
 
-num_seeds=10
+num_seeds=1
 num_workers = 40
 
 # time.sleep(120)
