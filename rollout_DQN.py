@@ -149,7 +149,7 @@ while my_sim.env.now < sim_time:
     step_counter += 1
     if step_counter % 1000 == 0 and step_counter > 1:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
-        print("Mean lateness: ", np.mean(my_sim.lateness))
+        print("Seed: "+ str(args.seed), "Mean lateness: ", np.mean(my_sim.lateness))
 
 
 # Total wafers produced
