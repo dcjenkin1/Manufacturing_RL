@@ -23,7 +23,7 @@ parser.add_argument("--factory_file_dir", default='r20_setup/', help="Path to fa
 parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 parser.add_argument('--batch_size', default=32, help='batch size for training')
-parser.add_argument('--n_step', default=1, help='Number of real rewards to include for the target')
+parser.add_argument('--n_step', default=1, type=int, help='Number of real rewards to include for the target')
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
