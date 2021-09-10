@@ -26,8 +26,10 @@ parser.add_argument("--save_dir", default='data/', help="Path save log files in"
 parser.add_argument("--seed", default=0, type=int, help="random seed")
 parser.add_argument('--batch_size', default=32, type=int, help='batch size for training')
 parser.add_argument('--train_rate', default=10, type=int, help='The number of steps to take between training the network')
-parser.add_argument('--DDDQN', default=False, help='Use Double Dueling DQN')
-parser.add_argument('--n_step', default=1, type=int, help='Number of real rewards to include for the target')
+parser.add_argument('--DDDQN', default=True, help='Use Double Dueling DQN')
+parser.add_argument('--n_step', default=4, type=int, help='Number of real rewards to include for the target')
+parser.add_argument('--gamma', default=0.99, type=float, help='discount factor')
+parser.add_argument('--PER', default=False, help='Use Prioritized Experience Replay')
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
@@ -115,9 +117,9 @@ state_size = len(state)
 
 # Creating the DQN agent
 if args.DDDQN:
-    dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=0.99, batch_size=32, nstep=args.n_step, prioritized_replay_beta_iters=int(sim_time), seed=args.seed)
+    dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=args.gamma, batch_size=32, nstep=args.n_step, per=args.PER, prioritized_replay_beta_iters=int(sim_time), seed=args.seed)
 else:
-    dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=0.99, batch_size=32, seed=args.seed)
+    dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=args.gamma, batch_size=32, seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)
@@ -139,7 +141,11 @@ else:
 
 order_count = 0
 step_counter = 0
-loss = []
+state_list = []
+action_list = []
+reward_list = []
+next_allowed_actions_list = []
+loss=[]
 eps = [dqn_agent.epsilon]
 while my_sim.env.now < sim_time:
     
@@ -154,8 +160,22 @@ while my_sim.env.now < sim_time:
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
 
-    # Save the example for later training
-    dqn_agent.remember(state, action, reward, next_state, next_allowed_actions)
+    state_list.append(state)
+    action_list.append(action)
+    reward_list.append(reward)
+    next_allowed_actions_list.append(next_allowed_actions)
+    
+    if len(reward_list) >= args.n_step:
+        reward_sum = 0
+        for i in range(args.n_step):
+            reward_sum += (args.gamma ** i) * reward_list[i]
+        
+        # Save the example for later training
+        dqn_agent.remember(state_list[0], action_list[0], reward_sum, next_state, next_allowed_actions_list[0])
+        
+        del state_list[0]
+        del action_list[0]
+        del reward_list[0]
 
     # if my_sim.order_completed:
     #     # After each wafer completed, train the policy network 

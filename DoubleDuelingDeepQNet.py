@@ -16,7 +16,7 @@ from baselines.common.schedules import LinearSchedule
 ########################################################################################################################################
 
 class DQN:
-    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max=1, batch_size=32, epsilon_min = 0., nstep=1, prioritized_replay_beta_iters=None, seed=None):
+    def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max=1, batch_size=32, epsilon_min = 0., nstep=1, per=True, prioritized_replay_beta_iters=1e6, seed=None):
         self.state_space_dim = state_space_dim
         self.action_space = action_space
         self.gamma = gamma
@@ -44,7 +44,11 @@ class DQN:
                                        initial_p=self.prioritized_replay_beta0,
                                        final_p=1.0)
         
-        self.memory = PrioritizedReplayBuffer(size = 10000, seed=seed, alpha=self.prioritized_replay_alpha)
+        self.PER = per
+        if self.PER:
+            self.memory = PrioritizedReplayBuffer(size = 10000, seed=seed, alpha=self.prioritized_replay_alpha)
+        else:
+            self.memory = ReplayBuffer(size = 10000, seed=seed)
 
     # Create the neural network model to train the q function
     def create_model(self):
@@ -124,8 +128,13 @@ class DQN:
         else: 
             target_model = self.target_model
             
-        samples = self.memory.sample(self.batch_size, beta=self.beta_schedule.value(t))
-        (states, actions, rewards, new_states, new_allowed_actions, dones, weights, batch_idxes) = samples
+        if self.PER:
+            samples = self.memory.sample(self.batch_size, beta=self.beta_schedule.value(t))
+            (states, actions, rewards, new_states, new_allowed_actions, dones, weights, batch_idxes) = samples
+        else:
+            samples = self.memory.sample(self.batch_size)
+            (states, actions, rewards, new_states, new_allowed_actions, dones) = samples
+            
         states = np.array(states).reshape(self.batch_size, self.state_space_dim)
         preds = self.model.predict(states)
         target_preds = preds.copy()
@@ -158,8 +167,9 @@ class DQN:
             td_errors.append(preds[b][action_ids[b]] - target_preds[b][action_ids[b]])
             
         loss = self.model.train_on_batch(states, target_preds)
-        new_priorities = np.abs(td_errors) + self.prioritized_replay_eps
-        self.memory.update_priorities(batch_idxes, new_priorities)
+        if self.PER:
+            new_priorities = np.abs(td_errors) + self.prioritized_replay_eps
+            self.memory.update_priorities(batch_idxes, new_priorities)
         
         return loss
 
