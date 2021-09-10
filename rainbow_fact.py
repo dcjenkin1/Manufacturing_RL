@@ -31,7 +31,7 @@ parser.add_argument("--save_dir", default='data/', help="Path save log files in"
 parser.add_argument("--seed", default=0, help="random seed")
 parser.add_argument('--batch_size', default=32, help='batch size for training')
 parser.add_argument('--train_rate', default=10, help='The number of steps to take between training the network')
-parser.add_argument('--nstep', default=5, help='batch size for training')
+parser.add_argument('--nstep', default=5, help='number of real rewards to include for the target')
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())

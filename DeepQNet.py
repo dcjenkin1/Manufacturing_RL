@@ -7,7 +7,6 @@ from collections import deque
 import numpy as np
 import random
 
-
 ########################################################################################################################################
 #################################################################### CREATING Deep Q-learning Class ####################################
 ########################################################################################################################################
@@ -89,7 +88,7 @@ class DQN:
         self.memory.append([state, action, reward, next_state, next_allowed_actions])
 
     # Build the replay buffer # Train the model
-    def replay(self, extern_target_model = None):        
+    def replay(self, t=None, extern_target_model = None):        
         if len(self.memory) < self.batch_size:
             return
         

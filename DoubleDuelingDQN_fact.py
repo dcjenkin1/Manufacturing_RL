@@ -23,6 +23,7 @@ parser.add_argument("--factory_file_dir", default='r20_setup/', help="Path to fa
 parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 parser.add_argument('--batch_size', default=32, help='batch size for training')
+parser.add_argument('--n_step', default=1, help='Number of real rewards to include for the target')
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H}'.format(date=datetime.datetime.now())
@@ -109,7 +110,7 @@ action_size = len(action_space)
 state_size = len(state)
 
 # Creating the DQN agent
-dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99, batch_size=32, seed=args.seed)
+dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=0.99, batch_size=32, nstep=args.n_step, prioritized_replay_beta_iters=int(sim_time), seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)
@@ -149,7 +150,7 @@ while my_sim.env.now < sim_time:
 
     if my_sim.order_completed:
         # After each wafer completed, train the policy network 
-        loss = dqn_agent.replay()
+        loss = dqn_agent.replay(t=my_sim.env.now)
         order_count += 1
         if order_count >= 1:
             # After every 20 processes update the target network and reset the order count
