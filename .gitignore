@@ -133,3 +133,11 @@ dmypy.json
 *.json
 *.png
 *.xlsx
+data/r20_setup/dqn/2021-09-10-14-54-33/DDDQN PER n=1.txt
+data/r20_setup/dqn/2021-09-10-14-54-25/DDDQN ER n=1.txt
+data/r20_setup/dqn/2021-09-10-14-50-53/DDDQN ER n=4.txt
+data/r20_setup/dqn/2021-09-10-14-42-32/DDDQN PER n=4.txt
+data/r20_setup/dqn/2021-09-10-14-42-00/DQN ER n=4.txt
+data/r20_setup/dqn/2021-09-10-14-41-24/DQN PER e=4.txt
+data/r20_setup/dqn/2021-09-10-14-40-33/DQN ER n=1.txt
+data/r20_setup/dqn/2021-09-10-14-38-05/DQN PER n=1.txt

@@ -1,6 +1,6 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-import factory_sim as fact_sim
+import factory_sim_throughput as fact_sim
 import numpy as np
 import pandas as pd
 import math 
@@ -26,10 +26,10 @@ parser.add_argument("--save_dir", default='data/', help="Path save log files in"
 parser.add_argument("--seed", default=0, type=int, help="random seed")
 parser.add_argument('--batch_size', default=32, type=int, help='batch size for training')
 parser.add_argument('--train_rate', default=10, type=int, help='The number of steps to take between training the network')
-parser.add_argument('--DDDQN', default=False, help='Use Double Dueling DQN')
+parser.add_argument('--DDDQN', default=True, help='Use Double Dueling DQN')
 parser.add_argument('--n_step', default=1, type=int, help='Number of real rewards to include for the target')
 parser.add_argument('--gamma', default=0.99, type=float, help='discount factor')
-parser.add_argument('--PER', default=False, help='Use Prioritized Experience Replay')
+parser.add_argument('--PER', default=True, help='Use Prioritized Experience Replay')
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())
