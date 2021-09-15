@@ -347,17 +347,19 @@ class FactorySim(object):
             before_time = self.env.now
             self.env.step()
             time_change = self.env.now-before_time
-            # current_week = math.ceil(self.env.now / (7 * 24 * 60))  # Calculating the current week
-            # for key, value in self.due_wafers.items():
-            #     buffer_list = []  # This list stores value of previous unfinished wafers count
-            #     buffer_list.append(sum(value[:current_week]))
-            #     self.step_reward -= time_change*sum(buffer_list)
-            
-            completed_wafers = 0
-            for key, value in self.complete_wafer_dict.items():
-                completed_wafers += value                
-            self.step_reward += (completed_wafers-self.past_completed_wafers)/max(time_change,1)
-            self.past_completed_wafers = completed_wafers
+            if time_change > 0:
+                # current_week = math.ceil(self.env.now / (7 * 24 * 60))  # Calculating the current week
+                # for key, value in self.due_wafers.items():
+                #     buffer_list = []  # This list stores value of previous unfinished wafers count
+                #     buffer_list.append(sum(value[:current_week]))
+                #     self.step_reward -= time_change*sum(buffer_list)
+                
+                completed_wafers = 0
+                for key, value in self.complete_wafer_dict.items():
+                    completed_wafers += value                
+                                
+                self.step_reward += (completed_wafers-self.past_completed_wafers)/max(time_change,1.)
+                self.past_completed_wafers = completed_wafers
             
             for station in self.stations:
                 if len(self.queue_lists[station]) > 0:

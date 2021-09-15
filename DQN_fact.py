@@ -147,6 +147,7 @@ reward_list = []
 next_allowed_actions_list = []
 loss=[]
 eps = [dqn_agent.epsilon]
+all_reward = []
 while my_sim.env.now < sim_time:
     
     action = dqn_agent.choose_action(state, allowed_actions)
@@ -164,6 +165,8 @@ while my_sim.env.now < sim_time:
     action_list.append(action)
     reward_list.append(reward)
     next_allowed_actions_list.append(next_allowed_actions)
+    
+    all_reward.append(reward)
     
     if len(reward_list) >= args.n_step:
         reward_sum = 0
@@ -194,31 +197,44 @@ while my_sim.env.now < sim_time:
         eps.append(dqn_agent.epsilon)
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         print("Mean lateness: ", np.mean(my_sim.lateness))
-        # # Plot the time taken to complete each wafer
-        plt.plot(my_sim.lateness)
-        plt.xlabel("Wafers")
-        plt.ylabel("Lateness")
-        plt.title("The amount of time each wafer was late")
-        plt.show()
+        print("Mean Reward: ", np.mean(all_reward))
+        print("Mean 10000 lateness: ", np.mean(my_sim.lateness[10000:]))
+        print("Mean 10000 Reward: ", np.mean(all_reward[10000:]))
+        print("Total wafers produced:", len(my_sim.cycle_time))
         
-        # # Plot the loss
-        plt.plot(loss)
-        plt.ylabel("Loss")
-        plt.title("Training loss")
-        plt.show()
-        # # Plot epsilon
-        plt.plot(eps)
-        plt.ylabel("Epsilon")
-        plt.title("Training epsilon")
-        plt.show()
-        #
-        # Plot the time taken to complete each wafer
-        plt.plot(my_sim.cumulative_reward_list)
-        plt.xlabel("step")
-        plt.ylabel("Cumulative Reward")
-        plt.title("The sum of all rewards up until each time step")
-        plt.show()
-        plt.pause(0.05)
+
+    #     # # Plot the time taken to complete each wafer
+    #     plt.plot(my_sim.lateness)
+    #     plt.xlabel("Wafers")
+    #     plt.ylabel("Lateness")
+    #     plt.title("The amount of time each wafer was late")
+    #     plt.show()
+        
+    #     plt.plot(all_reward)
+    #     plt.xlabel("Steps")
+    #     plt.ylabel("Reward")
+    #     plt.title("The amount of reward achieved per step")
+    #     plt.show()
+        
+    #     # # Plot the loss
+    #     plt.plot(loss)
+    #     plt.ylabel("Loss")
+    #     plt.title("Training loss")
+    #     plt.yscale('log') 
+    #     plt.show()
+    #     # # Plot epsilon
+    #     plt.plot(eps)
+    #     plt.ylabel("Epsilon")
+    #     plt.title("Training epsilon")
+    #     plt.show()
+    #     #
+    #     # Plot the time taken to complete each wafer
+    #     plt.plot(my_sim.cumulative_reward_list)
+    #     plt.xlabel("timestep")
+    #     plt.ylabel("Cumulative Reward")
+    #     plt.title("The sum of all rewards up until each time step")
+    #     plt.show()
+    #     plt.pause(0.05)
 
 # Save the trained DQN policy network
 dqn_agent.save_model(res_path+'model.h5')
