@@ -1,4 +1,4 @@
-import factory_sim as fact_sim
+import factory_sim_throughput as fact_sim
 import numpy as np
 import pandas as pd
 import math 
@@ -14,9 +14,10 @@ from scipy.ndimage.filters import uniform_filter1d
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 parser.add_argument("--sim_time", default=2e6, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='./r20_setup/', help="Path to factory setup files")
+parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./pdqn/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
+parser.add_argument("--method", default='cr', help="methods available: due_time, cr, fifo, randact_sorted, randact_unsorted, randact_rand, randwaf")
 args = parser.parse_args()
 
 id = '{date:%Y-%m-%d-%H-%M-%S}'.format(date=datetime.datetime.now())# str(int(np.ceil(random.random()*10000)))
@@ -67,17 +68,61 @@ def choose_action(sim):
     wafer_list = sim.queue_lists[sim.next_machine.station]
 
     if len(wafer_list) == 1:
-        waf_ = wafer_list[0]
-        return waf_
-
+        wafer = wafer_list[0]
+        return wafer
     else:
-        cr_ratio = {}
-        for waf in wafer_list:
-            cr_ = (waf.due_time - sim.env.now) / (sim.get_rem_shop_time(waf.HT, waf.seq))
-            cr_ratio[waf] = cr_
-        waf_to_choose = min(cr_ratio, key=cr_ratio.get)
-        # best_action = (waf_to_choose.HT, waf_to_choose.seq)
-        return waf_to_choose
+        if args.method=='cr':
+            cr_ratio = {}
+            for waf in wafer_list:
+                
+                cr_ = (waf.due_time - sim.env.now) / (sim.get_rem_shop_time(waf.HT, waf.seq))
+                cr_ratio[waf] = cr_
+            wafer = min(cr_ratio, key=cr_ratio.get)
+            # cr = (wafer.due_time - sim.env.now) / (sim.get_rem_shop_time(wafer.HT, wafer.seq))
+            # if  cr< 0:
+            #     print("Late wafer selected", sim.env.now, wafer.due_time, cr, wafer)
+            #     print(cr_ratio)
+            #     print()
+            
+        elif args.method=='due_time':
+            due_time = {}
+            for waf in wafer_list:
+                dt_ = waf.due_time
+                due_time[waf] = dt_
+            wafer = min(due_time, key=due_time.get)
+        
+        elif args.method=='fifo':
+            wafer = wafer_list[0]
+            
+        elif args.method=='randact_sorted':
+            allowed_actions = list(set([(waf.HT,waf.seq) for waf in wafer_list]))
+            action = random.choice(allowed_actions)
+            # print(wafer_list)
+            wafer = next(waf for waf in sorted(wafer_list, key=lambda x: x.due_time) if waf.HT == action[0] and waf.seq == action[1])
+            
+        elif args.method=='randact_unsorted':
+            # action = random.choice(my_sim.allowed_actions)
+            allowed_actions = list(set([(waf.HT,waf.seq) for waf in wafer_list]))
+            
+            action = random.choice(allowed_actions)
+            wafer = next(waf for waf in wafer_list if waf.HT == action[0] and waf.seq == action[1])
+        
+        elif args.method=='randact_rand':
+            # action = random.choice(my_sim.allowed_actions)
+            allowed_actions = list(set([(waf.HT,waf.seq) for waf in wafer_list]))
+            
+            action = random.choice(allowed_actions)
+            wafer = random.choice([waf for waf in wafer_list if waf.HT == action[0] and waf.seq == action[1]])
+        
+        elif args.method=='randwaf':
+            wafer = random.choice(wafer_list)
+        else:
+            print("Unknown method: "+args.method)
+            print("Using fifo instead")
+            wafer = wafer_list[0]
+        
+        return wafer
+    
 
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
@@ -92,8 +137,10 @@ action_space = list(chain.from_iterable(my_sim.station_HT_seq.values()))
 action_size = len(action_space)
 
 step_counter=0
+all_reward = []
 while my_sim.env.now < sim_time:
     # print(my_sim.env.now)
+    
     wafer = choose_action(my_sim)
 
     my_sim.run_action(mach, wafer)
@@ -103,15 +150,16 @@ while my_sim.env.now < sim_time:
     # next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
-
+    all_reward.append(reward)
     # Update the machines and allowed actions for the next step
     mach, allowed_actions = next_mach, next_allowed_actions
     # print("State:", state)
     
-    if step_counter % 1000 == 0 and step_counter > 1:
+    if step_counter % 10000 == 0 and step_counter > 1:
         print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
         print("Mean lateness: ", np.mean(my_sim.lateness))
-        print("Running mean lateness: ", np.mean(my_sim.lateness[-min(len(my_sim.lateness),1000):]))
+        print("Running mean lateness: ", np.mean(my_sim.lateness[-min(len(my_sim.lateness),10000):]))
+        print("Running mean reward: ", np.mean(all_reward[-min(len(all_reward),10000):]))
     step_counter+=1
 
 # print(my_sim.get_proc_time('ASGA', 99, 4))
@@ -195,4 +243,22 @@ plt.plot(my_sim.cumulative_reward_list)
 plt.xlabel("step")
 plt.ylabel("Cumulative Reward")
 plt.title("The sum of all rewards up until each time step")
+plt.show()
+
+data = my_sim.lateness
+binwidth = 2
+plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
+plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+plt.yscale('log')
+# plt.xlim(-10,1500)
+# min_ylim, max_ylim = plt.ylim()
+plt.show()
+
+data = my_sim.lateness[-10000:]
+binwidth = 2
+plt.hist(data,range(int(min(data)), int(max(data) + binwidth), binwidth))#, histtype=u'step', density=True)
+plt.axvline(np.mean(data), color='r', linestyle='dashed', linewidth=1)
+plt.yscale('log')
+# plt.xlim(-10,1500)
+# min_ylim, max_ylim = plt.ylim()
 plt.show()

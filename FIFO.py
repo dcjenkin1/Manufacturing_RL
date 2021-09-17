@@ -1,4 +1,4 @@
-import factory_sim as fact_sim
+import factory_sim_throughput as fact_sim
 import numpy as np
 import pandas as pd
 import math 
@@ -13,9 +13,8 @@ import json
 
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
-parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=5e5, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='./b20_setup/', help="Path to factory setup files")
+parser.add_argument("--sim_time", default=2e6, type=int, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='./r20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='./pdqn/', help="Path save log files in")
 parser.add_argument("--seed", default=0, help="random seed")
 args = parser.parse_args()
@@ -81,8 +80,10 @@ mach = my_sim.next_machine
 action_space = list(chain.from_iterable(my_sim.station_HT_seq.values()))
 action_size = len(action_space)
 
+step_counter=0
+all_reward = []
 while my_sim.env.now < sim_time:
-    print(my_sim.env.now)
+    
     wafer = choose_action(my_sim)
 
     my_sim.run_action(mach, wafer)
@@ -92,11 +93,16 @@ while my_sim.env.now < sim_time:
     # next_state = get_state(my_sim)
     next_allowed_actions = my_sim.allowed_actions
     reward = my_sim.step_reward
-
+    all_reward.append(reward)
     # Update the machines and allowed actions for the next step
     mach, allowed_actions = next_mach, next_allowed_actions
     # print("State:", state)
-
+    if step_counter % 10000 == 0 and step_counter > 1:
+        print(("%.2f" % (100*my_sim.env.now/sim_time))+"% done")
+        print("Mean lateness: ", np.mean(my_sim.lateness))
+        print("Running mean lateness: ", np.mean(my_sim.lateness[-min(len(my_sim.lateness),10000):]))
+        print("Running mean reward: ", np.mean(all_reward[-min(len(all_reward),10000):]))
+    step_counter+=1
 
 # Total wafers produced
 # print("Total wafers produced:", len(my_sim.cycle_time))
