@@ -286,7 +286,7 @@ class FactorySim(object):
     def get_throughput(self, minutes=None):
         if minutes == None: #use_all
             if self.env.now>self.burnin:
-                throughput = len([x for x in self.completed_wafers if x > self.burnin])/max(self.env.now,1)-self.burnin
+                throughput = len([x for x in self.completed_wafers if x > self.burnin])/(max(self.env.now,1)-self.burnin)
             else:
                 throughput = 0
         else:
@@ -362,18 +362,21 @@ class FactorySim(object):
             self.env.step()
             if self.env.now>self.burnin:
                 time_change = self.env.now-before_time
-                # if time_change > 0:
-                current_week = math.ceil(self.env.now / (7 * 24 * 60))  # Calculating the current week
-                for key, value in self.due_wafers.items():
-                    buffer_list = []  # This list stores value of previous unfinished wafers count
-                    buffer_list.append(sum(value[:current_week]))
-                    self.step_reward -= time_change*sum(buffer_list)/60
+                buffer_list = []
+                for station in self.stations:
+                    wafer_list = self.queue_lists[station]
+                    for waf in wafer_list:
+                        buffer_list.append(max(self.env.now - waf.due_time,0))
+                            
                 
-                # completed_wafers = 0
-                # for key, value in self.complete_wafer_dict.items():
-                #     completed_wafers += value
-                                
-                self.step_reward += self.get_throughput(minutes=None) #(completed_wafers-self.past_completed_wafers)#/max(time_change,1.)
+                lateness =  time_change*len([x for x in buffer_list if x > 0])
+
+                
+                throughput = self.get_throughput(minutes=None)
+                
+                self.step_reward += throughput - lateness
+                
+                # print(lateness, throughput)
                 # self.past_completed_wafers = completed_wafers
             
             for station in self.stations:
