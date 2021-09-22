@@ -24,9 +24,9 @@ parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minute
 parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, type=int, help="random seed")
-parser.add_argument("--burnin", default=10000, type=int, help="burn in period in minutes")
+parser.add_argument("--burnin", default=5000, type=int, help="burn in period in minutes")
 parser.add_argument('--batch_size', default=32, type=int, help='batch size for training')
-parser.add_argument('--train_rate', default=1, type=int, help='The number of steps to take between training the network')
+parser.add_argument('--train_rate', default=10, type=int, help='The number of steps to take between training the network')
 parser.add_argument('--DDDQN', default=True, help='Use Double Dueling DQN')
 parser.add_argument('--n_step', default=1, type=int, help='Number of real rewards to include for the target')
 parser.add_argument('--gamma', default=0.99, type=float, help='discount factor')
@@ -120,7 +120,7 @@ state_size = len(state)
 if args.DDDQN:
     dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=args.gamma, batch_size=32, nstep=args.n_step, per=args.PER, prioritized_replay_beta_iters=int(sim_time), seed=args.seed)
 else:
-    dqn_agent = DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99, gamma=args.gamma, batch_size=32, seed=args.seed)
+    dqn_agent = DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.9999, gamma=args.gamma, batch_size=32, seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)
