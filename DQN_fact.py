@@ -9,7 +9,7 @@ import random
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from itertools import chain
-import DeepQNet
+from DeepQNet import DQN
 import DoubleDuelingDeepQNet
 import argparse
 import datetime
@@ -20,12 +20,13 @@ from scipy.ndimage.filters import uniform_filter1d
 parser = argparse.ArgumentParser(description='A tutorial of argparse!')
 # parser.add_argument("--predictron_model_dir", default='./Predictron_DQN_3e5_dense_32_base.h5', help="Path to the Predictron model")
 # parser.add_argument("--state_rep_size", default='32', help="Size of the state representation")
-parser.add_argument("--sim_time", default=2e6, type=int, help="Simulation minutes")
-parser.add_argument("--factory_file_dir", default='r20_setup/', help="Path to factory setup files")
+parser.add_argument("--sim_time", default=1e5, type=int, help="Simulation minutes")
+parser.add_argument("--factory_file_dir", default='b20_setup/', help="Path to factory setup files")
 parser.add_argument("--save_dir", default='data/', help="Path save log files in")
 parser.add_argument("--seed", default=0, type=int, help="random seed")
+parser.add_argument("--burnin", default=10000, type=int, help="burn in period in minutes")
 parser.add_argument('--batch_size', default=32, type=int, help='batch size for training')
-parser.add_argument('--train_rate', default=10, type=int, help='The number of steps to take between training the network')
+parser.add_argument('--train_rate', default=1, type=int, help='The number of steps to take between training the network')
 parser.add_argument('--DDDQN', default=True, help='Use Double Dueling DQN')
 parser.add_argument('--n_step', default=1, type=int, help='Number of real rewards to include for the target')
 parser.add_argument('--gamma', default=0.99, type=float, help='discount factor')
@@ -101,7 +102,7 @@ def get_state(sim):
 
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
-                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed)
+                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed, burnin=args.burnin)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -119,7 +120,7 @@ state_size = len(state)
 if args.DDDQN:
     dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=args.gamma, batch_size=32, nstep=args.n_step, per=args.PER, prioritized_replay_beta_iters=int(sim_time), seed=args.seed)
 else:
-    dqn_agent = DeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=args.gamma, batch_size=32, seed=args.seed)
+    dqn_agent = DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99, gamma=args.gamma, batch_size=32, seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)
@@ -150,7 +151,8 @@ eps = [dqn_agent.epsilon]
 all_reward = []
 while my_sim.env.now < sim_time:
     
-    action = dqn_agent.choose_action(state, allowed_actions)
+    action = dqn_agent.choose_action(state, allowed_actions, use_epsilon=True)
+    # action = random.choice(allowed_actions)
     wafer_choice = next(wafer for wafer in my_sim.queue_lists[mach.station] if wafer.HT == action[0] and wafer.seq ==
                         action[1])
 
@@ -174,7 +176,8 @@ while my_sim.env.now < sim_time:
             reward_sum += (args.gamma ** i) * reward_list[i]
         
         # Save the example for later training
-        dqn_agent.remember(state_list[0], action_list[0], reward_sum, next_state, next_allowed_actions_list[0])
+        if my_sim.env.now > args.burnin:
+            dqn_agent.remember(state_list[0], action_list[0], reward_sum, next_state, next_allowed_actions_list[0])
         
         del state_list[0]
         del action_list[0]
@@ -182,13 +185,14 @@ while my_sim.env.now < sim_time:
 
     # if my_sim.order_completed:
     #     # After each wafer completed, train the policy network 
-    if step_counter % args.train_rate == 0:
-        loss.append(dqn_agent.replay(t=my_sim.env.now))
-        order_count += 1
-        if order_count >= 100:
-            # After every 20 processes update the target network and reset the order count
-            dqn_agent.train_target()
-            order_count = 0
+    if my_sim.env.now > args.burnin:
+        if step_counter % args.train_rate == 0:
+            loss.append(dqn_agent.replay(t=my_sim.env.now))
+            order_count += 1
+            if order_count >= 100:
+                # After every 20 processes update the target network and reset the order count
+                dqn_agent.train_target()
+                order_count = 0
 
     # Record the information for use again in the next training example
     mach, allowed_actions, state = next_mach, next_allowed_actions, next_state
@@ -203,38 +207,38 @@ while my_sim.env.now < sim_time:
         print("Total wafers produced:", len(my_sim.cycle_time))
         
 
-    #     # # Plot the time taken to complete each wafer
-    #     plt.plot(my_sim.lateness)
-    #     plt.xlabel("Wafers")
-    #     plt.ylabel("Lateness")
-    #     plt.title("The amount of time each wafer was late")
-    #     plt.show()
+        # # Plot the time taken to complete each wafer
+        # plt.plot(my_sim.lateness)
+        # plt.xlabel("Wafers")
+        # plt.ylabel("Lateness")
+        # plt.title("The amount of time each wafer was late")
+        # plt.show()
         
-    #     plt.plot(all_reward)
-    #     plt.xlabel("Steps")
-    #     plt.ylabel("Reward")
-    #     plt.title("The amount of reward achieved per step")
-    #     plt.show()
+        # plt.plot(all_reward)
+        # plt.xlabel("Steps")
+        # plt.ylabel("Reward")
+        # plt.title("The amount of reward achieved per step")
+        # plt.show()
         
-    #     # # Plot the loss
-    #     plt.plot(loss)
-    #     plt.ylabel("Loss")
-    #     plt.title("Training loss")
-    #     plt.yscale('log') 
-    #     plt.show()
-    #     # # Plot epsilon
-    #     plt.plot(eps)
-    #     plt.ylabel("Epsilon")
-    #     plt.title("Training epsilon")
-    #     plt.show()
-    #     #
-    #     # Plot the time taken to complete each wafer
-    #     plt.plot(my_sim.cumulative_reward_list)
-    #     plt.xlabel("timestep")
-    #     plt.ylabel("Cumulative Reward")
-    #     plt.title("The sum of all rewards up until each time step")
-    #     plt.show()
-    #     plt.pause(0.05)
+        # # # Plot the loss
+        # plt.plot(loss)
+        # plt.ylabel("Loss")
+        # plt.title("Training loss")
+        # plt.yscale('log') 
+        # plt.show()
+        # # # Plot epsilon
+        # plt.plot(eps)
+        # plt.ylabel("Epsilon")
+        # plt.title("Training epsilon")
+        # plt.show()
+        # #
+        # # Plot the time taken to complete each wafer
+        # plt.plot(my_sim.cumulative_reward_list)
+        # plt.xlabel("timestep")
+        # plt.ylabel("Cumulative Reward")
+        # plt.title("The sum of all rewards up until each time step")
+        # plt.show()
+        # plt.pause(0.05)
 
 # Save the trained DQN policy network
 dqn_agent.save_model(res_path+'model.h5')

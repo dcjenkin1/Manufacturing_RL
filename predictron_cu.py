@@ -104,7 +104,6 @@ class Predictron:
         #logger.INFO('*' * 30)
 
     def build_model(self):
-
         obs = keras.Input(shape=(self.state_size))
         # f_layer1 = layers.Conv2D(32, [3,3], activation='relu',padding="SAME")(obs) # Convolution for spatially correlated inputs
         f_layer1 = layers.Dense(self.state_rep_size, activation='relu', kernel_regularizer=l2(self.l2_weight))(obs) # conv 3x3 stride 1 if spacial correlation in obs

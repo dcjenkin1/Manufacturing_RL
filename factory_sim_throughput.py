@@ -109,6 +109,7 @@ class Machine(object):
                     sim_inst.cycle_time.append(self.env.now - wafer.start_time)
                     # print("Finished processing wafer %s at %s"%(wafer.name, self.env.now))
                     sim_inst.complete_wafer_dict[wafer.HT] += 1
+                    sim_inst.completed_wafers.append(self.env.now)
 
                     sim_inst.lateness.append(max([0, (sim_inst.env.now-wafer.due_time)]))
                     # Update the due_wafers dictionary to indicate that wafers of this head type were completed
@@ -170,7 +171,7 @@ class Machine(object):
 class FactorySim(object):
     #Initialize simpy environment and set the amount of time the simulation will run for
     def __init__(self, sim_time, m_dict, recipes, lead_dict, part_mix, n_part_mix, path_to_wait_times=None, break_mean=None,
-                 repair_mean=None, seed=None):
+                 repair_mean=None, seed=None, burnin=0):
         self.break_mean = break_mean
         self.repair_mean = repair_mean
         self.order_completed = False
@@ -179,6 +180,7 @@ class FactorySim(object):
         self.Sim_time = sim_time
         self.next_machine = None
         self.past_completed_wafers = 0
+        self.completed_wafers = []
         # self.dgr = dgr_dict
         self.lead_dict = lead_dict
         # self.num_wafers = wafers_per_box
@@ -190,6 +192,7 @@ class FactorySim(object):
         self.cumulative_reward = 0.
         self.cumulative_reward_list = []
         self.random_generator = random.Random()
+        self.burnin=burnin
         if seed is not None:
             self.random_generator.seed(seed)
 
@@ -280,7 +283,18 @@ class FactorySim(object):
         # assert(rem_shop_t>0)
         return rem_shop_t
 
-
+    def get_throughput(self, minutes=None):
+        if minutes == None: #use_all
+            if self.env.now>self.burnin:
+                throughput = len([x for x in self.completed_wafers if x > self.burnin])/max(self.env.now,1)-self.burnin
+            else:
+                throughput = 0
+        else:
+            throughput = len([x for x in self.completed_wafers if x > self.env.now-minutes])/minutes
+        
+        return throughput
+                         
+                     
 
     def start(self):
         for ht in self.part_mix.keys():
@@ -346,20 +360,21 @@ class FactorySim(object):
         while True:
             before_time = self.env.now
             self.env.step()
-            time_change = self.env.now-before_time
-            # if time_change > 0:
-            # current_week = math.ceil(self.env.now / (7 * 24 * 60))  # Calculating the current week
-            # for key, value in self.due_wafers.items():
-            #     buffer_list = []  # This list stores value of previous unfinished wafers count
-            #     buffer_list.append(sum(value[:current_week]))
-            #     self.step_reward -= time_change*sum(buffer_list)
-            
-            completed_wafers = 0
-            for key, value in self.complete_wafer_dict.items():
-                completed_wafers += value
-                            
-            self.step_reward += (completed_wafers-self.past_completed_wafers)#/max(time_change,1.)
-            self.past_completed_wafers = completed_wafers
+            if self.env.now>self.burnin:
+                time_change = self.env.now-before_time
+                # if time_change > 0:
+                current_week = math.ceil(self.env.now / (7 * 24 * 60))  # Calculating the current week
+                for key, value in self.due_wafers.items():
+                    buffer_list = []  # This list stores value of previous unfinished wafers count
+                    buffer_list.append(sum(value[:current_week]))
+                    self.step_reward -= time_change*sum(buffer_list)/60
+                
+                # completed_wafers = 0
+                # for key, value in self.complete_wafer_dict.items():
+                #     completed_wafers += value
+                                
+                self.step_reward += self.get_throughput(minutes=None) #(completed_wafers-self.past_completed_wafers)#/max(time_change,1.)
+                # self.past_completed_wafers = completed_wafers
             
             for station in self.stations:
                 if len(self.queue_lists[station]) > 0:
@@ -372,8 +387,4 @@ class FactorySim(object):
                                 self.cumulative_reward += self.step_reward
                                 self.cumulative_reward_list.append(self.cumulative_reward)
                                 return
-
-
-
-
 
