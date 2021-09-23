@@ -118,7 +118,8 @@ def get_state(sim):
 
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
-                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed, burnin=args.burnin, alpha = 1)
+                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], 
+                             seed=args.seed, burnin=args.burnin, alpha = 1) # alpha = 0 pure throughput, alpha = 1 pure lateness
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice

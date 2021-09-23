@@ -374,7 +374,7 @@ class FactorySim(object):
                         wafer_list.append(machine.wafer_being_proc)
                 
                 for waf in wafer_list:
-                    buffer_list.append([max(self.env.now - waf.due_time,0)])
+                    buffer_list.append(max(self.env.now - waf.due_time,0))
                 
                 lateness =  time_change*len([x for x in buffer_list if x > 0])
 
