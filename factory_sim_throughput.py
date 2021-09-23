@@ -171,7 +171,7 @@ class Machine(object):
 class FactorySim(object):
     #Initialize simpy environment and set the amount of time the simulation will run for
     def __init__(self, sim_time, m_dict, recipes, lead_dict, part_mix, n_part_mix, path_to_wait_times=None, break_mean=None,
-                 repair_mean=None, seed=None, burnin=0):
+                 repair_mean=None, seed=None, burnin=0, alpha=1):
         self.break_mean = break_mean
         self.repair_mean = repair_mean
         self.order_completed = False
@@ -193,6 +193,7 @@ class FactorySim(object):
         self.cumulative_reward_list = []
         self.random_generator = random.Random()
         self.burnin=burnin
+        self.alpha = alpha
         if seed is not None:
             self.random_generator.seed(seed)
 
@@ -374,7 +375,7 @@ class FactorySim(object):
                 
                 throughput = self.get_throughput(minutes=None)
                 
-                self.step_reward += throughput - lateness
+                self.step_reward += throughput*(1-self.alpha) - lateness*self.alpha
                 
                 # print(lateness, throughput)
                 # self.past_completed_wafers = completed_wafers

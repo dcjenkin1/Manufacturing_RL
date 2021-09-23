@@ -10,7 +10,7 @@ import random
 import matplotlib.pyplot as plt
 from itertools import chain
 from DeepQNet import DQN
-import DoubleDuelingDeepQNet
+from DoubleDuelingDeepQNet import DDDQN
 import argparse
 import datetime
 import json
@@ -27,7 +27,7 @@ parser.add_argument("--seed", default=0, type=int, help="random seed")
 parser.add_argument("--burnin", default=5000, type=int, help="burn in period in minutes")
 parser.add_argument('--batch_size', default=32, type=int, help='batch size for training')
 parser.add_argument('--train_rate', default=10, type=int, help='The number of steps to take between training the network')
-parser.add_argument('--DDDQN', default=True, help='Use Double Dueling DQN')
+parser.add_argument('--DDDQN', default=False, help='Use Double Dueling DQN')
 parser.add_argument('--n_step', default=1, type=int, help='Number of real rewards to include for the target')
 parser.add_argument('--gamma', default=0.99, type=float, help='discount factor')
 parser.add_argument('--PER', default=True, help='Use Prioritized Experience Replay')
@@ -102,7 +102,7 @@ def get_state(sim):
 
 # Create the factory simulation object
 my_sim = fact_sim.FactorySim(sim_time, machine_dict, recipes, lead_dict, part_mix, break_repair_WIP['n_batch_wip'],
-                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed, burnin=args.burnin)
+                             break_mean=break_repair_WIP['break_mean'], repair_mean=break_repair_WIP['repair_mean'], seed=args.seed, burnin=args.burnin, alpha = 1)
 # start the simulation
 my_sim.start()
 # Retrieve machine object for first action choice
@@ -118,9 +118,9 @@ state_size = len(state)
 
 # Creating the DQN agent
 if args.DDDQN:
-    dqn_agent = DoubleDuelingDeepQNet.DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.99999, gamma=args.gamma, batch_size=32, nstep=args.n_step, per=args.PER, prioritized_replay_beta_iters=int(sim_time), seed=args.seed)
+    dqn_agent = DDDQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=args.gamma, batch_size=32, nstep=args.n_step, per=args.PER, prioritized_replay_beta_iters=int(sim_time), seed=args.seed)
 else:
-    dqn_agent = DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.9999, gamma=args.gamma, batch_size=32, seed=args.seed)
+    dqn_agent = DQN(state_space_dim= state_size, action_space= action_space, epsilon_decay=0.999, gamma=args.gamma, batch_size=32, seed=args.seed)
 
 # if args.seed is not None:# Reinitialize factory with seed
 #     random.seed(args.seed)

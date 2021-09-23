@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Input, Dense, Add, Lambda, Subtract, Average
-from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from collections import deque
 import numpy as np
@@ -15,7 +15,7 @@ from baselines.common.schedules import LinearSchedule
 #################################################################### CREATING Deep Q-learning Class ####################################
 ########################################################################################################################################
 
-class DQN:
+class DDDQN:
     def __init__(self, state_space_dim, action_space, gamma=0.9, epsilon_decay=0.8, tau=0.125, learning_rate=0.005, epsilon_max=1, batch_size=32, epsilon_min = 0., nstep=1, per=True, prioritized_replay_beta_iters=1e6, seed=None):
         self.state_space_dim = state_space_dim
         self.action_space = action_space
