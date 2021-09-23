@@ -89,13 +89,29 @@ def get_state(sim):
     current_time = sim.env.now # Calculating the current time
     current_week = math.ceil(current_time / (7*24*60)) #Calculating the current week 
 
-    for key, value in sim.due_wafers.items():
-        rolling_window.append(value[current_week:current_week+max_length_of_window]) #Adding only the values from current week up till the window length
-        buffer_list = [] # This list stores value of previous unfinished wafers count
-        buffer_list.append(sum(value[:current_week]))
-        rolling_window.extend([buffer_list])
+    buffer_list = []
+    wafer_list = []
+    for station in sim.stations:
+        wafer_list = wafer_list + sim.queue_lists[station]
+        
+    for machine in sim.machines_list:
+        if machine.wafer_being_proc is not None:
+            wafer_list.append(machine.wafer_being_proc)
+    
+    for waf in wafer_list:
+        buffer_list.append([waf.HT, max(sim.env.now - waf.due_time,0)])
+                
+    c = []
+    for ht in sim.recipes.keys():
+        c.append(len([x for ht_, x in buffer_list if x > 0 and ht_ == ht]))
+    # print(sim.env.now, c)
+    # for key, value in sim.due_wafers.items():
+    #     rolling_window.append(value[current_week:current_week+max_length_of_window]) #Adding only the values from current week up till the window length
+    #     buffer_list = [] # This list stores value of previous unfinished wafers count
+    #     buffer_list.append(sum(value[:current_week]))
+    #     rolling_window.extend([buffer_list])
 
-    c = sum(rolling_window, [])
+    # c = sum(rolling_window, [])
     state_rep.extend(c) # Appending the rolling window to state space
     return state_rep
 

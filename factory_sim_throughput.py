@@ -364,11 +364,17 @@ class FactorySim(object):
             if self.env.now>self.burnin:
                 time_change = self.env.now-before_time
                 buffer_list = []
+                wafer_list = []
+                
                 for station in self.stations:
-                    wafer_list = self.queue_lists[station]
-                    for waf in wafer_list:
-                        buffer_list.append(max(self.env.now - waf.due_time,0))
-                            
+                    wafer_list = wafer_list + self.queue_lists[station]
+                    
+                for machine in self.machines_list:
+                    if machine.wafer_being_proc is not None:
+                        wafer_list.append(machine.wafer_being_proc)
+                
+                for waf in wafer_list:
+                    buffer_list.append([max(self.env.now - waf.due_time,0)])
                 
                 lateness =  time_change*len([x for x in buffer_list if x > 0])
 
